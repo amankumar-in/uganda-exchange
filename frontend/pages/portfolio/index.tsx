@@ -227,7 +227,6 @@ const WalletPage: NextPageWithLayout = () => {
       BTC: { name: 'Bitcoin', color: '#F7931A' },
       ETH: { name: 'Ethereum', color: '#627EEA' },
       USDT: { name: 'Tether', color: '#26A17B' },
-      TUIT: { name: 'Tuition Token', color: token.colorPrimary },
     };
 
     // Create a map of existing balances
@@ -253,11 +252,19 @@ const WalletPage: NextPageWithLayout = () => {
       const price = usdPair?.price || 0;
       const usdValue = balance.balance * price;
 
-      const info = assetInfo[asset] || { name: asset, color: token.colorPrimary };
+      const info = assetInfo[asset];
+      const name = info?.name || usdPair?.name || asset;
+      const color = info?.color || token.colorPrimary;
+
+      // Icon priority:
+      // 1. usdPair.iconUrl (Real data from backend/mapped pairs)
+      // 2. Safe fallback for TUIT (initials) if no icon provided
+      // 3. CoinCap fallback for others
+      const iconUrl = usdPair?.iconUrl || (asset === 'TUIT' ? undefined : `https://assets.coincap.io/assets/icons/${asset.toLowerCase()}@2x.png`);
 
       return {
         symbol: asset,
-        name: info.name,
+        name,
         balance: balance.balance.toLocaleString('en-US', {
           minimumFractionDigits: 2,
           maximumFractionDigits: 8,
@@ -274,10 +281,8 @@ const WalletPage: NextPageWithLayout = () => {
           ? `$${usdValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` 
           : '$0.00',
         change: usdPair?.change || 0,
-        color: info.color,
-        iconUrl: asset === 'TUIT' 
-          ? undefined // TUIT will use fallback (colored circle with first letter)
-          : (usdPair?.iconUrl || `https://assets.coincap.io/assets/icons/${asset.toLowerCase()}@2x.png`),
+        color,
+        iconUrl,
       };
     });
 
