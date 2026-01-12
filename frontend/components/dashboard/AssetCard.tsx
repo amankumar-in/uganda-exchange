@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import { theme, Grid } from 'antd';
-import { ExportOutlined, ImportOutlined, StopOutlined } from '@ant-design/icons';
+import { theme, Grid, Tooltip } from 'antd';
+import { ExportOutlined, LineChartOutlined } from '@ant-design/icons';
 import { fontWeights } from '@/theme/themeConfig';
 
 const { useToken } = theme;
@@ -18,8 +18,8 @@ interface AssetCardProps {
   iconUrl?: string;
   color?: string;
   onClick?: () => void;
-  onSend?: () => void;
-  onReceive?: () => void;
+  onTransfer?: () => void;
+  onTrade?: () => void;
   disabledActions?: boolean;
 }
 
@@ -33,8 +33,8 @@ const AssetCard: React.FC<AssetCardProps> = ({
   iconUrl,
   color,
   onClick,
-  onSend,
-  onReceive,
+  onTransfer,
+  onTrade,
   disabledActions = false,
 }) => {
   const { token } = useToken();
@@ -243,36 +243,43 @@ const AssetCard: React.FC<AssetCardProps> = ({
       </div>
 
       {/* Actions - Same buttons on mobile and desktop */}
-      {(onSend || onReceive) && (
-        <div style={actionsStyle}>
-          {onSend && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                if (!disabledActions) onSend();
-              }}
-              style={sendButtonStyle}
-              disabled={disabledActions}
-            >
-              {disabledActions ? <StopOutlined /> : <ExportOutlined />}
-              <span>Send</span>
-            </button>
-          )}
-          {onReceive && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                if (!disabledActions) onReceive();
-              }}
-              style={receiveButtonStyle}
-              disabled={disabledActions}
-            >
-              {disabledActions ? <StopOutlined /> : <ImportOutlined />}
-              <span>Receive</span>
-            </button>
-          )}
-        </div>
-      )}
+      {/* Actions - Same buttons on mobile and desktop */}
+      <div style={actionsStyle}>
+        {/* Transfer Button - Always Disabled for now */}
+        <Tooltip title="Deposit and withdrawal for this asset is coming soon">
+          <button
+            style={{
+              ...buttonBaseStyle,
+              backgroundColor: isBelowLg ? 'transparent' : token.colorFillSecondary,
+              color: token.colorTextDisabled,
+              cursor: 'not-allowed',
+              opacity: 0.6,
+            }}
+            disabled
+          >
+            <ExportOutlined />
+            <span>Transfer</span>
+          </button>
+        </Tooltip>
+
+        {/* Trade Button */}
+        {onTrade && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onTrade();
+            }}
+            style={{
+              ...buttonBaseStyle,
+              backgroundColor: isBelowLg ? 'transparent' : token.colorPrimaryBg,
+              color: token.colorPrimary,
+            }}
+          >
+            <LineChartOutlined />
+            <span>Trade</span>
+          </button>
+        )}
+      </div>
     </div>
   );
 };

@@ -726,14 +726,8 @@ const WalletPage: NextPageWithLayout = () => {
                     change={asset.change}
                     color={asset.color}
                     iconUrl={asset.iconUrl}
-                    disabledActions
-                    onSend={() => {
-                      // TODO: Implement send functionality
-                      console.log('Send', asset.symbol);
-                    }}
-                    onReceive={() => {
-                      // TODO: Implement receive functionality
-                      console.log('Receive', asset.symbol);
+                    onTrade={() => {
+                      router.push(`/trade?pair=${asset.symbol}-USD`);
                     }}
                   />
                 </motion.div>
