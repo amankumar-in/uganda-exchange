@@ -358,9 +358,36 @@ export class AdminService {
     }
 
     // Get live balances
-    const liveBalances = await this.prisma.client.cryptoBalance.findMany({
+    const liveCryptoBalances = await this.prisma.client.cryptoBalance.findMany({
       where: { userId },
     });
+
+    const liveFiatBalance = await this.prisma.client.fiatBalance.findUnique({
+      where: { userId },
+    });
+
+    // Combine live balances
+    const liveBalances: BalanceItem[] = [];
+
+    if (liveFiatBalance) {
+      liveBalances.push({
+        asset: 'USD',
+        balance: parseFloat(liveFiatBalance.balance.toString()),
+        availableBalance: parseFloat(liveFiatBalance.availableBalance.toString()),
+        lockedBalance: parseFloat(liveFiatBalance.lockedBalance.toString()),
+      });
+    }
+
+    liveBalances.push(
+      ...liveCryptoBalances
+        .filter((b) => b.asset !== 'USD')
+        .map((b) => ({
+          asset: b.asset,
+          balance: parseFloat(b.balance.toString()),
+          availableBalance: parseFloat(b.availableBalance.toString()),
+          lockedBalance: parseFloat(b.lockedBalance.toString()),
+        })),
+    );
 
     // Get learner fiat balance
     const learnerFiatBalance = await this.prisma.client.learnerFiatBalance.findUnique({
@@ -373,12 +400,7 @@ export class AdminService {
     });
 
     return {
-      live: liveBalances.map((b) => ({
-        asset: b.asset,
-        balance: parseFloat(b.balance.toString()),
-        availableBalance: parseFloat(b.availableBalance.toString()),
-        lockedBalance: parseFloat(b.lockedBalance.toString()),
-      })),
+      live: liveBalances,
       learner: {
         fiat: learnerFiatBalance
           ? {
@@ -417,6 +439,37 @@ export class AdminService {
 
     if (dto.mode === 'live') {
       // Adjust live balance
+      if (dto.asset === 'USD') {
+        const balance = await this.prisma.client.fiatBalance.upsert({
+          where: { userId },
+          create: {
+            userId,
+            currency: 'USD',
+            balance: dto.amount,
+            availableBalance: dto.amount,
+            lockedBalance: 0,
+          },
+          update: {
+            balance: { increment: dto.amount },
+            availableBalance: { increment: dto.amount },
+          },
+        });
+
+        this.logger.log(
+          `Admin ${adminId} adjusted ${dto.mode} balance for user ${userId}: ${dto.asset} ${dto.amount > 0 ? '+' : ''}${dto.amount}. Reason: ${dto.reason}`,
+        );
+
+        return {
+          success: true,
+          newBalance: {
+            asset: 'USD',
+            balance: parseFloat(balance.balance.toString()),
+            availableBalance: parseFloat(balance.availableBalance.toString()),
+            lockedBalance: parseFloat(balance.lockedBalance.toString()),
+          },
+        };
+      }
+
       const balance = await this.prisma.client.cryptoBalance.upsert({
         where: {
           userId_asset: {

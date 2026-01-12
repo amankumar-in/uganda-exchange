@@ -5,6 +5,7 @@ import { useRouter } from 'next/router';
 import { theme } from 'antd';
 import { LeftOutlined, CaretUpOutlined, CaretDownOutlined, DownOutlined } from '@ant-design/icons';
 import { motion } from 'motion/react';
+import PriceFormatter from './PriceFormatter';
 import { fontWeights } from '@/theme/themeConfig';
 import { useThemeMode } from '@/context/ThemeContext';
 
@@ -116,7 +117,14 @@ const MobileTradeHeader: React.FC<MobileTradeHeaderProps> = ({
               color: isDark ? token.colorTextTertiary : 'rgba(255, 255, 255, 0.9)', 
               fontWeight: fontWeights.medium,
             }}>
-              ${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: price < 1 ? 4 : 2 })}
+              <PriceFormatter 
+                price={price} 
+                style={{ 
+                  fontSize: token.fontSize, 
+                  color: isDark ? token.colorTextTertiary : 'rgba(255, 255, 255, 0.9)', 
+                  fontWeight: fontWeights.medium,
+                }} 
+              />
             </span>
             <div
               style={{
@@ -148,7 +156,7 @@ const MobileTradeHeader: React.FC<MobileTradeHeaderProps> = ({
             color: isDark ? '#8B5CF6' : '#ffffff',
             fontWeight: fontWeights.bold,
           }}>
-            Change
+            Select
           </span>
           <DownOutlined style={{ 
             color: isDark ? '#8B5CF6' : '#ffffff', 

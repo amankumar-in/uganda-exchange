@@ -13,6 +13,49 @@ export class CoinGeckoController {
   constructor(private readonly coinGeckoService: CoinGeckoService) {}
 
   /**
+   * GET /coingecko/token/id/:id
+   * Get detailed token information by CoinGecko ID
+   */
+  @Get('token/id/:id')
+  async getTokenDetailsById(@Param('id') id: string) {
+    try {
+      const tokenData = await this.coinGeckoService.getTokenDetailsById(id);
+
+      if (!tokenData) {
+        throw new HttpException(
+          `Token with ID ${id} not found`,
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
+      return { success: true, token: tokenData };
+    } catch (error: any) {
+      if (error instanceof HttpException) throw error;
+      throw new HttpException(
+        error.message || 'Failed to fetch token details',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  /**
+   * GET /coingecko/coins/:id/ohlc
+   * Get OHLC data for a coin
+   */
+  @Get('coins/:id/ohlc')
+  async getCoinOHLC(@Param('id') id: string, @Query('days') days: string) {
+    try {
+      const data = await this.coinGeckoService.getCoinOHLC(id, parseInt(days || '1'));
+      return { success: true, data };
+    } catch (error: any) {
+      throw new HttpException(
+        error.message || 'Failed to fetch OHLC data',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  /**
    * GET /coingecko/token/:symbol
    * Get detailed token information including description, links, and market data
    */
@@ -47,12 +90,14 @@ export class CoinGeckoController {
     @Query('page') page?: string,
     @Query('per_page') perPage?: string,
     @Query('sparkline') sparkline?: string,
+    @Query('ids') ids?: string,
   ) {
     try {
       const markets = await this.coinGeckoService.getMarketsList(
         page ? parseInt(page) : 1,
         perPage ? parseInt(perPage) : 100,
         sparkline === 'true',
+        ids,
       );
 
       return { success: true, markets };

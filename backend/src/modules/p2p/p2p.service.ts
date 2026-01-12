@@ -165,15 +165,28 @@ export class P2PService {
 
     // For SELL ads: Check if user has sufficient crypto balance
     if (dto.side === AdSide.SELL) {
-      const balance = await this.prisma.client.cryptoBalance.findUnique({
-        where: { userId_asset: { userId, asset: dto.asset } },
-      });
+      if (dto.asset === 'USD') {
+        const balance = await this.prisma.client.fiatBalance.findUnique({
+          where: { userId },
+        });
 
-      const available = balance ? parseFloat(balance.availableBalance.toString()) : 0;
-      if (available < dto.totalQty) {
-        throw new BadRequestException(
-          `Insufficient ${dto.asset} balance. Available: ${available}, Required: ${dto.totalQty}`,
-        );
+        const available = balance ? parseFloat(balance.availableBalance.toString()) : 0;
+        if (available < dto.totalQty) {
+          throw new BadRequestException(
+            `Insufficient ${dto.asset} balance. Available: ${available}, Required: ${dto.totalQty}`,
+          );
+        }
+      } else {
+        const balance = await this.prisma.client.cryptoBalance.findUnique({
+          where: { userId_asset: { userId, asset: dto.asset } },
+        });
+
+        const available = balance ? parseFloat(balance.availableBalance.toString()) : 0;
+        if (available < dto.totalQty) {
+          throw new BadRequestException(
+            `Insufficient ${dto.asset} balance. Available: ${available}, Required: ${dto.totalQty}`,
+          );
+        }
       }
     }
 
@@ -314,11 +327,20 @@ export class P2PService {
 
     // For SELL ads: Re-check balance before resuming
     if (ad.side === 'SELL') {
-      const balance = await this.prisma.client.cryptoBalance.findUnique({
-        where: { userId_asset: { userId, asset: ad.asset } },
-      });
+      let available = 0;
+      
+      if (ad.asset === 'USD') {
+        const balance = await this.prisma.client.fiatBalance.findUnique({
+          where: { userId },
+        });
+        available = balance ? parseFloat(balance.availableBalance.toString()) : 0;
+      } else {
+        const balance = await this.prisma.client.cryptoBalance.findUnique({
+          where: { userId_asset: { userId, asset: ad.asset } },
+        });
+        available = balance ? parseFloat(balance.availableBalance.toString()) : 0;
+      }
 
-      const available = balance ? parseFloat(balance.availableBalance.toString()) : 0;
       const remaining = parseFloat(ad.remainingQty.toString());
 
       if (available < remaining) {
@@ -602,13 +624,23 @@ export class P2PService {
       }
 
       // 2. Lock escrow (move from available to locked)
-      await tx.cryptoBalance.update({
-        where: { userId_asset: { userId: sellerUserId, asset: ad.asset } },
-        data: {
-          availableBalance: { decrement: dto.qty },
-          lockedBalance: { increment: dto.qty },
-        },
-      });
+      if (ad.asset === 'USD') {
+        await tx.fiatBalance.update({
+          where: { userId: sellerUserId },
+          data: {
+            availableBalance: { decrement: dto.qty },
+            lockedBalance: { increment: dto.qty },
+          },
+        });
+      } else {
+        await tx.cryptoBalance.update({
+          where: { userId_asset: { userId: sellerUserId, asset: ad.asset } },
+          data: {
+            availableBalance: { decrement: dto.qty },
+            lockedBalance: { increment: dto.qty },
+          },
+        });
+      }
 
       // 3. Create the trade
       const expiresAt = new Date(Date.now() + PAYMENT_WINDOW_SECONDS * 1000);
@@ -808,15 +840,26 @@ export class P2PService {
 
       // 2. Unlock escrow (move back to seller's available balance)
       const qtyLocked = parseFloat(trade.escrow!.qtyLocked.toString());
-      await tx.cryptoBalance.update({
-        where: {
-          userId_asset: { userId: trade.sellerUserId, asset: trade.asset },
-        },
-        data: {
-          availableBalance: { increment: qtyLocked },
-          lockedBalance: { decrement: qtyLocked },
-        },
-      });
+      
+      if (trade.asset === 'USD') {
+        await tx.fiatBalance.update({
+          where: { userId: trade.sellerUserId },
+          data: {
+            availableBalance: { increment: qtyLocked },
+            lockedBalance: { decrement: qtyLocked },
+          },
+        });
+      } else {
+        await tx.cryptoBalance.update({
+          where: {
+            userId_asset: { userId: trade.sellerUserId, asset: trade.asset },
+          },
+          data: {
+            availableBalance: { increment: qtyLocked },
+            lockedBalance: { decrement: qtyLocked },
+          },
+        });
+      }
 
       // 3. Update escrow status
       await tx.p2PEscrow.update({
@@ -887,33 +930,61 @@ export class P2PService {
       const qtyLocked = parseFloat(trade.escrow!.qtyLocked.toString());
 
       // 1. Transfer from seller's locked to buyer's available
-      await tx.cryptoBalance.update({
-        where: {
-          userId_asset: { userId: trade.sellerUserId, asset: trade.asset },
-        },
-        data: {
-          lockedBalance: { decrement: qtyLocked },
-          balance: { decrement: qtyLocked },
-        },
-      });
+      if (trade.asset === 'USD') {
+        // Seller decrement
+        await tx.fiatBalance.update({
+          where: { userId: trade.sellerUserId },
+          data: {
+            lockedBalance: { decrement: qtyLocked },
+            balance: { decrement: qtyLocked },
+          },
+        });
 
-      // Get or create buyer's balance
-      await tx.cryptoBalance.upsert({
-        where: {
-          userId_asset: { userId: trade.buyerUserId, asset: trade.asset },
-        },
-        create: {
-          userId: trade.buyerUserId,
-          asset: trade.asset,
-          balance: qtyLocked,
-          availableBalance: qtyLocked,
-          lockedBalance: 0,
-        },
-        update: {
-          balance: { increment: qtyLocked },
-          availableBalance: { increment: qtyLocked },
-        },
-      });
+        // Buyer increment
+        await tx.fiatBalance.upsert({
+          where: { userId: trade.buyerUserId },
+          create: {
+            userId: trade.buyerUserId,
+            currency: 'USD',
+            balance: qtyLocked,
+            availableBalance: qtyLocked,
+            lockedBalance: 0,
+          },
+          update: {
+            balance: { increment: qtyLocked },
+            availableBalance: { increment: qtyLocked },
+          },
+        });
+      } else {
+        // Seller decrement
+        await tx.cryptoBalance.update({
+          where: {
+            userId_asset: { userId: trade.sellerUserId, asset: trade.asset },
+          },
+          data: {
+            lockedBalance: { decrement: qtyLocked },
+            balance: { decrement: qtyLocked },
+          },
+        });
+
+        // Buyer increment
+        await tx.cryptoBalance.upsert({
+          where: {
+            userId_asset: { userId: trade.buyerUserId, asset: trade.asset },
+          },
+          create: {
+            userId: trade.buyerUserId,
+            asset: trade.asset,
+            balance: qtyLocked,
+            availableBalance: qtyLocked,
+            lockedBalance: 0,
+          },
+          update: {
+            balance: { increment: qtyLocked },
+            availableBalance: { increment: qtyLocked },
+          },
+        });
+      }
 
       // 2. Update escrow status
       await tx.p2PEscrow.update({
@@ -1198,33 +1269,59 @@ export class P2PService {
         escrowStatus = 'RELEASED';
 
         // Decrease seller's locked balance
-        await tx.cryptoBalance.update({
-          where: {
-            userId_asset: { userId: trade.sellerUserId, asset: trade.asset },
-          },
-          data: {
-            lockedBalance: { decrement: qtyLocked },
-            balance: { decrement: qtyLocked },
-          },
-        });
+        if (trade.asset === 'USD') {
+          await tx.fiatBalance.update({
+            where: { userId: trade.sellerUserId },
+            data: {
+              lockedBalance: { decrement: qtyLocked },
+              balance: { decrement: qtyLocked },
+            },
+          });
 
-        // Increase buyer's balance
-        await tx.cryptoBalance.upsert({
-          where: {
-            userId_asset: { userId: trade.buyerUserId, asset: trade.asset },
-          },
-          create: {
-            userId: trade.buyerUserId,
-            asset: trade.asset,
-            balance: qtyLocked,
-            availableBalance: qtyLocked,
-            lockedBalance: 0,
-          },
-          update: {
-            balance: { increment: qtyLocked },
-            availableBalance: { increment: qtyLocked },
-          },
-        });
+          // Increase buyer's balance
+          await tx.fiatBalance.upsert({
+            where: { userId: trade.buyerUserId },
+            create: {
+              userId: trade.buyerUserId,
+              currency: 'USD',
+              balance: qtyLocked,
+              availableBalance: qtyLocked,
+              lockedBalance: 0,
+            },
+            update: {
+              balance: { increment: qtyLocked },
+              availableBalance: { increment: qtyLocked },
+            },
+          });
+        } else {
+          await tx.cryptoBalance.update({
+            where: {
+              userId_asset: { userId: trade.sellerUserId, asset: trade.asset },
+            },
+            data: {
+              lockedBalance: { decrement: qtyLocked },
+              balance: { decrement: qtyLocked },
+            },
+          });
+
+          // Increase buyer's balance
+          await tx.cryptoBalance.upsert({
+            where: {
+              userId_asset: { userId: trade.buyerUserId, asset: trade.asset },
+            },
+            create: {
+              userId: trade.buyerUserId,
+              asset: trade.asset,
+              balance: qtyLocked,
+              availableBalance: qtyLocked,
+              lockedBalance: 0,
+            },
+            update: {
+              balance: { increment: qtyLocked },
+              availableBalance: { increment: qtyLocked },
+            },
+          });
+        }
 
         await tx.p2PEscrow.update({
           where: { id: trade.escrow!.id },
@@ -1241,15 +1338,25 @@ export class P2PService {
         escrowStatus = 'UNLOCKED';
 
         // Move from locked back to available
-        await tx.cryptoBalance.update({
-          where: {
-            userId_asset: { userId: trade.sellerUserId, asset: trade.asset },
-          },
-          data: {
-            lockedBalance: { decrement: qtyLocked },
-            availableBalance: { increment: qtyLocked },
-          },
-        });
+        if (trade.asset === 'USD') {
+          await tx.fiatBalance.update({
+            where: { userId: trade.sellerUserId },
+            data: {
+              lockedBalance: { decrement: qtyLocked },
+              availableBalance: { increment: qtyLocked },
+            },
+          });
+        } else {
+          await tx.cryptoBalance.update({
+            where: {
+              userId_asset: { userId: trade.sellerUserId, asset: trade.asset },
+            },
+            data: {
+              lockedBalance: { decrement: qtyLocked },
+              availableBalance: { increment: qtyLocked },
+            },
+          });
+        }
 
         await tx.p2PEscrow.update({
           where: { id: trade.escrow!.id },
@@ -1327,15 +1434,25 @@ export class P2PService {
           });
 
           // 2. Unlock escrow
-          await tx.cryptoBalance.update({
-            where: {
-              userId_asset: { userId: trade.sellerUserId, asset: trade.asset },
-            },
-            data: {
-              availableBalance: { increment: qtyLocked },
-              lockedBalance: { decrement: qtyLocked },
-            },
-          });
+          if (trade.asset === 'USD') {
+            await tx.fiatBalance.update({
+              where: { userId: trade.sellerUserId },
+              data: {
+                availableBalance: { increment: qtyLocked },
+                lockedBalance: { decrement: qtyLocked },
+              },
+            });
+          } else {
+            await tx.cryptoBalance.update({
+              where: {
+                userId_asset: { userId: trade.sellerUserId, asset: trade.asset },
+              },
+              data: {
+                availableBalance: { increment: qtyLocked },
+                lockedBalance: { decrement: qtyLocked },
+              },
+            });
+          }
 
           await tx.p2PEscrow.update({
             where: { id: trade.escrow!.id },

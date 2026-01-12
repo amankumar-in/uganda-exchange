@@ -19,16 +19,40 @@ export class AssetsService {
    * Get all balances for a user
    */
   async getUserBalances(userId: string): Promise<BalanceResponse[]> {
-    const balances = await this.prisma.client.cryptoBalance.findMany({
-      where: { userId },
-    });
+    const [cryptoBalances, fiatBalance] = await Promise.all([
+      this.prisma.client.cryptoBalance.findMany({
+        where: { userId },
+      }),
+      this.prisma.client.fiatBalance.findUnique({
+        where: { userId },
+      }),
+    ]);
 
-    return balances.map((b) => ({
-      asset: b.asset,
-      balance: parseFloat(b.balance.toString()),
-      availableBalance: parseFloat(b.availableBalance.toString()),
-      lockedBalance: parseFloat(b.lockedBalance.toString()),
-    }));
+    const balances: BalanceResponse[] = [];
+
+    // Add USD Balance from FiatBalance table
+    if (fiatBalance) {
+      balances.push({
+        asset: 'USD',
+        balance: parseFloat(fiatBalance.balance.toString()),
+        availableBalance: parseFloat(fiatBalance.availableBalance.toString()),
+        lockedBalance: parseFloat(fiatBalance.lockedBalance.toString()),
+      });
+    }
+
+    // Add crypto balances, excluding USD if mistakenly present there
+    balances.push(
+      ...cryptoBalances
+        .filter((b) => b.asset !== 'USD')
+        .map((b) => ({
+          asset: b.asset,
+          balance: parseFloat(b.balance.toString()),
+          availableBalance: parseFloat(b.availableBalance.toString()),
+          lockedBalance: parseFloat(b.lockedBalance.toString()),
+        })),
+    );
+
+    return balances;
   }
 
   /**
@@ -38,6 +62,21 @@ export class AssetsService {
     userId: string,
     asset: string,
   ): Promise<BalanceResponse | null> {
+    if (asset === 'USD') {
+      const fiatBalance = await this.prisma.client.fiatBalance.findUnique({
+        where: { userId },
+      });
+
+      if (!fiatBalance) return null;
+
+      return {
+        asset: 'USD',
+        balance: parseFloat(fiatBalance.balance.toString()),
+        availableBalance: parseFloat(fiatBalance.availableBalance.toString()),
+        lockedBalance: parseFloat(fiatBalance.lockedBalance.toString()),
+      };
+    }
+
     const balance = await this.prisma.client.cryptoBalance.findUnique({
       where: {
         userId_asset: {
@@ -66,6 +105,28 @@ export class AssetsService {
     userId: string,
     asset: string,
   ): Promise<BalanceResponse> {
+    if (asset === 'USD') {
+      const balance = await this.prisma.client.fiatBalance.findUnique({
+        where: { userId },
+      });
+
+      if (balance) {
+        return {
+          asset: 'USD',
+          balance: parseFloat(balance.balance.toString()),
+          availableBalance: parseFloat(balance.availableBalance.toString()),
+          lockedBalance: parseFloat(balance.lockedBalance.toString()),
+        };
+      }
+      
+      return {
+        asset: 'USD',
+        balance: 0,
+        availableBalance: 0,
+        lockedBalance: 0,
+      };
+    }
+
     const balance = await this.prisma.client.cryptoBalance.findUnique({
       where: {
         userId_asset: {
@@ -103,6 +164,24 @@ export class AssetsService {
     asset: string,
     amount: number, // Positive to add, negative to subtract
   ): Promise<void> {
+    if (asset === 'USD') {
+      await this.prisma.client.fiatBalance.upsert({
+        where: { userId },
+        create: {
+          userId,
+          currency: 'USD',
+          balance: amount,
+          availableBalance: amount,
+          lockedBalance: 0,
+        },
+        update: {
+          balance: { increment: amount },
+          availableBalance: { increment: amount },
+        },
+      });
+      return;
+    }
+
     await this.prisma.client.cryptoBalance.upsert({
       where: {
         userId_asset: {
@@ -144,6 +223,17 @@ export class AssetsService {
       );
     }
 
+    if (asset === 'USD') {
+      await this.prisma.client.fiatBalance.update({
+        where: { userId },
+        data: {
+          availableBalance: { decrement: amount },
+          lockedBalance: { increment: amount },
+        },
+      });
+      return;
+    }
+
     await this.prisma.client.cryptoBalance.update({
       where: {
         userId_asset: {
@@ -170,6 +260,17 @@ export class AssetsService {
     asset: string,
     amount: number,
   ): Promise<void> {
+    if (asset === 'USD') {
+      await this.prisma.client.fiatBalance.update({
+        where: { userId },
+        data: {
+          availableBalance: { increment: amount },
+          lockedBalance: { decrement: amount },
+        },
+      });
+      return;
+    }
+
     await this.prisma.client.cryptoBalance.update({
       where: {
         userId_asset: {
@@ -300,7 +401,7 @@ export class AssetsService {
 
     switch (range) {
       case '1D':
-        startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        startDate = new Date(now.getTime() - 48 * 60 * 60 * 1000); // 48h to include yesterday's midnight snapshot
         break;
       case '1W':
         startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);

@@ -3,7 +3,8 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { theme, Input, Drawer } from 'antd';
-import { SearchOutlined, SwapOutlined, CaretUpOutlined, CaretDownOutlined } from '@ant-design/icons';
+import { SearchOutlined, SwapOutlined, CaretUpOutlined, CaretDownOutlined, StarOutlined, StarFilled } from '@ant-design/icons';
+import PriceFormatter from './PriceFormatter';
 import { fontWeights } from '@/theme/themeConfig';
 import { useThemeMode } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
@@ -200,11 +201,15 @@ const PairSelector: React.FC<PairSelectorProps> = ({
     }
   }, [router.query.pair, filteredPairs]);
 
-  const formatPrice = (price: number, quote: string) => {
-    if (quote === 'ETH') return price.toFixed(4);
+  const formatPrice = (priceInput: number | string, quote: string) => {
+    const price = Number(priceInput);
+    if (isNaN(price)) return '0.00';
+    
+    if (quote === 'ETH') return price.toFixed(6);
     if (price >= 1000) return price.toLocaleString('en-US', { maximumFractionDigits: 2 });
     if (price >= 1) return price.toFixed(2);
-    return price.toFixed(4);
+    if (price < 0.001) return price.toFixed(8);
+    return price.toFixed(6);
   };
 
   const handlePairClick = (symbol: string) => {
@@ -275,7 +280,7 @@ const PairSelector: React.FC<PairSelectorProps> = ({
             color: isSelected ? '#ffffff' : token.colorText,
             lineHeight: 1.5,
           }}>
-            {formatPrice(pair.price, pair.quote)}
+            <PriceFormatter price={pair.price} quote={pair.quote} />
           </div>
           <div style={{
             fontSize: token.fontSizeSM,
@@ -389,7 +394,7 @@ const PairSelector: React.FC<PairSelectorProps> = ({
             fontWeight: fontWeights.medium,
             fontSize: token.fontSizeSM,
           }}>
-            {currentPair ? formatPrice(currentPair.price, currentPair.quote) : '—'}
+            {currentPair ? <PriceFormatter price={currentPair.price} quote={currentPair.quote} /> : '—'}
           </div>
         </div>
 

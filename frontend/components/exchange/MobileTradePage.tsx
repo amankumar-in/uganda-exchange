@@ -10,6 +10,7 @@ import MobileTradeHeader from './MobileTradeHeader';
 import TradeFormModal from './TradeFormModal';
 import TradingChart from './TradingChart';
 import PairSelector from './PairSelector';
+import PriceFormatter from './PriceFormatter';
 
 const { useToken } = theme;
 
@@ -353,7 +354,7 @@ function TradeHistoryMobile({ trades, isLoading }: { trades: any[]; isLoading: b
             color: trade.side === 'BUY' ? '#22C55E' : '#EF4444',
             fontWeight: fontWeights.semibold,
           }}>
-            {parseFloat(trade.price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            <PriceFormatter price={Number(trade.price)} />
           </span>
           <span style={{ flex: 1, textAlign: 'right', color: token.colorText }}>
             {parseFloat(trade.size).toFixed(6)}
@@ -436,7 +437,7 @@ function OrderBookMobile({ orderBook, isLoading }: { orderBook: any; isLoading: 
               }}
             />
             <span style={{ color: '#22C55E', fontWeight: fontWeights.semibold, zIndex: 1 }}>
-              {parseFloat(bid.price).toFixed(2)}
+              <PriceFormatter price={parseFloat(bid.price)} />
             </span>
             <span style={{ color: token.colorText, zIndex: 1 }}>
               {parseFloat(bid.size).toFixed(4)}
@@ -481,7 +482,7 @@ function OrderBookMobile({ orderBook, isLoading }: { orderBook: any; isLoading: 
               }}
             />
             <span style={{ color: '#EF4444', fontWeight: fontWeights.semibold, zIndex: 1 }}>
-              {parseFloat(ask.price).toFixed(2)}
+              <PriceFormatter price={parseFloat(ask.price)} />
             </span>
             <span style={{ color: token.colorText, zIndex: 1 }}>
               {parseFloat(ask.size).toFixed(4)}
@@ -561,10 +562,13 @@ function MyOrdersMobile({ orders, isLoading }: { orders: any[]; isLoading: boole
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: token.fontSizeSM }}>
             <span style={{ color: token.colorTextSecondary }}>
-              {order.filledAmount?.toFixed(6) || order.requestedAmount?.toFixed(6)} @ ${order.price?.toFixed(2)}
+              {order.filledAmount?.toFixed(6) || order.requestedAmount?.toFixed(6)} @ <PriceFormatter price={order.price} />
             </span>
             <span style={{ color: token.colorText, fontWeight: fontWeights.semibold }}>
-              ${order.totalValue?.toFixed(2)}
+              ${order.totalValue?.toLocaleString('en-US', { 
+                minimumFractionDigits: 2, 
+                maximumFractionDigits: order.totalValue < 1 ? 6 : 2 
+              })}
             </span>
           </div>
           <div style={{ fontSize: token.fontSizeSM, color: token.colorTextTertiary }}>

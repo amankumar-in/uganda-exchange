@@ -31,6 +31,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useThemeMode } from '@/context/ThemeContext';
 import { useSidebar } from '@/context/SidebarContext';
 import { useLayout } from '@/context/LayoutContext';
+import { useExchange } from '@/context/ExchangeContext';
 import MobileBottomNav from '@/components/layout/MobileBottomNav';
 
 const { useToken } = theme;
@@ -83,16 +84,44 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 }) => {
   const router = useRouter();
   
+  // Derive activeKey from route, or use prop override if provided
+  const activeKey = activeKeyProp ?? getActiveKeyFromPath(router.pathname);
+
   // Get layout options from context (set by pages dynamically)
   const { options: layoutOptions } = useLayout();
+
+  // LIVE EXCHANGE DATA INTEGRATION (Fix for custom token 0 price issue)
+  const { 
+    selectedPair, 
+    currentPrice: livePrice, 
+    priceChange: liveChange, 
+    currentUsdVolume: liveVolume, 
+    currentPairData 
+  } = useExchange();
+
+  // Helper to format volume
+  const formatVolume = (volume: number): string => {
+    if (isNaN(volume) || volume <= 0) return '$0';
+    if (volume >= 1e9) return `$${(volume / 1e9).toFixed(1)}B`;
+    if (volume >= 1e6) return `$${(volume / 1e6).toFixed(1)}M`;
+    if (volume >= 1e3) return `$${(volume / 1e3).toFixed(1)}K`;
+    return `$${volume.toFixed(0)}`;
+  };
+
+  // If we are on the trade page, construct the live data object
+  const liveExchangeData = (activeKey === 'trade' && selectedPair) ? {
+    pair: selectedPair,
+    price: livePrice,
+    change: liveChange,
+    volume: formatVolume(liveVolume),
+    iconUrl: currentPairData?.iconUrl,
+    baseAsset: currentPairData?.baseCurrency,
+  } : null;
   
   // Merge props with context - props take precedence
   const fullWidth = fullWidthProp ?? layoutOptions.fullWidth;
   const hideMobileNav = hideMobileNavProp ?? layoutOptions.hideMobileNav;
-  const exchangeData = exchangeDataProp ?? layoutOptions.exchangeData;
-  
-  // Derive activeKey from route, or use prop override if provided
-  const activeKey = activeKeyProp ?? getActiveKeyFromPath(router.pathname);
+  const exchangeData = liveExchangeData ?? exchangeDataProp ?? layoutOptions.exchangeData;
   const { token } = useToken();
   const { user, logout } = useAuth();
   const { mode, toggleMode } = useThemeMode();
@@ -141,6 +170,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       router.prefetch(route);
     });
   }, [router]);
+
+
 
   // Set mounted, greeting, and load app mode on client side
   React.useEffect(() => {
@@ -957,7 +988,10 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                       {exchangeData.pair}
                     </span>
                     <span style={{ fontSize: token.fontSizeHeading4, fontWeight: fontWeights.bold, color: token.colorText }}>
-                      ${exchangeData.price.toLocaleString('en-US', { maximumFractionDigits: 2 })}
+                      ${exchangeData.price.toLocaleString('en-US', { 
+                        maximumFractionDigits: exchangeData.price < 0.001 ? 8 : (exchangeData.price < 1 ? 6 : 2),
+                        minimumFractionDigits: 2 
+                      })}
                     </span>
                     <span style={{ 
                       fontSize: token.fontSizeLG, 

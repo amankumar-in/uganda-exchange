@@ -22,6 +22,7 @@ interface PortfolioGrowthChartProps {
   mode: 'learner' | 'investor';
   height?: number;
   hideHeader?: boolean;
+  currentBalance?: number;
 }
 
 type TimeRange = '1D' | '1W' | '1M' | '6M' | '1Y';
@@ -39,6 +40,7 @@ const PortfolioGrowthChart: React.FC<PortfolioGrowthChartProps> = ({
   mode,
   height = 300,
   hideHeader = false,
+  currentBalance,
 }) => {
   const { token } = useToken();
   const { mode: themeMode } = useThemeMode();
@@ -89,20 +91,33 @@ const PortfolioGrowthChart: React.FC<PortfolioGrowthChartProps> = ({
 
   // Transform data for Recharts
   const chartData: ChartDataPoint[] = React.useMemo(() => {
-    if (!data || data.length === 0) return [];
+    // If we have no data AND no current balance, return empty
+    if ((!data || data.length === 0) && typeof currentBalance === 'undefined') return [];
     
-    return data
-      .map(d => ({
-        date: new Date(d.snapshotDate).toLocaleDateString('en-US', {
-          month: 'short',
-          day: 'numeric',
-        }),
-        timestamp: new Date(d.snapshotDate).getTime(),
-        current: d.totalValue,
-        invested: d.investedValue,
-      }))
-      .sort((a, b) => a.timestamp - b.timestamp);
-  }, [data]);
+    const points = (data || []).map(d => ({
+      date: new Date(d.snapshotDate).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+      }),
+      timestamp: new Date(d.snapshotDate).getTime(),
+      current: d.totalValue,
+      invested: d.investedValue,
+    }));
+
+    // Add "Live" data point if we have a current balance
+    if (typeof currentBalance !== 'undefined') {
+      const lastInvested = points.length > 0 ? points[points.length - 1].invested : currentBalance; // Fallback to current if no history
+      
+      points.push({
+        date: 'Live',
+        timestamp: Date.now(),
+        current: currentBalance,
+        invested: lastInvested,
+      });
+    }
+
+    return points.sort((a, b) => a.timestamp - b.timestamp);
+  }, [data, currentBalance]);
 
   // Calculate performance metrics
   const performanceData = React.useMemo(() => {

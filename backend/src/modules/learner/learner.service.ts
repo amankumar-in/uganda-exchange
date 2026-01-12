@@ -3,6 +3,7 @@ import { PrismaService } from '../../prisma.service';
 import { Prisma, TradeStatus, OrderType } from '@prisma/client';
 import { CoinbaseService, OrderValidationResult } from '../coinbase/coinbase.service';
 import { CollegeCoinsService } from '../college-coins/college-coins.service';
+import { TokensService } from '../tokens/tokens.service';
 
 export interface LearnerBalanceResponse {
   asset: string;
@@ -64,6 +65,7 @@ export class LearnerService {
     private coinbaseService: CoinbaseService,
     @Inject(forwardRef(() => CollegeCoinsService))
     private collegeCoinsService: CollegeCoinsService,
+    private tokensService: TokensService,
   ) {}
 
   // ============================================
@@ -426,26 +428,52 @@ export class LearnerService {
       
       this.logger.log(`[placeLearnerTrade] Demo college coin ${asset}: price=${executionPrice}, formattedAmount=${formattedAmount}`);
     } else {
-      // ========================================
-      // REGULAR TOKEN VALIDATION
-      // Use Coinbase validation
-      // ========================================
-      const validation = await this.coinbaseService.validateAndFormatOrder(
-        productId,
-        side,
-        side === 'BUY' ? amount : undefined, // quoteSize for BUY
-        side === 'SELL' ? amount : undefined, // baseSize for SELL
-      );
+      // Check if it's a custom token
+      const customToken = await this.tokensService.findBySymbol(asset);
+      if (customToken) {
+        executionPrice = customToken.currentPrice || 0;
+        if (executionPrice <= 0) {
+          throw new BadRequestException(`Price not available for custom token ${asset}`);
+        }
 
-      this.logger.log(`[placeLearnerTrade] Validation passed for ${productId} ${side}: ${JSON.stringify(validation)}`);
+        const minMarketFunds = 1;
 
-      // Use validated/formatted amounts
-      formattedAmount = side === 'BUY'
-        ? parseFloat(validation.formattedQuoteSize!)
-        : parseFloat(validation.formattedBaseSize!);
+        if (side === 'BUY') {
+          formattedAmount = Math.round(amount * 100) / 100;
+          if (formattedAmount < minMarketFunds) {
+            throw new BadRequestException(`Order size is too small. Minimum order size is $${minMarketFunds} USD.`);
+          }
+        } else {
+          formattedAmount = Math.round(amount * 1e8) / 1e8;
+          const estimatedValue = formattedAmount * executionPrice;
+          if (estimatedValue < minMarketFunds) {
+            throw new BadRequestException(`Order value is too small. Minimum order value is $${minMarketFunds} USD.`);
+          }
+        }
+        
+        this.logger.log(`[placeLearnerTrade] Custom token ${asset}: price=${executionPrice}, formattedAmount=${formattedAmount}`);
+      } else {
+        // ========================================
+        // REGULAR TOKEN VALIDATION
+        // Use Coinbase validation
+        // ========================================
+        const validation = await this.coinbaseService.validateAndFormatOrder(
+          productId,
+          side,
+          side === 'BUY' ? amount : undefined, // quoteSize for BUY
+          side === 'SELL' ? amount : undefined, // baseSize for SELL
+        );
 
-      // Use price from Coinbase product data if available, otherwise use frontend price
-      executionPrice = validation.productPrice || currentPrice;
+        this.logger.log(`[placeLearnerTrade] Validation passed for ${productId} ${side}: ${JSON.stringify(validation)}`);
+
+        // Use validated/formatted amounts
+        formattedAmount = side === 'BUY'
+          ? parseFloat(validation.formattedQuoteSize!)
+          : parseFloat(validation.formattedBaseSize!);
+
+        // Use price from Coinbase product data if available, otherwise use frontend price
+        executionPrice = validation.productPrice || currentPrice;
+      }
     }
 
     // ========================================
@@ -681,7 +709,7 @@ export class LearnerService {
 
     switch (range) {
       case '1D':
-        startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        startDate = new Date(now.getTime() - 48 * 60 * 60 * 1000); // 48h to include yesterday's midnight snapshot
         break;
       case '1W':
         startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);

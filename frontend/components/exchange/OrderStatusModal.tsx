@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { InternalOrder } from '@/services/api/coinbase';
 import { fontWeights } from '@/theme/themeConfig';
 import { throttle } from '@/utils/debounce';
+import PriceFormatter from './PriceFormatter';
 
 const { Text, Title } = Typography;
 const { useToken } = theme;
@@ -287,7 +288,7 @@ export default function OrderStatusModal({
                               fontWeight: fontWeights.semibold,
                             }}
                           >
-                            ${currentOrder.price.toFixed(2)}
+                            <PriceFormatter price={currentOrder.price} style={{ fontWeight: 'inherit', fontSize: 'inherit' }} />
                           </Text>
                         </div>
 

@@ -300,7 +300,7 @@ export class CoinGeckoService {
   }
 
   /**
-   * Get detailed token information including description, links, and market data
+   * Get detailed token information by Symbol
    */
   async getTokenDetails(symbol: string): Promise<TokenMarketData | null> {
     const id = await this.getIdFromSymbol(symbol);
@@ -308,7 +308,74 @@ export class CoinGeckoService {
       this.logger.warn(`No CoinGecko ID found for symbol: ${symbol}`);
       return null;
     }
+    return this.getTokenDetailsById(id);
+  }
 
+  async getCoinOHLC(id: string, days: number): Promise<[number, number, number, number, number][]> {
+    const fetchWithFallback = async (d: number): Promise<[number, number, number, number, number][]> => {
+      // 1. Try Market Chart first (High resolution: 5m for 1d, 1h for 1-90d)
+      try {
+        const chartRes = await fetch(
+          `${COINGECKO_API_URL}/coins/${id}/market_chart?vs_currency=usd&days=${d}`,
+          { headers: this.getHeaders() }
+        );
+        if (chartRes.ok) {
+          const chartData = await chartRes.json();
+          if (chartData.prices && Array.isArray(chartData.prices) && chartData.prices.length > 5) {
+            // Convert Price Points [timestamp, price] to Candle [timestamp, o, h, l, c]
+            return chartData.prices.map((p: [number, number]) => [p[0], p[1], p[1], p[1], p[1]]);
+          }
+        }
+      } catch (e) {
+        this.logger.warn(`Market chart failed for ${id} (${d} days): ${e.message}`);
+      }
+
+      // 2. Fallback: Standard OHLC Endpoint (Fixed resolutions: 30m, 4h, 4d)
+      try {
+        const ohlcRes = await fetch(
+          `${COINGECKO_API_URL}/coins/${id}/ohlc?vs_currency=usd&days=${d}`,
+          { headers: this.getHeaders() }
+        );
+        if (ohlcRes.ok) {
+          const ohlcData = await ohlcRes.json();
+          if (Array.isArray(ohlcData) && ohlcData.length > 0) {
+            return ohlcData;
+          }
+        }
+      } catch (e) {
+        this.logger.warn(`OHLC failed for ${id} (${d} days): ${e.message}`);
+      }
+
+      return [];
+    };
+
+    try {
+      // Try requested days
+      let data = await fetchWithFallback(days);
+      
+      // If empty and we tried a short duration, expand to 30 days to find ANY trading history
+      if (data.length < 5 && days < 30) {
+        this.logger.log(`Expanding search for ${id} to 30 days...`);
+        data = await fetchWithFallback(30);
+      }
+      
+      // If still empty, expand to 90 days (last resort)
+      if (data.length < 5 && days < 90) {
+        this.logger.log(`Expanding search for ${id} to 90 days...`);
+        data = await fetchWithFallback(90);
+      }
+
+      return data;
+    } catch (error) {
+      this.logger.error(`Fatal crash in getCoinOHLC for ${id}:`, error);
+      return [];
+    }
+  }
+
+  /**
+   * Get detailed token information by ID
+   */
+  async getTokenDetailsById(id: string): Promise<TokenMarketData | null> {
     // Check cache
     const cached = this.tokenCache.get(id);
     if (cached && Date.now() - cached.timestamp < PRICE_CACHE_DURATION) {
@@ -418,7 +485,7 @@ export class CoinGeckoService {
 
       return tokenData;
     } catch (error) {
-      this.logger.error(`Failed to fetch token details for ${symbol}`, error);
+      this.logger.error(`Failed to fetch token details for ID ${id}`, error);
       // Return cached data if available
       if (cached) return cached.data;
       return null;
@@ -433,9 +500,10 @@ export class CoinGeckoService {
     page = 1,
     perPage = 100,
     sparkline = false,
+    ids?: string,
   ): Promise<MarketListItem[]> {
-    // Check cache (only for first page)
-    if (page === 1) {
+    // Check cache (only for first page and when no specific IDs are requested)
+    if (page === 1 && !ids) {
       if (sparkline) {
         // Check sparkline cache
         if (
@@ -462,6 +530,9 @@ export class CoinGeckoService {
       url.searchParams.set('per_page', perPage.toString());
       url.searchParams.set('page', page.toString());
       url.searchParams.set('sparkline', sparkline.toString());
+      if (ids) {
+        url.searchParams.set('ids', ids);
+      }
       url.searchParams.set('price_change_percentage', '7d');
 
       const response = await fetch(url.toString(), {

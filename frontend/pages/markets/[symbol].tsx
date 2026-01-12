@@ -23,6 +23,7 @@ import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import Header, { HEADER_HEIGHT } from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { MiniPriceChart } from '@/components/exchange';
+import PriceFormatter from '@/components/exchange/PriceFormatter';
 import { fontWeights } from '@/theme/themeConfig';
 import { useAuth } from '@/context/AuthContext';
 import { useExchange } from '@/context/ExchangeContext';
@@ -31,12 +32,15 @@ import { useSidebar } from '@/context/SidebarContext';
 import { getWatchlist, toggleWatchlist } from '@/services/api/watchlist';
 import {
   getTokenDetails,
+  getTokenDetailsById,
   getMarketsList,
   TokenMarketData,
   formatLargeNumber,
   formatSupply,
 } from '@/services/api/coingecko';
 import { getDemoCollegeCoin, DemoCollegeCoin, resolveUploadUrl } from '@/services/api/college-coins';
+import { TokensApi } from '@/services/api/tokens';
+import { Token } from '@/types/token';
 
 const { useToken } = theme;
 const { useBreakpoint } = Grid;
@@ -169,6 +173,7 @@ export default function TokenDetailsPage() {
   const [pageLoading, setPageLoading] = useState(true);
   const [tokenData, setTokenData] = useState<TokenMarketData | null>(null);
   const [collegeCoinData, setCollegeCoinData] = useState<DemoCollegeCoin | null>(null);
+  const [customTokenData, setCustomTokenData] = useState<Token | null>(null);
   const [referenceTokenData, setReferenceTokenData] = useState<TokenMarketData | null>(null);
   const [loadingToken, setLoadingToken] = useState(true);
   const [isWatchlisted, setIsWatchlisted] = useState(false);
@@ -241,13 +246,93 @@ export default function TokenDetailsPage() {
           }
         })
         .catch(() => {
-          // Failed to check college coin, try CoinGecko
-          setCollegeCoinData(null);
-          setReferenceTokenData(null);
-          getTokenDetails(symbol.toUpperCase())
-            .then((data) => { setTokenData(data); setLoadingToken(false); })
-            .catch(() => setLoadingToken(false));
+          // Failed to check college coin, try Custom Token (Asset Manager)
+          TokensApi.getBySymbol(symbol.toUpperCase())
+            .then(async (token) => {
+              if (token && token.isActive) {
+                setCustomTokenData(token);
+                
+                let cgData: any = null;
+                // If token has a coingeckoId, fetch rich metadata
+                if (token.coingeckoId) {
+                  try {
+                    cgData = await getTokenDetailsById(token.coingeckoId);
+                  } catch (e) {
+                    console.error('Failed to fetch rich data for custom token:', e);
+                  }
+                }
+
+                // Map Token to TokenMarketData shape, merging with CG data if available
+                const mappedData: any = {
+                  id: token.id,
+                  symbol: token.symbol,
+                  name: token.name,
+                  image: {
+                    thumb: token.iconUrl || cgData?.image?.thumb || '',
+                    small: token.iconUrl || cgData?.image?.small || '',
+                    large: token.iconUrl || cgData?.image?.large || '',
+                  },
+                  description: token.description || cgData?.description || '',
+                  links: {
+                    homepage: (token.website ? [token.website] : cgData?.links?.homepage) || [],
+                    twitter_screen_name: token.twitter?.replace('https://twitter.com/', '') || cgData?.links?.twitter_screen_name || '',
+                    chat_url: (token.discord ? [token.discord] : cgData?.links?.chat_url) || [],
+                    whitepaper: token.whitepaper || cgData?.links?.whitepaper || '',
+                    blockchain_site: cgData?.links?.blockchain_site || [],
+                    official_forum_url: cgData?.links?.official_forum_url || [],
+                    announcement_url: cgData?.links?.announcement_url || [],
+                    subreddit_url: cgData?.links?.subreddit_url || '',
+                    repos_url: cgData?.links?.repos_url || { github: [], bitbucket: [] },
+                  },
+                  market_data: {
+                    current_price: { usd: token.currentPrice || cgData?.market_data?.current_price?.usd || 0 },
+                    price_change_percentage_24h: token.change24h || cgData?.market_data?.price_change_percentage_24h || 0,
+                    market_cap: { usd: cgData?.market_data?.market_cap?.usd || 0 },
+                    fully_diluted_valuation: { usd: cgData?.market_data?.fully_diluted_valuation?.usd || 0 },
+                    total_volume: { usd: cgData?.market_data?.total_volume?.usd || 0 },
+                    high_24h: { usd: cgData?.market_data?.high_24h?.usd || 0 },
+                    low_24h: { usd: cgData?.market_data?.low_24h?.usd || 0 },
+                    circulating_supply: cgData?.market_data?.circulating_supply || 0,
+                    total_supply: cgData?.market_data?.total_supply || 0,
+                    max_supply: cgData?.market_data?.max_supply || 0,
+                    ath: { usd: cgData?.market_data?.ath?.usd || 0 },
+                    ath_date: { usd: cgData?.market_data?.ath_date?.usd || '' },
+                    ath_change_percentage: { usd: cgData?.market_data?.ath_change_percentage?.usd || 0 },
+                    atl: { usd: cgData?.market_data?.atl?.usd || 0 },
+                    atl_date: { usd: cgData?.market_data?.atl_date?.usd || '' },
+                    atl_change_percentage: { usd: cgData?.market_data?.atl_change_percentage?.usd || 0 },
+                  },
+                  categories: cgData?.categories || [],
+                  genesis_date: cgData?.genesis_date || null,
+                  sentiment_votes_up_percentage: cgData?.sentiment_votes_up_percentage || 50,
+                  sentiment_votes_down_percentage: cgData?.sentiment_votes_down_percentage || 50,
+                  watchlist_portfolio_users: cgData?.watchlist_portfolio_users || 0,
+                  last_updated: cgData?.last_updated || new Date().toISOString(),
+                };
+                
+                setCollegeCoinData(null);
+                setReferenceTokenData(null);
+                setTokenData(mappedData);
+                setLoadingToken(false);
+              } else {
+                setCustomTokenData(null);
+                // Not a custom token, fetch from CoinGecko
+                fallbackToCoinGecko();
+              }
+            })
+            .catch(() => {
+              setCustomTokenData(null);
+              fallbackToCoinGecko();
+            });
         });
+
+      const fallbackToCoinGecko = () => {
+        setCollegeCoinData(null);
+        setReferenceTokenData(null);
+        getTokenDetails(symbol.toUpperCase())
+          .then((data) => { setTokenData(data); setLoadingToken(false); })
+          .catch(() => setLoadingToken(false));
+      };
     }
   }, [pageLoading, symbol]);
 
@@ -257,14 +342,21 @@ export default function TokenDetailsPage() {
     if (!pageLoading && symbol && typeof symbol === 'string') {
       setLoadingSparkline(true);
       
-      // Determine which symbol to fetch sparkline for
+      // Determine which symbol or ID to fetch sparkline for
       const targetSymbol = collegeCoinData?.peggedToAsset || symbol;
+      const targetId = customTokenData?.coingeckoId || tokenData?.id; // Use coingeckoId if we have it
+      
       const scaleFactor = collegeCoinData?.peggedPercentage ? collegeCoinData.peggedPercentage / 100 : 1;
       
-      getMarketsList(1, 100, true)
+      // If we have a specific ID, fetch only that ID to ensure we get its sparkline (even if not top 100)
+      const fetchIds = targetId && targetId !== symbol.toLowerCase() ? targetId : undefined;
+
+      getMarketsList(1, 100, true, fetchIds)
         .then((markets) => {
           const market = markets.find(
-            (m) => m.symbol.toUpperCase() === targetSymbol.toUpperCase()
+            (m) => 
+              (fetchIds && m.id === fetchIds) || 
+              m.symbol.toUpperCase() === targetSymbol.toUpperCase()
           );
           if (market?.sparkline_in_7d?.price) {
             // Scale the sparkline data for college coins
@@ -275,7 +367,7 @@ export default function TokenDetailsPage() {
         })
         .catch(() => setLoadingSparkline(false));
     }
-  }, [pageLoading, symbol, collegeCoinData]);
+  }, [pageLoading, symbol, collegeCoinData, customTokenData, tokenData]);
 
   // Fetch watchlist (only for authenticated users)
   useEffect(() => {
@@ -503,19 +595,7 @@ export default function TokenDetailsPage() {
                       <div style={{ fontSize: themeToken.fontSizeSM, opacity: 0.8, marginBottom: 4 }}>
                         Current Price
                       </div>
-                      <div style={{
-                        fontSize: isMobile ? 28 : 32,
-                        fontWeight: fontWeights.bold,
-                        fontVariantNumeric: 'tabular-nums',
-                        lineHeight: 1.2,
-                        marginBottom: themeToken.marginSM,
-                        whiteSpace: 'nowrap',
-                      }}>
-                        ${livePrice.toLocaleString('en-US', {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: livePrice < 1 ? 6 : 2,
-                        })}
-                      </div>
+                      <PriceFormatter price={livePrice} style={{ fontSize: isMobile ? 28 : 32, fontWeight: fontWeights.bold, color: '#fff' }} />
                       <div style={{ display: 'flex', alignItems: 'center', gap: themeToken.marginXS, flexWrap: 'wrap' }}>
                         <span style={{
                           display: 'inline-flex',
@@ -534,7 +614,7 @@ export default function TokenDetailsPage() {
                       <div style={{ marginTop: themeToken.marginXS, opacity: 0.8, fontSize: themeToken.fontSizeSM }}>
                         {collegeCoinData.peggedPercentage}% of {collegeCoinData.peggedToAsset}
                         {collegeCoinData.referencePrice && (
-                          <span> (${collegeCoinData.referencePrice.toLocaleString()})</span>
+                          <span> (<PriceFormatter price={collegeCoinData.referencePrice} />)</span>
                         )}
                       </div>
                     </div>
@@ -759,25 +839,25 @@ export default function TokenDetailsPage() {
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <span style={{ color: themeToken.colorTextSecondary }}>24h High</span>
                           <span style={{ color: themeToken.colorText, fontWeight: fontWeights.medium }}>
-                            ${((referenceTokenData.market_data.high_24h.usd || 0) * (collegeCoinData.peggedPercentage / 100)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}
+                            <PriceFormatter price={((referenceTokenData.market_data.high_24h.usd || 0) * (collegeCoinData.peggedPercentage / 100))} />
                           </span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <span style={{ color: themeToken.colorTextSecondary }}>24h Low</span>
                           <span style={{ color: themeToken.colorText, fontWeight: fontWeights.medium }}>
-                            ${((referenceTokenData.market_data.low_24h.usd || 0) * (collegeCoinData.peggedPercentage / 100)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}
+                            <PriceFormatter price={((referenceTokenData.market_data.low_24h.usd || 0) * (collegeCoinData.peggedPercentage / 100))} />
                           </span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <span style={{ color: '#16C47F', fontWeight: fontWeights.semibold }}>ATH (scaled)</span>
                           <span style={{ color: themeToken.colorText, fontWeight: fontWeights.medium }}>
-                            ${((referenceTokenData.market_data.ath.usd || 0) * (collegeCoinData.peggedPercentage / 100)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}
+                            <PriceFormatter price={((referenceTokenData.market_data.ath.usd || 0) * (collegeCoinData.peggedPercentage / 100))} />
                           </span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <span style={{ color: '#fc6f03', fontWeight: fontWeights.semibold }}>ATL (scaled)</span>
                           <span style={{ color: themeToken.colorText, fontWeight: fontWeights.medium }}>
-                            ${((referenceTokenData.market_data.atl.usd || 0) * (collegeCoinData.peggedPercentage / 100)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}
+                            <PriceFormatter price={((referenceTokenData.market_data.atl.usd || 0) * (collegeCoinData.peggedPercentage / 100))} />
                           </span>
                         </div>
                       </div>
@@ -960,19 +1040,7 @@ export default function TokenDetailsPage() {
                       <div style={{ fontSize: themeToken.fontSizeSM, opacity: 0.8, marginBottom: 4 }}>
                         Current Price
                       </div>
-                      <div style={{
-                        fontSize: isMobile ? 28 : 32,
-                        fontWeight: fontWeights.bold,
-                        fontVariantNumeric: 'tabular-nums',
-                        lineHeight: 1.2,
-                        marginBottom: themeToken.marginSM,
-                        whiteSpace: 'nowrap',
-                      }}>
-                        ${livePrice.toLocaleString('en-US', {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: livePrice < 1 ? 6 : 2,
-                        })}
-                      </div>
+                      <PriceFormatter price={livePrice} style={{ fontSize: isMobile ? 28 : 32, fontWeight: fontWeights.bold, color: '#fff' }} />
                       <div style={{ display: 'flex', alignItems: 'center', gap: themeToken.marginXS, flexWrap: 'wrap' }}>
                         <span style={{
                           display: 'inline-flex',
@@ -989,7 +1057,7 @@ export default function TokenDetailsPage() {
                         </span>
                       </div>
                       <div style={{ marginTop: themeToken.marginXS, opacity: 0.8, fontSize: themeToken.fontSizeSM }}>
-                        H: ${tokenData.market_data.high_24h.usd?.toLocaleString() || 'N/A'} · L: ${tokenData.market_data.low_24h.usd?.toLocaleString() || 'N/A'}
+                        H: <PriceFormatter price={tokenData.market_data.high_24h.usd} /> · L: <PriceFormatter price={tokenData.market_data.low_24h.usd} />
                       </div>
                     </div>
                   </div>
@@ -1073,8 +1141,8 @@ export default function TokenDetailsPage() {
                       
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 80 }}>
                         <KeyStat
-                          label="Market Cap"
-                          value={formatLargeNumber(tokenData.market_data.market_cap.usd)}
+                          label={tokenData.market_data.market_cap.usd > 0 ? "Market Cap" : "FDV"}
+                          value={formatLargeNumber(tokenData.market_data.market_cap.usd || tokenData.market_data.fully_diluted_valuation.usd)}
                           color="#11998e"
                         />
                       </div>
@@ -1087,8 +1155,8 @@ export default function TokenDetailsPage() {
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 80 }}>
                         <KeyStat
-                          label="Circulating"
-                          value={formatSupply(tokenData.market_data.circulating_supply)}
+                          label={tokenData.market_data.circulating_supply > 0 ? "Circulating" : "Total Supply"}
+                          value={formatSupply(tokenData.market_data.circulating_supply || tokenData.market_data.total_supply || tokenData.market_data.max_supply || 0)}
                           color="#fa709a"
                           subValue={
                             tokenData.market_data.max_supply && (
@@ -1120,8 +1188,8 @@ export default function TokenDetailsPage() {
                     }}>
                       <div style={{ flex: 1 }}>
                         <KeyStat
-                          label="Market Cap"
-                          value={formatLargeNumber(tokenData.market_data.market_cap.usd)}
+                          label={tokenData.market_data.market_cap.usd > 0 ? "Market Cap" : "FDV"}
+                          value={formatLargeNumber(tokenData.market_data.market_cap.usd || tokenData.market_data.fully_diluted_valuation.usd)}
                           color="#11998e"
                         />
                       </div>
@@ -1136,8 +1204,8 @@ export default function TokenDetailsPage() {
                       <div style={{ width: 1, height: 50, background: separatorColor }} />
                       <div style={{ flex: 1 }}>
                         <KeyStat
-                          label="Circulating"
-                          value={formatSupply(tokenData.market_data.circulating_supply)}
+                          label={tokenData.market_data.circulating_supply > 0 ? "Circulating" : "Total Supply"}
+                          value={formatSupply(tokenData.market_data.circulating_supply || tokenData.market_data.total_supply || tokenData.market_data.max_supply || 0)}
                           color="#fa709a"
                           subValue={
                             tokenData.market_data.max_supply && (
@@ -1230,7 +1298,7 @@ export default function TokenDetailsPage() {
                           </div>
                           <div style={{ textAlign: 'right' }}>
                             <div style={{ fontWeight: fontWeights.semibold, color: themeToken.colorText }}>
-                              ${tokenData.market_data.ath.usd?.toLocaleString() || 'N/A'}
+                              <PriceFormatter price={tokenData.market_data.ath.usd} />
                             </div>
                             <PriceChangeBadge value={tokenData.market_data.ath_change_percentage.usd} size="small" />
                           </div>
@@ -1244,7 +1312,7 @@ export default function TokenDetailsPage() {
                           </div>
                           <div style={{ textAlign: 'right' }}>
                             <div style={{ fontWeight: fontWeights.semibold, color: themeToken.colorText }}>
-                              ${tokenData.market_data.atl.usd?.toLocaleString() || 'N/A'}
+                              <PriceFormatter price={tokenData.market_data.atl.usd} />
                             </div>
                             <PriceChangeBadge value={tokenData.market_data.atl_change_percentage.usd} size="small" />
                           </div>
@@ -1419,7 +1487,7 @@ export default function TokenDetailsPage() {
                         </div>
                         <div style={{ textAlign: 'right' }}>
                           <div style={{ fontWeight: fontWeights.semibold, color: themeToken.colorText }}>
-                            ${tokenData.market_data.ath.usd?.toLocaleString() || 'N/A'}
+                            <PriceFormatter price={tokenData.market_data.ath.usd} />
                           </div>
                           <PriceChangeBadge value={tokenData.market_data.ath_change_percentage.usd} size="small" />
                         </div>
@@ -1433,7 +1501,7 @@ export default function TokenDetailsPage() {
                         </div>
                         <div style={{ textAlign: 'right' }}>
                           <div style={{ fontWeight: fontWeights.semibold, color: themeToken.colorText }}>
-                            ${tokenData.market_data.atl.usd?.toLocaleString() || 'N/A'}
+                            <PriceFormatter price={tokenData.market_data.atl.usd} />
                           </div>
                           <PriceChangeBadge value={tokenData.market_data.atl_change_percentage.usd} size="small" />
                         </div>

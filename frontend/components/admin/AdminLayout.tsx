@@ -7,6 +7,7 @@ import {
   HomeOutlined,
   FolderOutlined,
   TeamOutlined,
+  DollarOutlined,
 } from '@ant-design/icons';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
@@ -70,6 +71,11 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
       key: 'p2p-disputes',
       icon: <TeamOutlined />,
       label: <Link href="/admin/p2p/disputes">P2P Disputes</Link>,
+    },
+    {
+      key: 'assets',
+      icon: <DollarOutlined />,
+      label: <Link href="/admin/assets">Asset Manager</Link>,
     },
     {
       key: 'college-coins',

@@ -183,29 +183,20 @@ export class FiatService {
       });
       this.logger.log(`Current USD balance for user ${userId}: ${currentBalance ? currentBalance.balance.toString() : '0 (does not exist)'}`);
 
-      // Update user's USD balance (in crypto_balances table as USD asset)
+      // Update user's USD balance (in fiat_balances table as USD asset)
       this.logger.log(`Upserting USD balance: adding ${amount} to user ${userId}`);
-      const updatedBalance = await this.prisma.client.cryptoBalance.upsert({
-        where: {
-          userId_asset: {
-            userId,
-            asset: 'USD',
-          },
-        },
+      const updatedBalance = await this.prisma.client.fiatBalance.upsert({
+        where: { userId },
         create: {
           userId,
-          asset: 'USD',
+          currency: 'USD',
           balance: amount,
           availableBalance: amount,
           lockedBalance: 0,
         },
         update: {
-          balance: {
-            increment: amount,
-          },
-          availableBalance: {
-            increment: amount,
-          },
+          balance: { increment: amount },
+          availableBalance: { increment: amount },
         },
       });
       this.logger.log(`USD balance updated successfully. New balance: ${updatedBalance.balance.toString()}, available: ${updatedBalance.availableBalance.toString()}`);
@@ -331,40 +322,26 @@ export class FiatService {
           this.logger.log(`Transaction ${transactionId} already completed, verifying balance...`);
           
           const amount = parseFloat(transaction.amount.toString());
-          const balance = await this.prisma.client.cryptoBalance.findUnique({
-            where: {
-              userId_asset: {
-                userId,
-                asset: 'USD',
-              },
-            },
+          const balance = await this.prisma.client.fiatBalance.findUnique({
+            where: { userId },
           });
 
           // If balance doesn't exist or is less than transaction amount, update it
           // This handles the case where webhook failed but transaction was marked complete
           if (!balance || parseFloat(balance.balance.toString()) < amount) {
             this.logger.log(`Balance missing or insufficient, updating balance for transaction ${transactionId}`);
-            await this.prisma.client.cryptoBalance.upsert({
-              where: {
-                userId_asset: {
-                  userId,
-                  asset: 'USD',
-                },
-              },
+            await this.prisma.client.fiatBalance.upsert({
+              where: { userId },
               create: {
                 userId,
-                asset: 'USD',
+                currency: 'USD',
                 balance: amount,
                 availableBalance: amount,
                 lockedBalance: 0,
               },
               update: {
-                balance: {
-                  increment: amount,
-                },
-                availableBalance: {
-                  increment: amount,
-                },
+                balance: { increment: amount },
+                availableBalance: { increment: amount },
               },
             });
             this.logger.log(`Balance updated for transaction ${transactionId}`);
@@ -535,13 +512,8 @@ export class FiatService {
     }
 
     // Check user has sufficient balance
-    const balance = await this.prisma.client.cryptoBalance.findUnique({
-      where: {
-        userId_asset: {
-          userId,
-          asset: 'USD',
-        },
-      },
+    const balance = await this.prisma.client.fiatBalance.findUnique({
+      where: { userId },
     });
 
     const availableBalance = balance ? parseFloat(balance.availableBalance.toString()) : 0;
@@ -579,20 +551,11 @@ export class FiatService {
 
       try {
         // Lock the balance
-        await this.prisma.client.cryptoBalance.update({
-          where: {
-            userId_asset: {
-              userId,
-              asset: 'USD',
-            },
-          },
+        await this.prisma.client.fiatBalance.update({
+          where: { userId },
           data: {
-            availableBalance: {
-              decrement: amount,
-            },
-            lockedBalance: {
-              increment: amount,
-            },
+            availableBalance: { decrement: amount },
+            lockedBalance: { increment: amount },
           },
         });
 
@@ -666,20 +629,11 @@ export class FiatService {
       this.logger.error('Failed to create withdrawal', error);
       
       // Unlock the balance on error
-      await this.prisma.client.cryptoBalance.update({
-        where: {
-          userId_asset: {
-            userId,
-            asset: 'USD',
-          },
-        },
+      await this.prisma.client.fiatBalance.update({
+        where: { userId },
         data: {
-          availableBalance: {
-            increment: amount,
-          },
-          lockedBalance: {
-            decrement: amount,
-          },
+          availableBalance: { increment: amount },
+          lockedBalance: { decrement: amount },
         },
       });
 
@@ -724,20 +678,11 @@ export class FiatService {
       });
 
       // Deduct from locked balance (already locked during withdrawal creation)
-      await this.prisma.client.cryptoBalance.update({
-        where: {
-          userId_asset: {
-            userId,
-            asset: 'USD',
-          },
-        },
+      await this.prisma.client.fiatBalance.update({
+        where: { userId },
         data: {
-          balance: {
-            decrement: amount,
-          },
-          lockedBalance: {
-            decrement: amount,
-          },
+          balance: { decrement: amount },
+          lockedBalance: { decrement: amount },
         },
       });
 
@@ -776,20 +721,11 @@ export class FiatService {
       });
 
       // Unlock and restore balance
-      await this.prisma.client.cryptoBalance.update({
-        where: {
-          userId_asset: {
-            userId,
-            asset: 'USD',
-          },
-        },
+      await this.prisma.client.fiatBalance.update({
+        where: { userId },
         data: {
-          availableBalance: {
-            increment: amount,
-          },
-          lockedBalance: {
-            decrement: amount,
-          },
+          availableBalance: { increment: amount },
+          lockedBalance: { decrement: amount },
         },
       });
 

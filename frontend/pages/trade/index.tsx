@@ -177,7 +177,7 @@ function ExchangePageContent() {
         // If order is already completed, show success toast
         if (result.order.status === 'COMPLETED' && result.order.filledAmount > 0) {
           message.success(
-            `${side} order completed! Filled ${result.order.filledAmount.toFixed(8)} ${baseAsset} at $${result.order.price.toFixed(2)}`,
+            `${side} order completed! Filled ${result.order.filledAmount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 8 })} ${baseAsset} at $${result.order.price.toFixed(2)}`,
             5
           );
         } else if (result.order.status === 'PENDING') {
@@ -238,7 +238,7 @@ function ExchangePageContent() {
             if (updatedOrder.status === 'COMPLETED' && updatedOrder.filledAmount > 0) {
               const [baseAsset] = selectedPair.split('-');
               message.success(
-                `${updatedOrder.side} order completed! Filled ${updatedOrder.filledAmount.toFixed(8)} ${baseAsset} at $${updatedOrder.price.toFixed(2)}`,
+                `${updatedOrder.side} order completed! Filled ${updatedOrder.filledAmount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 8 })} ${baseAsset} at $${updatedOrder.price.toFixed(2)}`,
                 5
               );
             } else if (updatedOrder.status === 'FAILED') {

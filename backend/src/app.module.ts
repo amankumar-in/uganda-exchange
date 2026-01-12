@@ -20,6 +20,8 @@ import { CollegeCoinsModule } from './modules/college-coins/college-coins.module
 import { AdminModule } from './modules/admin/admin.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
 import { P2PModule } from './modules/p2p/p2p.module';
+import { TokensModule } from './modules/tokens/tokens.module';
+import { CronModule } from './modules/cron/cron.module';
 
 @Module({
   imports: [
@@ -61,6 +63,9 @@ import { P2PModule } from './modules/p2p/p2p.module';
     UploadsModule,
     // P2P OTC marketplace module
     P2PModule,
+    TokensModule,
+    // Cron jobs
+    CronModule,
   ],
   controllers: [AppController, TestController],
   providers: [AppService, PrismaService, EmailService],

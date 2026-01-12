@@ -20,6 +20,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useExchange } from '@/context/ExchangeContext';
 import { useThemeMode } from '@/context/ThemeContext';
 import { getWatchlist, toggleWatchlist } from '@/services/api/watchlist';
+import PriceFormatter from '@/components/exchange/PriceFormatter';
 
 const { useToken } = theme;
 const { useBreakpoint } = Grid;
@@ -242,7 +243,7 @@ const MarketCard = memo(({
             color: token.colorText,
             fontVariantNumeric: 'tabular-nums',
           }}>
-            ${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: price < 1 ? 4 : 2 })}
+            <PriceFormatter price={price} />
           </div>
           <div style={{
             fontSize: compact ? 10 : token.fontSizeSM,
@@ -368,7 +369,7 @@ const MarketRow = memo(({
         fontVariantNumeric: 'tabular-nums',
         fontSize: token.fontSize,
       }}>
-        ${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: price < 1 ? 4 : 2 })}
+        <PriceFormatter price={price} />
       </div>
 
       {/* Change */}

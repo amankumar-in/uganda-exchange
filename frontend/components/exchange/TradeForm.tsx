@@ -8,6 +8,7 @@ import { fontWeights } from '@/theme/themeConfig';
 import { useThemeMode } from '@/context/ThemeContext';
 import { useExchange } from '@/context/ExchangeContext';
 import Image from 'next/image';
+import PriceFormatter from './PriceFormatter';
 
 const { useToken } = theme;
 
@@ -88,8 +89,11 @@ const TradeForm: React.FC<TradeFormProps> = ({
     const num = parseFloat(value) || 0;
     if (num > 0 && price > 0) {
       const totalValue = num * price;
-      // Use 2 decimals for USD, 8 for other currencies (ETH, USDT, etc.)
-      const decimals = quoteAsset === 'USD' ? 2 : 8;
+      // High precision for sub-penny totals
+      let decimals = 8;
+      if (quoteAsset === 'USD') {
+        decimals = totalValue < 0.001 ? 8 : (totalValue < 1 ? 6 : 2);
+      }
       setTotal(totalValue.toFixed(decimals));
     } else {
       setTotal('');
@@ -111,28 +115,34 @@ const TradeForm: React.FC<TradeFormProps> = ({
   const handlePercentage = (percent: number) => {
     if (price <= 0) return; // Don't calculate if price is invalid
     
-    const totalDecimals = quoteAsset === 'USD' ? 2 : 8;
-    // Use appropriate precision multiplier based on asset type
-    const precisionMultiplier = quoteAsset === 'USD' ? 100 : 100000000; // 2 decimals for USD, 8 for crypto
+    // For USD, use dynamic precision based on value size
+    const totalDecimals = quoteAsset === 'USD' ? 6 : 8; 
+    // Use appropriate precision multiplier
+    const precisionMultiplier = quoteAsset === 'USD' ? 100 : 100000000; 
     
     if (isBuy) {
       // For BUY: user pays the total amount
-      // Round down to avoid exceeding balance, using appropriate precision for the asset
       const maxTotal = percent === 100 
         ? Math.floor(quoteBalance * precisionMultiplier) / precisionMultiplier
         : quoteBalance * (percent / 100);
-      setTotal(maxTotal.toFixed(totalDecimals));
+        
+      // If USD value is > 1 use 2 decimals, otherwise 6
+      const decimals = (quoteAsset === 'USD' && maxTotal >= 1) ? 2 : totalDecimals;
+      
+      setTotal(maxTotal.toFixed(decimals));
       if (price > 0) {
         setAmount((maxTotal / price).toFixed(8));
       }
     } else {
-      // For SELL: user sells base asset - always use 8 decimal precision for crypto
+      // For SELL: user sells base asset
       const maxAmount = percent === 100
-        ? Math.floor(baseBalance * 100000000) / 100000000  // 8 decimals for crypto
+        ? Math.floor(baseBalance * 100000000) / 100000000
         : baseBalance * (percent / 100);
       setAmount(maxAmount.toFixed(8));
       if (price > 0) {
-        setTotal((maxAmount * price).toFixed(totalDecimals));
+        const totalVal = maxAmount * price;
+        const decimals = quoteAsset === 'USD' ? (totalVal < 0.001 ? 8 : (totalVal < 1 ? 6 : 2)) : 8;
+        setTotal(totalVal.toFixed(decimals));
       }
     }
   };
@@ -159,7 +169,7 @@ const TradeForm: React.FC<TradeFormProps> = ({
       if (baseBalance === 0) {
         message.error(`You don't have any ${baseAsset} to sell`);
       } else {
-        message.error(`Insufficient ${baseAsset} balance. You want to sell ${amountNum.toFixed(8)} but only have ${baseBalance.toFixed(8)}`);
+        message.error(`Insufficient ${baseAsset} balance. You want to sell ${amountNum.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 8 })} but only have ${baseBalance.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 8 })}`);
       }
       setShowConfirm(false);
       return;
@@ -360,10 +370,7 @@ const TradeForm: React.FC<TradeFormProps> = ({
           Price
         </span>
         <span style={{ fontSize: token.fontSizeLG, fontWeight: fontWeights.bold, color: token.colorText }}>
-          {quoteAsset === 'USD' 
-            ? `$${price.toLocaleString('en-US', { maximumFractionDigits: 2 })}`
-            : `${price.toLocaleString('en-US', { maximumFractionDigits: 8 })} ${quoteAsset}`
-          }
+          <PriceFormatter price={price} quote={quoteAsset} />
         </span>
       </div>
 
@@ -378,7 +385,7 @@ const TradeForm: React.FC<TradeFormProps> = ({
             Amount
           </span>
           <span style={{ fontSize: token.fontSizeSM, color: token.colorTextTertiary }}>
-            Avail: {baseBalance.toFixed(4)} {baseAsset}
+            Avail: {baseBalance.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 8 })} {baseAsset}
           </span>
         </div>
         <InputWithAddon
@@ -440,8 +447,8 @@ const TradeForm: React.FC<TradeFormProps> = ({
           </span>
           <span style={{ fontSize: token.fontSizeSM, color: token.colorTextTertiary }}>
             Avail: {quoteAsset === 'USD' 
-              ? `$${quoteBalance.toFixed(2)}`
-              : `${quoteBalance.toFixed(4)} ${quoteAsset}`
+              ? `$${quoteBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+              : `${quoteBalance.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 8 })} ${quoteAsset}`
             }
           </span>
         </div>
@@ -507,7 +514,7 @@ const TradeForm: React.FC<TradeFormProps> = ({
                 : baseBalance === 0
                   ? `You don't have any ${baseAsset} to sell`
                   : amountNum > baseBalance
-                    ? `You want to sell ${amountNum.toFixed(8)} ${baseAsset} but only have ${baseBalance.toFixed(8)}`
+                    ? `You want to sell ${amountNum.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 8 })} ${baseAsset} but only have ${baseBalance.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 8 })}`
                     : null
               }
             </motion.div>
@@ -532,7 +539,7 @@ const TradeForm: React.FC<TradeFormProps> = ({
               <span>Fee (0.5%)</span>
               <span>
                 {quoteAsset === 'USD' 
-                  ? `$${fee.toFixed(2)}`
+                  ? `$${fee.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: fee < 0.001 ? 8 : (fee < 1 ? 6 : 2) })}`
                   : `${fee.toFixed(8)} ${quoteAsset}`
                 }
               </span>
@@ -543,7 +550,7 @@ const TradeForm: React.FC<TradeFormProps> = ({
                 {isBuy 
                   ? `${receiveAmount.toFixed(6)} ${baseAsset}`
                   : quoteAsset === 'USD'
-                  ? `$${receiveAmount.toFixed(2)}`
+                  ? `$${receiveAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: receiveAmount < 0.001 ? 8 : (receiveAmount < 1 ? 6 : 2) })}`
                   : `${receiveAmount.toFixed(8)} ${quoteAsset}`
                 }
               </span>
@@ -752,7 +759,7 @@ const TradeForm: React.FC<TradeFormProps> = ({
             <span style={{ color: token.colorTextSecondary }}>Price</span>
             <span style={{ color: token.colorText }}>
               {quoteAsset === 'USD' 
-                ? `$${price.toLocaleString('en-US', { maximumFractionDigits: 2 })}`
+                ? `$${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: price < 0.001 ? 8 : (price < 1 ? 6 : 2) })}`
                 : `${price.toLocaleString('en-US', { maximumFractionDigits: 8 })} ${quoteAsset}`
               }
             </span>

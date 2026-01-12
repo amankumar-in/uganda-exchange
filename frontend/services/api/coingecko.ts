@@ -147,10 +147,38 @@ async function apiCall<T>(endpoint: string): Promise<T> {
 /**
  * Get detailed token information including description, links, and market data
  */
+export async function getCoinOHLC(id: string, days: number): Promise<[number, number, number, number, number][]> {
+  try {
+    const data = await apiCall<{ success: boolean; data: [number, number, number, number, number][] }>(
+      `/coingecko/coins/${id}/ohlc?days=${days}`,
+    );
+    return data.data;
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Get detailed token information including description, links, and market data
+ */
 export async function getTokenDetails(symbol: string): Promise<TokenMarketData | null> {
   try {
     const data = await apiCall<{ success: boolean; token: TokenMarketData }>(
       `/coingecko/token/${symbol}`,
+    );
+    return data.token;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Get detailed token information by ID
+ */
+export async function getTokenDetailsById(id: string): Promise<TokenMarketData | null> {
+  try {
+    const data = await apiCall<{ success: boolean; token: TokenMarketData }>(
+      `/coingecko/token/id/${id}`,
     );
     return data.token;
   } catch {
@@ -165,9 +193,17 @@ export async function getMarketsList(
   page = 1,
   perPage = 100,
   sparkline = false,
+  ids?: string,
 ): Promise<MarketListItem[]> {
+  const queryParams = new URLSearchParams({
+    page: page.toString(),
+    per_page: perPage.toString(),
+    sparkline: sparkline.toString(),
+  });
+  if (ids) queryParams.append('ids', ids);
+
   const data = await apiCall<{ success: boolean; markets: MarketListItem[] }>(
-    `/coingecko/markets?page=${page}&per_page=${perPage}&sparkline=${sparkline}`,
+    `/coingecko/markets?${queryParams.toString()}`,
   );
   return data.markets;
 }

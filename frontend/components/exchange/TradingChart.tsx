@@ -78,6 +78,15 @@ const TradingChart: React.FC<TradingChartProps> = ({
       crosshairMarkerRadius: 4,
       crosshairMarkerBorderColor: '#667eea',
       crosshairMarkerBackgroundColor: '#ffffff',
+      priceFormat: {
+        type: 'custom',
+        minMove: 0.00000001,
+        formatter: (price: number) => {
+          if (price < 0.001) return price.toFixed(8);
+          if (price < 1) return price.toFixed(6);
+          return price.toFixed(2);
+        },
+      },
     });
 
     // Transform and set data (area uses close price)

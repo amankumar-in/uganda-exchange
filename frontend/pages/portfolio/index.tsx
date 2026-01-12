@@ -299,7 +299,7 @@ const WalletPage: NextPageWithLayout = () => {
           symbol: balance.asset,
           name: usdPair?.name || balance.asset,
           balance: balance.balance.toLocaleString('en-US', {
-            minimumFractionDigits: 2,
+            minimumFractionDigits: 0,
             maximumFractionDigits: 8,
           }),
           availableBalance: balance.availableBalance.toLocaleString('en-US', {
@@ -430,7 +430,7 @@ const WalletPage: NextPageWithLayout = () => {
       title: 'Amount',
       dataIndex: 'filledAmount',
       key: 'filledAmount',
-      render: (amount: number, record: any) => `${amount.toFixed(8)} ${record.asset}`,
+      render: (amount: number, record: any) => `${amount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 8 })} ${record.asset}`,
     },
     {
       title: 'Price',
@@ -604,7 +604,7 @@ const WalletPage: NextPageWithLayout = () => {
                   {appMode === 'learner' ? 'Learner Mode' : 'Investor Mode'}
                 </Tag>
               </div>
-              <PortfolioGrowthChart mode={appMode} height={350} />
+              <PortfolioGrowthChart mode={appMode} height={350} currentBalance={totalBalance} />
             </Card>
           </motion.div>
         )}

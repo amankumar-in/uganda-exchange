@@ -17,6 +17,7 @@ import { useExchange } from '@/context/ExchangeContext';
 import { useAuth } from '@/context/AuthContext';
 import { InternalOrder } from '@/services/api/coinbase';
 import OrderStatusModal from './OrderStatusModal';
+import PriceFormatter from './PriceFormatter';
 
 const { useToken } = theme;
 const { useBreakpoint } = Grid;
@@ -233,7 +234,9 @@ const BuySellForm: React.FC<BuySellFormProps> = ({
     setAmount(value);
     const num = parseFloat(value) || 0;
     if (num > 0 && price > 0) {
-      setCashAmount((num * price).toFixed(2));
+      const totalVal = num * price;
+      const decimals = totalVal < 0.001 ? 8 : (totalVal < 1 ? 6 : 2);
+      setCashAmount(totalVal.toFixed(decimals));
     } else {
       setCashAmount('');
     }
@@ -274,7 +277,7 @@ const BuySellForm: React.FC<BuySellFormProps> = ({
     }
     
     if (!isBuy && amountNum > tokenBalance) {
-      message.error(`Insufficient ${selectedAsset} balance. You want to sell ${amountNum.toFixed(8)} but only have ${tokenBalance.toFixed(8)}`);
+      message.error(`Insufficient ${selectedAsset} balance. You want to sell ${amountNum.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 8 })} but only have ${tokenBalance.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 8 })}`);
       setShowConfirm(false);
       return;
     }
@@ -518,7 +521,7 @@ const BuySellForm: React.FC<BuySellFormProps> = ({
                   color: isDark ? token.colorText : '#ffffff', 
                   fontWeight: fontWeights.bold,
                 }}>
-                  ${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: price < 1 ? 4 : 2 })}
+                  ${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: price < 0.001 ? 8 : (price < 1 ? 6 : 2) })}
                 </span>
               </div>
               <span style={{ 
@@ -728,7 +731,9 @@ const BuySellForm: React.FC<BuySellFormProps> = ({
                   setAmount(v);
                   const num = parseFloat(v) || 0;
                   if (num > 0 && price > 0) {
-                    setCashAmount((num * price).toFixed(2));
+                    const totalVal = num * price;
+                    const decimals = totalVal < 0.001 ? 8 : (totalVal < 1 ? 6 : 2);
+                    setCashAmount(totalVal.toFixed(decimals));
                   } else {
                     setCashAmount('');
                   }
@@ -835,7 +840,7 @@ const BuySellForm: React.FC<BuySellFormProps> = ({
               }}
             >
               <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                Fee ${fee.toFixed(2)}
+                Fee ${fee.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: fee < 0.001 ? 8 : (fee < 1 ? 6 : 2) })}
                 <DownOutlined style={{ 
                   fontSize: 10, 
                   transform: showFeeDetails ? 'rotate(180deg)' : 'rotate(0)',
@@ -847,8 +852,8 @@ const BuySellForm: React.FC<BuySellFormProps> = ({
                 fontWeight: fontWeights.semibold 
               }}>
                 → {isBuy 
-                  ? `${receiveAmount.toFixed(4)} ${selectedAsset}`
-                  : `$${receiveAmount.toFixed(2)}`
+                  ? `${receiveAmount.toFixed(6)} ${selectedAsset}`
+                  : `$${receiveAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: receiveAmount < 0.001 ? 8 : (receiveAmount < 1 ? 6 : 2) })}`
                 }
               </span>
             </div>
@@ -1062,7 +1067,7 @@ const BuySellForm: React.FC<BuySellFormProps> = ({
                     </div>
                     <div style={{ textAlign: 'right', flexShrink: 0 }}>
                       <div style={{ fontSize: token.fontSize, color: token.colorText, fontWeight: fontWeights.medium }}>
-                        ${pair.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: pair.price < 1 ? 4 : 2 })}
+                        <PriceFormatter price={pair.price} />
                       </div>
                       {balance > 0 && (
                         <div style={{ fontSize: token.fontSizeSM, color: token.colorTextTertiary }}>{balance.toFixed(balance < 1 ? 4 : 2)}</div>
@@ -1204,10 +1209,7 @@ const BuySellForm: React.FC<BuySellFormProps> = ({
                         color: token.colorText,
                         fontWeight: fontWeights.medium,
                       }}>
-                        ${pair.price.toLocaleString('en-US', { 
-                          minimumFractionDigits: 2, 
-                          maximumFractionDigits: pair.price < 1 ? 4 : 2 
-                        })}
+                        <PriceFormatter price={pair.price} />
                       </div>
                       {balance > 0 && (
                         <div style={{ fontSize: token.fontSizeSM, color: token.colorTextTertiary }}>
@@ -1307,12 +1309,14 @@ const BuySellForm: React.FC<BuySellFormProps> = ({
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: token.marginSM }}>
               <span style={{ color: token.colorTextSecondary, fontSize: token.fontSizeSM }}>Price</span>
               <span style={{ color: token.colorText, fontSize: token.fontSizeSM }}>
-                ${price.toLocaleString('en-US', { maximumFractionDigits: 2 })}
+                <PriceFormatter price={price} />
               </span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: token.marginSM }}>
               <span style={{ color: token.colorTextSecondary, fontSize: token.fontSizeSM }}>Fee (0.5%)</span>
-              <span style={{ color: token.colorText, fontSize: token.fontSizeSM }}>${fee.toFixed(2)}</span>
+              <span style={{ color: token.colorText, fontSize: token.fontSizeSM }}>
+                <PriceFormatter price={fee} />
+              </span>
             </div>
             <div style={{
               display: 'flex',
@@ -1322,7 +1326,9 @@ const BuySellForm: React.FC<BuySellFormProps> = ({
             }}>
               <span style={{ color: token.colorTextSecondary }}>You {isBuy ? 'pay' : 'receive'}</span>
               <span style={{ color: token.colorText, fontWeight: fontWeights.bold }}>
-                {isBuy ? `$${cashAmountNum.toFixed(2)}` : `$${receiveAmount.toFixed(2)}`}
+                {isBuy 
+                  ? `$${cashAmountNum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: cashAmountNum < 1 ? 6 : 2 })}` 
+                  : `$${receiveAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: receiveAmount < 1 ? 6 : 2 })}`}
               </span>
             </div>
           </div>
@@ -1422,12 +1428,14 @@ const BuySellForm: React.FC<BuySellFormProps> = ({
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: token.marginXS }}>
               <span style={{ color: token.colorTextSecondary, fontSize: token.fontSizeSM }}>Price</span>
               <span style={{ color: token.colorText, fontSize: token.fontSizeSM }}>
-                ${price.toLocaleString('en-US', { maximumFractionDigits: 2 })}
+                <PriceFormatter price={price} />
               </span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: token.marginXS }}>
               <span style={{ color: token.colorTextSecondary, fontSize: token.fontSizeSM }}>Fee (0.5%)</span>
-              <span style={{ color: token.colorText, fontSize: token.fontSizeSM }}>${fee.toFixed(2)}</span>
+              <span style={{ color: token.colorText, fontSize: token.fontSizeSM }}>
+                <PriceFormatter price={fee} />
+              </span>
             </div>
             <div style={{
               display: 'flex',
@@ -1438,7 +1446,9 @@ const BuySellForm: React.FC<BuySellFormProps> = ({
             }}>
               <span style={{ color: token.colorTextSecondary, fontSize: token.fontSizeSM }}>You {isBuy ? 'pay' : 'receive'}</span>
               <span style={{ color: token.colorText, fontWeight: fontWeights.bold, fontSize: token.fontSizeSM }}>
-                {isBuy ? `$${cashAmountNum.toFixed(2)}` : `$${receiveAmount.toFixed(2)}`}
+                {isBuy 
+                  ? `$${cashAmountNum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: cashAmountNum < 1 ? 6 : 2 })}` 
+                  : `$${receiveAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: receiveAmount < 1 ? 6 : 2 })}`}
               </span>
             </div>
           </div>

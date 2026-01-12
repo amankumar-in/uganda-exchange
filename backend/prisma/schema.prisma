@@ -802,14 +802,63 @@ model DemoCollegeCoin {
   whitepaper        String?
   twitter           String?
   discord           String?
-  categories        String[] // ["Education", "College", "DeFi"]
+  categories        String[] // ["DeFi", "Layer 1", etc.]
   genesisDate       DateTime?
-  
+
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
-  
+
   @@map("demo_college_coins")
 }
+
+// ============================================
+// GLOBAL ASSET MANAGEMENT (New Token System)
+// ============================================
+
+model Token {
+  id                String   @id @default(uuid())
+  symbol            String   @unique  // BTC, ETH, TUIT, etc.
+  name              String   // Bitcoin, Ethereum, Tuition Coin
+  iconUrl           String?
+  
+  // Price Discovery Identity
+  coingeckoId       String?  // e.g. "bitcoin", "tuition-coin"
+  contractAddress   String?  // e.g. "0x963cd..."
+  chain             String?  // e.g. "ethereum", "base", "solana" (Generic slug for API)
+  
+  // Manual Price Fallback (if no API data found or preferred)
+  manualPrice       Decimal  @default(0) @db.Decimal(20, 8)
+
+  // Toggles (9 standard permissions)
+  allowBuy          Boolean  @default(false)
+  allowSell         Boolean  @default(false)
+  allowTradeUsdt    Boolean  @default(false)
+  allowTradeUsd     Boolean  @default(false)
+  allowTradeEth     Boolean  @default(false)
+  allowTradeTuit    Boolean  @default(false)
+  allowDeposit      Boolean  @default(false)
+  allowWithdraw     Boolean  @default(false)
+  allowP2P          Boolean  @default(false)
+
+  // Transaction Limits (USD Value)
+  minTransactionAmount Decimal @default(10)   @db.Decimal(20, 8)
+  maxTransactionAmount Decimal @default(5000) @db.Decimal(20, 8)
+
+  // Status & Metadata
+  isActive          Boolean  @default(true)
+  description       String?  @db.Text
+  website           String?
+  whitepaper        String?
+  twitter           String?
+  discord           String?
+  
+  updatedAt         DateTime @updatedAt
+  createdAt         DateTime @default(now())
+
+  @@map("tokens")
+}
+
+
 
 // Live mode portfolio snapshots (for investor mode growth chart)
 model PortfolioSnapshot {
@@ -831,4 +880,21 @@ model PortfolioSnapshot {
   @@unique([userId, snapshotDate])
   @@index([userId, snapshotDate])
   @@map("portfolio_snapshots")
+}
+
+// ============================================
+// CRON HELPERS
+// ============================================
+
+model DailyAssetPrice {
+  id        String   @id @default(uuid())
+  asset     String   // BTC, ETH, etc.
+  price     Decimal  @db.Decimal(20, 8) // Price at midnight UTC
+  date      DateTime @db.Date // The date this price represents
+  
+  createdAt DateTime @default(now())
+
+  @@unique([asset, date])
+  @@index([date])
+  @@map("daily_asset_prices")
 }
