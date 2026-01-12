@@ -251,7 +251,7 @@ export const TokenForm: React.FC<TokenFormProps> = ({
         <Card title="Permissions & Toggles" extra={<Tag color="orange">Step 3</Tag>}>
           <Row gutter={[24, 24]}>
             <Col span={8}>
-               <Divider orientation="left">Market</Divider>
+               <Divider titlePlacement="left">Market</Divider>
                <Form.Item name="allowBuy" valuePropName="checked" style={{ marginBottom: 8 }}>
                  <Switch checkedChildren="Buy ON" unCheckedChildren="Buy OFF" />
                </Form.Item>
@@ -264,7 +264,7 @@ export const TokenForm: React.FC<TokenFormProps> = ({
             </Col>
             
             <Col span={8}>
-              <Divider orientation="left">Wallet</Divider>
+              <Divider titlePlacement="left">Wallet</Divider>
                <Form.Item name="allowDeposit" valuePropName="checked" style={{ marginBottom: 8 }}>
                  <Switch checkedChildren="Deposits ON" unCheckedChildren="Deposits OFF" />
                </Form.Item>
@@ -274,7 +274,7 @@ export const TokenForm: React.FC<TokenFormProps> = ({
             </Col>
             
             <Col span={8}>
-              <Divider orientation="left">Trading Pairs</Divider>
+              <Divider titlePlacement="left">Trading Pairs</Divider>
                <Form.Item name="allowTradeUsd" valuePropName="checked" style={{ marginBottom: 8 }}>
                  <Switch checkedChildren="USD Pair" unCheckedChildren="No USD" />
                </Form.Item>
