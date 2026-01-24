@@ -11,6 +11,7 @@ import {
   Skeleton,
   message,
   Modal,
+  Drawer,
   Input,
   Tag,
   Popconfirm,
@@ -118,6 +119,7 @@ const SettingsPage: NextPageWithLayout = () => {
   const [appMode, setAppMode] = useState<'learner' | 'investor'>('learner');
   const [appModeLoading, setAppModeLoading] = useState(false);
   const [resetLoading, setResetLoading] = useState(false);
+  const [resetSuccessVisible, setResetSuccessVisible] = useState(false);
 
   const isMobile = mounted ? !screens.md : false;
 
@@ -282,7 +284,7 @@ const SettingsPage: NextPageWithLayout = () => {
     setResetLoading(true);
     try {
       await resetLearnerAccount();
-      message.success('Learner account reset! You now have $10,000 virtual balance.');
+      setResetSuccessVisible(true);
     } catch (err) {
       const error = err as Error & { message?: string };
       message.error(error.message || 'Failed to reset learner account');
@@ -522,7 +524,7 @@ const SettingsPage: NextPageWithLayout = () => {
               <div>
                 <Text style={{ fontSize: 13 }}>Reset Learner Account</Text>
                 <Text type="secondary" style={{ display: 'block', fontSize: 11 }}>
-                  Clear all trades and start fresh with $10,000
+                  Clear all trades and start fresh with $100,000
                 </Text>
               </div>
               <Popconfirm
@@ -978,6 +980,193 @@ const SettingsPage: NextPageWithLayout = () => {
           </div>
         )}
       </Modal>
+
+      {/* Reset Success Modal (Desktop) / Drawer (Mobile) */}
+      {isMobile ? (
+        <Drawer
+          placement="bottom"
+          open={resetSuccessVisible}
+          onClose={() => setResetSuccessVisible(false)}
+          height="auto"
+          closable={false}
+          zIndex={1100}
+          styles={{
+            wrapper: {
+              borderTopLeftRadius: 20,
+              borderTopRightRadius: 20,
+              overflow: 'hidden',
+            },
+            body: {
+              padding: token.paddingLG,
+              paddingBottom: token.paddingXL + 16,
+            },
+          }}
+        >
+          <div style={{ textAlign: 'center' }}>
+            {/* Drag indicator */}
+            <div
+              style={{
+                width: 36,
+                height: 4,
+                background: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)',
+                borderRadius: 2,
+                margin: '0 auto',
+                marginBottom: token.marginLG,
+              }}
+            />
+
+            {/* Celebration emoji */}
+            <div style={{ fontSize: 56, marginBottom: token.marginMD }}>
+              🚀
+            </div>
+
+            {/* Title */}
+            <Title level={4} style={{ margin: 0, marginBottom: token.marginXS }}>
+              Fresh Start!
+            </Title>
+
+            {/* Balance amount */}
+            <div
+              style={{
+                fontSize: 36,
+                fontWeight: fontWeights.bold,
+                background: 'linear-gradient(135deg, #0d7377 0%, #14919b 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+                marginBottom: token.marginSM,
+              }}
+            >
+              $100,000
+            </div>
+
+            <Text type="secondary" style={{ display: 'block', marginBottom: token.marginLG }}>
+              virtual balance ready to trade
+            </Text>
+
+            {/* Motivational message */}
+            <div
+              style={{
+                padding: token.paddingMD,
+                background: isDark ? 'rgba(13, 115, 119, 0.15)' : 'rgba(13, 115, 119, 0.08)',
+                borderRadius: token.borderRadiusLG,
+                marginBottom: token.marginLG,
+              }}
+            >
+              <Text style={{ fontSize: 15 }}>
+                Think you can turn it into{' '}
+                <span style={{ fontWeight: fontWeights.bold, color: token.colorPrimary }}>
+                  $1,000,000
+                </span>
+                ?
+              </Text>
+              <br />
+              <Text type="secondary" style={{ fontSize: 13 }}>
+                Practice smart, trade wisely, and see how far you can go.
+              </Text>
+            </div>
+
+            {/* Action button */}
+            <Button
+              type="primary"
+              size="large"
+              block
+              onClick={() => {
+                setResetSuccessVisible(false);
+                router.push('/overview');
+              }}
+              style={{
+                height: 48,
+                borderRadius: token.borderRadiusLG,
+                fontWeight: fontWeights.semibold,
+              }}
+            >
+              Start Trading
+            </Button>
+          </div>
+        </Drawer>
+      ) : (
+        <Modal
+          open={resetSuccessVisible}
+          onCancel={() => setResetSuccessVisible(false)}
+          footer={null}
+          centered
+          width={400}
+          closable={true}
+          zIndex={1100}
+        >
+          <div style={{ textAlign: 'center', padding: `${token.paddingMD}px 0` }}>
+            {/* Celebration emoji */}
+            <div style={{ fontSize: 64, marginBottom: token.marginMD }}>
+              🚀
+            </div>
+
+            {/* Title */}
+            <Title level={3} style={{ margin: 0, marginBottom: token.marginXS }}>
+              Fresh Start!
+            </Title>
+
+            {/* Balance amount */}
+            <div
+              style={{
+                fontSize: 42,
+                fontWeight: fontWeights.bold,
+                background: 'linear-gradient(135deg, #0d7377 0%, #14919b 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+                marginBottom: token.marginSM,
+              }}
+            >
+              $100,000
+            </div>
+
+            <Text type="secondary" style={{ display: 'block', marginBottom: token.marginLG, fontSize: 15 }}>
+              virtual balance ready to trade
+            </Text>
+
+            {/* Motivational message */}
+            <div
+              style={{
+                padding: token.paddingMD,
+                background: isDark ? 'rgba(13, 115, 119, 0.15)' : 'rgba(13, 115, 119, 0.08)',
+                borderRadius: token.borderRadiusLG,
+                marginBottom: token.marginLG,
+              }}
+            >
+              <Text style={{ fontSize: 16 }}>
+                Think you can turn it into{' '}
+                <span style={{ fontWeight: fontWeights.bold, color: token.colorPrimary }}>
+                  $1,000,000
+                </span>
+                ?
+              </Text>
+              <br />
+              <Text type="secondary" style={{ fontSize: 14 }}>
+                Practice smart, trade wisely, and see how far you can go.
+              </Text>
+            </div>
+
+            {/* Action button */}
+            <Button
+              type="primary"
+              size="large"
+              block
+              onClick={() => {
+                setResetSuccessVisible(false);
+                router.push('/overview');
+              }}
+              style={{
+                height: 48,
+                borderRadius: token.borderRadiusLG,
+                fontWeight: fontWeights.semibold,
+              }}
+            >
+              Start Trading
+            </Button>
+          </div>
+        </Modal>
+      )}
     </>
   );
 };

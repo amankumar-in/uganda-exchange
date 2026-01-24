@@ -207,7 +207,7 @@ export default function RegisterPage() {
   // Benefits for left panel
   const benefits = [
     { icon: <RocketOutlined />, title: 'Start Trading in Minutes', desc: 'Quick verification process' },
-    { icon: <GiftOutlined />, title: '$10,000 Practice Balance', desc: 'Learn risk-free in Learner Mode' },
+    { icon: <GiftOutlined />, title: '$100,000 Practice Balance', desc: 'Learn risk-free in Learner Mode' },
     { icon: <BookOutlined />, title: 'Educational Resources', desc: 'Master crypto trading basics' },
     { icon: <SafetyCertificateOutlined />, title: 'Bank-Grade Security', desc: 'Your assets are protected' },
   ];

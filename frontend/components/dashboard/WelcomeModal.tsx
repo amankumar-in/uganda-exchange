@@ -256,7 +256,7 @@ export default function WelcomeModal({
                       fontSize: token.fontSizeSM,
                     }}
                   >
-                    We have given you some virtual funds to play with. Use them to learn about college coins and crypto trading.
+                    We&apos;ve loaded your account with virtual funds to practice trading risk-free.
                   </motion.p>
                 </div>
               </div>
@@ -418,6 +418,42 @@ export default function WelcomeModal({
                     </div>
                   </motion.div>
                 )}
+
+                {/* Motivational Challenge Card */}
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                  style={{
+                    marginTop: token.marginMD,
+                    padding: token.paddingMD,
+                    background: 'linear-gradient(135deg, rgba(13, 115, 119, 0.12) 0%, rgba(20, 145, 155, 0.08) 100%)',
+                    borderRadius: token.borderRadiusLG,
+                    border: '1px solid rgba(13, 115, 119, 0.2)',
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: token.fontSize,
+                      fontWeight: fontWeights.semibold,
+                      color: token.colorText,
+                      marginBottom: 4,
+                    }}
+                  >
+                    Think you can turn $100K into{' '}
+                    <span style={{ color: '#0d7377' }}>$1,000,000</span>?
+                  </div>
+                  <div
+                    style={{
+                      fontSize: token.fontSizeSM,
+                      color: token.colorTextSecondary,
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    Master the markets, build your strategy, and climb the leaderboard.
+                    Who knows? The best traders might find something special waiting for them. 👀
+                  </div>
+                </motion.div>
               </div>
 
               {/* Footer */}
@@ -443,7 +479,7 @@ export default function WelcomeModal({
                     border: 'none',
                   }}
                 >
-                  Start Exploring
+                  Start Your Journey
                 </Button>
               </div>
             </div>

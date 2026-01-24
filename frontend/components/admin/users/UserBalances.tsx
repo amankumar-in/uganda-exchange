@@ -73,7 +73,7 @@ export const UserBalances: React.FC<UserBalancesProps> = ({ userId }) => {
   const handleResetLearner = async () => {
     try {
       await resetLearnerAccount(userId);
-      message.success('Learner account reset to $10,000');
+      message.success('Learner account reset to $100,000');
       fetchBalances();
     } catch (error: any) {
       message.error(error.message);
@@ -186,7 +186,7 @@ export const UserBalances: React.FC<UserBalancesProps> = ({ userId }) => {
                   </Button>
                   <Popconfirm
                     title="Reset Learner Account"
-                    description="Delete all learner trades and reset to $10,000?"
+                    description="Delete all learner trades and reset to $100,000?"
                     onConfirm={handleResetLearner}
                     okText="Reset"
                     cancelText="Cancel"

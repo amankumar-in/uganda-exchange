@@ -1034,7 +1034,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                 <div style={{ padding: '4px 0' }}>
                   <div style={{ fontWeight: 600, marginBottom: 4 }}>🎓 Learning Mode</div>
                   <div style={{ fontSize: 12, opacity: 0.9 }}>
-                    Practice trading with $10,000 virtual balance.
+                    Practice trading with $100,000 virtual balance.
                     <br />
                     Switch to Investor in Settings when ready.
                   </div>

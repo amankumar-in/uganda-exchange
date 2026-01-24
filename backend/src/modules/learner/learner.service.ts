@@ -56,8 +56,8 @@ export class LearnerService {
   private readonly PLATFORM_FEE_PERCENT = 0.5; // 0.5% platform fee (same as live)
   
   // Initial balance configuration
-  private readonly CASH_BALANCE = 4000; // $4,000 starting cash
-  private readonly COLLEGE_COIN_VALUE_EACH = 1500; // $1,500 worth of each college coin
+  private readonly CASH_BALANCE = 40000; // $40,000 starting cash
+  private readonly COLLEGE_COIN_VALUE_EACH = 15000; // $15,000 worth of each college coin
   private readonly MAX_COLLEGE_COINS = 4; // Maximum 4 college coins to give
 
   constructor(
@@ -74,7 +74,7 @@ export class LearnerService {
 
   /**
    * Initialize learner account for a new user
-   * Creates $4,000 USD balance + $1,500 worth of up to 4 college coins
+   * Creates $40,000 USD balance + $15,000 worth of up to 4 college coins
    */
   async initializeLearnerAccount(userId: string): Promise<void> {
     // Check if already initialized
@@ -87,7 +87,7 @@ export class LearnerService {
       return;
     }
 
-    // Create initial fiat balance with $4,000
+    // Create initial fiat balance with $40,000
     await this.prisma.client.learnerFiatBalance.create({
       data: {
         userId,
@@ -116,7 +116,7 @@ export class LearnerService {
           .slice(0, this.MAX_COLLEGE_COINS);
       }
 
-      // Give $1,500 worth of each selected coin
+      // Give $15,000 worth of each selected coin
       for (const coin of selectedCoins) {
         try {
           // Calculate the current price of the college coin
@@ -178,7 +178,7 @@ export class LearnerService {
 
   /**
    * Reset learner account back to initial state
-   * Deletes all trades and balances, reinitializes with $4,000 + college coins
+   * Deletes all trades and balances, reinitializes with $40,000 + college coins
    */
   async resetLearnerAccount(userId: string): Promise<{ message: string }> {
     // Delete all learner trades
@@ -201,7 +201,7 @@ export class LearnerService {
       where: { userId },
     });
 
-    // Reinitialize with new $4,000 + college coins distribution
+    // Reinitialize with new $40,000 + college coins distribution
     await this.initializeLearnerAccount(userId);
 
     // Get the balances to build a dynamic message
