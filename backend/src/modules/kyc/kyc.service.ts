@@ -1,7 +1,15 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  Logger,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
 import { VeriffService } from './veriff.service';
-import { KycRestrictionsService, KycRejectionType } from './kyc-restrictions.service';
+import {
+  KycRestrictionsService,
+  KycRejectionType,
+} from './kyc-restrictions.service';
 import { PersonalDetailsDto } from './dto/personal-details.dto';
 import { AddressDto } from './dto/address.dto';
 import { KycStatus, Kyc } from '@prisma/client';
@@ -61,7 +69,13 @@ export class KycService {
       veriffStatus: kyc.veriffStatus,
       veriffReason: kyc.veriffReason,
       hasPersonalDetails: !!(kyc.firstName && kyc.lastName && kyc.dateOfBirth),
-      hasAddress: !!(kyc.street1 && kyc.city && kyc.region && kyc.postalCode && kyc.country),
+      hasAddress: !!(
+        kyc.street1 &&
+        kyc.city &&
+        kyc.region &&
+        kyc.postalCode &&
+        kyc.country
+      ),
       hasVeriffSession: !!kyc.veriffSessionId,
     };
   }
@@ -100,6 +114,7 @@ export class KycService {
       throw new BadRequestException('Please complete personal details first');
     }
 
+    // Save the address data first (we always want to capture this)
     const updated = await this.prisma.client.kyc.update({
       where: { id: kyc.id },
       data: {
@@ -112,6 +127,48 @@ export class KycService {
         currentStep: Math.max(kyc.currentStep, 2),
       },
     });
+
+    // Check geographic restrictions
+    const stateCheck = await this.kycRestrictionsService.isStateAllowed(
+      dto.country,
+      dto.region,
+    );
+
+    if (!stateCheck.allowed) {
+      this.logger.log(
+        `User ${userId} blocked due to geographic restriction: ${stateCheck.reason}`,
+      );
+
+      // Log the rejection
+      await this.kycRestrictionsService.logRejection(kyc.id, userId, {
+        rejectionType: 'RESTRICTED_STATE',
+        userProvidedCountry: dto.country,
+        userProvidedState: dto.region,
+        reason:
+          stateCheck.reason ||
+          `State ${dto.region} is not allowed for verification`,
+      });
+
+      // Update KYC status to reflect the restriction
+      await this.prisma.client.kyc.update({
+        where: { id: kyc.id },
+        data: {
+          status: 'REJECTED',
+          veriffReason:
+            stateCheck.reason ||
+            `State ${dto.region} is not available for verification`,
+        },
+      });
+
+      await this.prisma.client.user.update({
+        where: { id: userId },
+        data: { kycStatus: 'REJECTED' },
+      });
+
+      throw new BadRequestException(
+        `We're not available in ${dto.region} yet, but we're coming to your location very soon! Your information has been saved.`,
+      );
+    }
 
     return {
       message: 'Address saved',
@@ -129,29 +186,46 @@ export class KycService {
     if (!kyc.firstName || !kyc.lastName || !kyc.dateOfBirth) {
       throw new BadRequestException('Please complete personal details first');
     }
-    if (!kyc.street1 || !kyc.city || !kyc.region || !kyc.postalCode || !kyc.country) {
+    if (
+      !kyc.street1 ||
+      !kyc.city ||
+      !kyc.region ||
+      !kyc.postalCode ||
+      !kyc.country
+    ) {
       throw new BadRequestException('Please complete address details first');
     }
 
     // Check for existing session that can be reused
     const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
-    const isStaleSession = kyc.veriffSessionId &&
+    const isStaleSession =
+      kyc.veriffSessionId &&
       kyc.veriffStatus === 'created' &&
       kyc.updatedAt < new Date(Date.now() - SESSION_TIMEOUT_MS);
 
     // If there's an existing non-stale session, return it
-    if (kyc.veriffSessionId && kyc.veriffStatus === 'created' && !isStaleSession) {
-      this.logger.log(`Reusing existing Veriff session for user ${userId}: ${kyc.veriffSessionId}`);
+    if (
+      kyc.veriffSessionId &&
+      kyc.veriffStatus === 'created' &&
+      !isStaleSession
+    ) {
+      this.logger.log(
+        `Reusing existing Veriff session for user ${userId}: ${kyc.veriffSessionId}`,
+      );
       // We don't have the URL stored, so we need to create a new session
       // But first check if user is just returning - Veriff sessions are valid for a while
     }
 
     if (isStaleSession) {
-      this.logger.log(`Clearing stale Veriff session for user ${userId}: ${kyc.veriffSessionId}`);
+      this.logger.log(
+        `Clearing stale Veriff session for user ${userId}: ${kyc.veriffSessionId}`,
+      );
     }
 
     // Format date of birth for Veriff (YYYY-MM-DD)
-    const dob = kyc.dateOfBirth ? kyc.dateOfBirth.toISOString().split('T')[0] : '';
+    const dob = kyc.dateOfBirth
+      ? kyc.dateOfBirth.toISOString().split('T')[0]
+      : '';
 
     // Create new Veriff session
     const session = await this.veriffService.createSession(
@@ -188,7 +262,11 @@ export class KycService {
   /**
    * Handle Veriff webhook
    */
-  async handleVeriffWebhook(payload: unknown, signature: string, rawBody: string) {
+  async handleVeriffWebhook(
+    payload: unknown,
+    signature: string,
+    rawBody: string,
+  ) {
     // Verify signature
     if (!this.veriffService.verifyWebhookSignature(rawBody, signature)) {
       this.logger.warn('Invalid Veriff webhook signature');
@@ -196,9 +274,19 @@ export class KycService {
     }
 
     const webhookData = this.veriffService.parseWebhookPayload(payload);
-    const { sessionId, attemptId, status, code, reason, reasonCode, isFullauto } = webhookData;
+    const {
+      sessionId,
+      attemptId,
+      status,
+      code,
+      reason,
+      reasonCode,
+      isFullauto,
+    } = webhookData;
 
-    this.logger.log(`Veriff webhook received: session=${sessionId}, status=${status}, code=${code}, isFullauto=${isFullauto}`);
+    this.logger.log(
+      `Veriff webhook received: session=${sessionId}, status=${status}, code=${code}, isFullauto=${isFullauto}`,
+    );
 
     // Find KYC by session ID
     const kyc = await this.prisma.client.kyc.findUnique({
@@ -253,7 +341,9 @@ export class KycService {
 
     // Handle resubmission requested - Veriff wants user to try again
     if (status === 'resubmission_requested') {
-      this.logger.log(`Veriff resubmission requested for user ${kyc.userId}: ${reason || reasonCode}`);
+      this.logger.log(
+        `Veriff resubmission requested for user ${kyc.userId}: ${reason || reasonCode}`,
+      );
 
       // Reset to allow retry
       await this.prisma.client.kyc.update({
@@ -282,7 +372,9 @@ export class KycService {
     // 9161 - Document damaged or not fully visible
     const RETRIABLE_CODES = [9104, 9151, 9161];
     if (code && RETRIABLE_CODES.includes(code)) {
-      this.logger.log(`Veriff retriable rejection for user ${kyc.userId}: code=${code}, reason=${reason || reasonCode}`);
+      this.logger.log(
+        `Veriff retriable rejection for user ${kyc.userId}: code=${code}, reason=${reason || reasonCode}`,
+      );
 
       // Reset to allow retry
       await this.prisma.client.kyc.update({
@@ -290,7 +382,10 @@ export class KycService {
         data: {
           veriffStatus: status,
           veriffAttemptId: attemptId,
-          veriffReason: reason || reasonCode || `Rejected (code ${code}) - please try again`,
+          veriffReason:
+            reason ||
+            reasonCode ||
+            `Rejected (code ${code}) - please try again`,
           veriffSessionId: null, // Clear session to allow new one
           status: 'PENDING',
           currentStep: 2,
@@ -310,7 +405,10 @@ export class KycService {
       const decision = await this.veriffService.getDecision(sessionId);
 
       if (decision) {
-        const validationResult = await this.validateStateRestrictions(kyc, decision);
+        const validationResult = await this.validateStateRestrictions(
+          kyc,
+          decision,
+        );
 
         if (!validationResult.valid) {
           // Log rejection
@@ -334,7 +432,9 @@ export class KycService {
               veriffAttemptId: attemptId,
               veriffStatus: status,
               veriffReason: validationResult.reason,
-              veriffDecisionTime: webhookData.decisionTime ? new Date(webhookData.decisionTime) : null,
+              veriffDecisionTime: webhookData.decisionTime
+                ? new Date(webhookData.decisionTime)
+                : null,
               documentCountry: validationResult.documentCountry,
               documentState: validationResult.documentState,
               documentType: validationResult.documentType,
@@ -348,7 +448,9 @@ export class KycService {
             data: { kycStatus: 'REJECTED' },
           });
 
-          this.logger.log(`KYC rejected for user ${kyc.userId}: ${validationResult.reason}`);
+          this.logger.log(
+            `KYC rejected for user ${kyc.userId}: ${validationResult.reason}`,
+          );
           return { received: true };
         }
 
@@ -359,7 +461,9 @@ export class KycService {
             veriffAttemptId: attemptId,
             veriffStatus: status,
             veriffReason: reason || reasonCode || null,
-            veriffDecisionTime: webhookData.decisionTime ? new Date(webhookData.decisionTime) : null,
+            veriffDecisionTime: webhookData.decisionTime
+              ? new Date(webhookData.decisionTime)
+              : null,
             documentCountry: validationResult.documentCountry,
             documentState: validationResult.documentState,
             documentType: validationResult.documentType,
@@ -386,7 +490,9 @@ export class KycService {
         veriffAttemptId: attemptId,
         veriffStatus: status,
         veriffReason: reason || reasonCode || null,
-        veriffDecisionTime: webhookData.decisionTime ? new Date(webhookData.decisionTime) : null,
+        veriffDecisionTime: webhookData.decisionTime
+          ? new Date(webhookData.decisionTime)
+          : null,
         status: kycStatus,
         currentStep: kycStatus === 'APPROVED' ? 4 : kyc.currentStep,
       },
@@ -407,7 +513,7 @@ export class KycService {
    */
   private async validateStateRestrictions(
     kyc: Kyc,
-    decision: Awaited<ReturnType<VeriffService['getDecision']>>
+    decision: Awaited<ReturnType<VeriffService['getDecision']>>,
   ): Promise<StateValidationResult> {
     if (!decision) {
       return { valid: true };
@@ -432,7 +538,7 @@ export class KycService {
 
     // 1. Check if country is allowed
     const countryAllowed = await this.kycRestrictionsService.isCountryAllowed(
-      documentCountry || kyc.country || ''
+      documentCountry || kyc.country || '',
     );
     if (!countryAllowed) {
       return {
@@ -446,7 +552,11 @@ export class KycService {
     }
 
     // 2. Check country mismatch (document vs user-provided)
-    if (documentCountry && kyc.country && documentCountry.toUpperCase() !== kyc.country.toUpperCase()) {
+    if (
+      documentCountry &&
+      kyc.country &&
+      documentCountry.toUpperCase() !== kyc.country.toUpperCase()
+    ) {
       return {
         valid: false,
         rejectionType: 'COUNTRY_MISMATCH',
@@ -460,7 +570,10 @@ export class KycService {
     // 3. If document has state info, validate it
     if (documentState) {
       // Check state mismatch (document vs user-provided)
-      if (kyc.region && documentState.toUpperCase() !== kyc.region.toUpperCase()) {
+      if (
+        kyc.region &&
+        documentState.toUpperCase() !== kyc.region.toUpperCase()
+      ) {
         return {
           valid: false,
           rejectionType: 'STATE_MISMATCH',
@@ -474,13 +587,15 @@ export class KycService {
       // Check if state is in allowed list
       const stateCheck = await this.kycRestrictionsService.isStateAllowed(
         documentCountry || kyc.country || '',
-        documentState
+        documentState,
       );
       if (!stateCheck.allowed) {
         return {
           valid: false,
           rejectionType: 'RESTRICTED_STATE',
-          reason: stateCheck.reason || `State ${documentState} is not allowed for verification`,
+          reason:
+            stateCheck.reason ||
+            `State ${documentState} is not allowed for verification`,
           documentCountry,
           documentState,
           documentType,
@@ -489,12 +604,17 @@ export class KycService {
     } else {
       // Document has no state (e.g., passport) - validate user-provided state
       if (kyc.region && kyc.country) {
-        const stateCheck = await this.kycRestrictionsService.isStateAllowed(kyc.country, kyc.region);
+        const stateCheck = await this.kycRestrictionsService.isStateAllowed(
+          kyc.country,
+          kyc.region,
+        );
         if (!stateCheck.allowed) {
           return {
             valid: false,
             rejectionType: 'RESTRICTED_STATE',
-            reason: stateCheck.reason || `State ${kyc.region} is not allowed for verification`,
+            reason:
+              stateCheck.reason ||
+              `State ${kyc.region} is not allowed for verification`,
             documentCountry,
             documentState,
             documentType,
@@ -519,7 +639,9 @@ export class KycService {
       where: { userId },
     });
 
-    console.log(`[CheckDecision] userId=${userId}, sessionId=${kyc?.veriffSessionId}, dbStatus=${kyc?.status}`);
+    console.log(
+      `[CheckDecision] userId=${userId}, sessionId=${kyc?.veriffSessionId}, dbStatus=${kyc?.status}`,
+    );
 
     if (!kyc || !kyc.veriffSessionId) {
       throw new NotFoundException('No active verification session');
@@ -527,10 +649,15 @@ export class KycService {
 
     const decision = await this.veriffService.getDecision(kyc.veriffSessionId);
 
-    console.log(`[CheckDecision] Veriff response:`, decision ? { status: decision.status, code: decision.code } : 'null');
+    console.log(
+      `[CheckDecision] Veriff response:`,
+      decision ? { status: decision.status, code: decision.code } : 'null',
+    );
 
     if (!decision) {
-      console.log(`[CheckDecision] No decision from Veriff, returning db status: ${kyc.status}`);
+      console.log(
+        `[CheckDecision] No decision from Veriff, returning db status: ${kyc.status}`,
+      );
       return {
         status: kyc.status || 'PENDING',
         veriffStatus: kyc.veriffStatus || null,
@@ -539,7 +666,10 @@ export class KycService {
     }
 
     // Update if decision is available
-    const kycStatus = this.veriffService.mapVeriffStatusToKycStatus(decision.status, decision.code);
+    const kycStatus = this.veriffService.mapVeriffStatusToKycStatus(
+      decision.status,
+      decision.code,
+    );
 
     if (kycStatus !== kyc.status) {
       await this.prisma.client.kyc.update({
@@ -547,7 +677,9 @@ export class KycService {
         data: {
           veriffStatus: decision.status,
           veriffReason: decision.reason || decision.reasonCode || null,
-          veriffDecisionTime: decision.decisionTime ? new Date(decision.decisionTime) : null,
+          veriffDecisionTime: decision.decisionTime
+            ? new Date(decision.decisionTime)
+            : null,
           status: kycStatus,
           currentStep: kycStatus === 'APPROVED' ? 4 : kyc.currentStep,
         },
@@ -607,4 +739,3 @@ export class KycService {
     };
   }
 }
-
