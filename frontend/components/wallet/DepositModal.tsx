@@ -224,13 +224,13 @@ export default function DepositModal({ visible, onClose, onSuccess }: DepositMod
         styles={{
           body: {
             padding: token.paddingLG,
-            paddingTop: 60,
             minHeight: '100vh',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            overflowY: 'auto',
           },
-          wrapper: { borderRadius: 0 },
+          wrapper: { borderRadius: 0, overflow: 'auto' },
           mask: { background: token.colorBgContainer },
         }}
         style={{ top: 0, margin: 0, padding: 0, maxWidth: '100vw' }}
@@ -331,20 +331,21 @@ export default function DepositModal({ visible, onClose, onSuccess }: DepositMod
       zIndex={token.zIndexPopupBase + 20}
       styles={{
         body: {
-          padding: token.paddingLG,
-          paddingTop: 60,
+          padding: token.paddingMD,
+          paddingTop: token.paddingMD,
           minHeight: '100vh',
           boxSizing: 'border-box',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          justifyContent: isMobile ? 'flex-start' : 'center',
+          justifyContent: 'flex-start',
+          overflowY: 'auto',
         },
         wrapper: {
           borderRadius: 0,
           minHeight: '100vh',
           boxShadow: 'none',
-          overflow: 'hidden',
+          overflow: 'auto',
         },
         mask: {
           background: token.colorBgContainer,
@@ -381,7 +382,7 @@ export default function DepositModal({ visible, onClose, onSuccess }: DepositMod
           boxShadow: token.boxShadowSecondary,
         }}
       />
-      <div style={{ maxWidth: 520, width: '100%' }}>
+      <div style={{ maxWidth: 520, width: '100%', marginTop: 16, paddingBottom: token.paddingXL }}>
       <AnimatePresence mode="wait">
         {/* Learner Mode Simulation Success */}
         {simulationSuccess && amount ? (
