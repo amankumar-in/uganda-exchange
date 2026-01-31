@@ -349,13 +349,6 @@ export default function DepositModal({ visible, onClose, onSuccess }: DepositMod
         mask: {
           background: token.colorBgContainer,
         },
-        content: {
-          maxWidth: isMobile ? '100%' : 520,
-          width: '100%',
-          margin: '0 auto',
-          boxShadow: 'none',
-          background: 'transparent',
-        },
       }}
       style={{
         top: 0,
@@ -388,6 +381,7 @@ export default function DepositModal({ visible, onClose, onSuccess }: DepositMod
           boxShadow: token.boxShadowSecondary,
         }}
       />
+      <div style={{ maxWidth: 520, width: '100%' }}>
       <AnimatePresence mode="wait">
         {/* Learner Mode Simulation Success */}
         {simulationSuccess && amount ? (
@@ -721,6 +715,7 @@ export default function DepositModal({ visible, onClose, onSuccess }: DepositMod
           </motion.div>
         ) : null}
       </AnimatePresence>
+      </div>
     </Modal>
   );
 }
