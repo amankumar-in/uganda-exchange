@@ -26,6 +26,7 @@ export interface KycStatus {
   currentStep: number;
   status: 'PENDING' | 'SUBMITTED' | 'APPROVED' | 'REJECTED';
   veriffStatus: string | null;
+  veriffReason: string | null;
   hasPersonalDetails: boolean;
   hasAddress: boolean;
   hasVeriffSession: boolean;

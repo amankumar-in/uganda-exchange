@@ -8,6 +8,7 @@ import {
   FolderOutlined,
   TeamOutlined,
   DollarOutlined,
+  GlobalOutlined,
 } from '@ant-design/icons';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
@@ -22,6 +23,7 @@ interface AdminLayoutProps {
   children: React.ReactNode;
   selectedKey?: string;
   title?: string;
+  subtitle?: string;
   hideHeader?: boolean;
 }
 
@@ -29,6 +31,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   children,
   selectedKey = 'users',
   title,
+  subtitle,
   hideHeader = false,
 }) => {
   const router = useRouter();
@@ -71,6 +74,11 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
       key: 'p2p-disputes',
       icon: <TeamOutlined />,
       label: <Link href="/admin/p2p/disputes">P2P Disputes</Link>,
+    },
+    {
+      key: 'kyc-restrictions',
+      icon: <GlobalOutlined />,
+      label: <Link href="/admin/kyc-restrictions">KYC Restrictions</Link>,
     },
     {
       key: 'assets',
@@ -163,23 +171,36 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 
       <Layout style={{ marginLeft: 240, background: isDark ? token.colorBgLayout : '#f5f5f5' }}>
         {!hideHeader && (
-          <Header style={{ 
-            padding: '0 24px', 
+          <Header style={{
+            padding: '0 24px',
+            height: 'auto',
+            minHeight: 64,
+            lineHeight: 'normal',
+            paddingTop: 16,
+            paddingBottom: 16,
             background: token.colorBgContainer,
             borderBottom: `1px solid ${token.colorBorderSecondary}`,
             display: 'flex',
             alignItems: 'center',
           }}>
-            <Title level={4} style={{ margin: 0, color: token.colorText }}>
-              {title || (
-                <>
-                  {selectedKey === 'users' && 'User Management'}
-                  {selectedKey === 'p2p-disputes' && 'P2P Disputes'}
-                  {selectedKey === 'college-coins' && 'Demo College Coins (Learner Mode)'}
-                  {selectedKey === 'media' && 'Media Manager'}
-                </>
+            <div>
+              <Title level={4} style={{ margin: 0, color: token.colorText }}>
+                {title || (
+                  <>
+                    {selectedKey === 'users' && 'User Management'}
+                    {selectedKey === 'p2p-disputes' && 'P2P Disputes'}
+                    {selectedKey === 'kyc-restrictions' && 'KYC Restrictions'}
+                    {selectedKey === 'college-coins' && 'Demo College Coins (Learner Mode)'}
+                    {selectedKey === 'media' && 'Media Manager'}
+                  </>
+                )}
+              </Title>
+              {subtitle && (
+                <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                  {subtitle}
+                </Typography.Text>
               )}
-            </Title>
+            </div>
           </Header>
         )}
 

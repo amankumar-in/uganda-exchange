@@ -15,7 +15,7 @@ import { getKycStatus, checkVeriffDecision, KycStatus } from '@/services/api/onb
 const { useToken } = theme;
 const { useBreakpoint } = Grid;
 
-type StatusType = 'loading' | 'approved' | 'pending' | 'rejected' | 'error';
+type StatusType = 'loading' | 'approved' | 'pending' | 'rejected' | 'retry' | 'incomplete' | 'error';
 
 // Theme colors
 const themeColors = {
@@ -57,17 +57,48 @@ export default function StatusPage() {
         const kycStatus = await getKycStatus();
         setKycData(kycStatus);
 
+        // If already decided, show result
         if (kycStatus.status === 'APPROVED') {
           setStatus('approved');
+          return;
         } else if (kycStatus.status === 'REJECTED') {
           setStatus('rejected');
+          setRejectReason(kycStatus.veriffReason);
+          return;
+        }
+
+        // If there's a session, check with Veriff directly before deciding what to show
+        // This handles cases where webhook is delayed or didn't arrive
+        if (kycStatus.hasVeriffSession) {
           try {
             const decision = await checkVeriffDecision();
-            setRejectReason(decision.reason);
+            if (decision.status === 'APPROVED') {
+              setStatus('approved');
+              return;
+            } else if (decision.status === 'REJECTED') {
+              setStatus('rejected');
+              setRejectReason(decision.reason);
+              return;
+            } else if (decision.status === 'SUBMITTED') {
+              // User actually submitted, waiting for decision
+              setStatus('pending');
+              return;
+            }
+            // Still PENDING after checking - show pending, not incomplete
+            // (Veriff may be processing)
+            setStatus('pending');
+            return;
           } catch {
-            // Ignore
+            // If Veriff check fails, fall through to show based on local status
           }
-        } else if (kycStatus.status === 'SUBMITTED' || kycStatus.hasVeriffSession) {
+        }
+
+        // No session cases
+        if (kycStatus.veriffReason && !kycStatus.hasVeriffSession) {
+          // Had a retriable rejection - show retry screen with reason
+          setStatus('retry');
+          setRejectReason(kycStatus.veriffReason);
+        } else if (kycStatus.status === 'SUBMITTED') {
           setStatus('pending');
         } else {
           router.push('/onboarding');
@@ -272,7 +303,7 @@ export default function StatusPage() {
       }}>
         <CloseCircleOutlined style={{ fontSize: 50, color: '#EF4444' }} />
       </div>
-      
+
       <div>
         <h2 style={{
           fontSize: isMobile ? 22 : 28,
@@ -287,13 +318,13 @@ export default function StatusPage() {
           fontSize: token.fontSize,
           color: 'rgba(255,255,255,0.8)',
         }}>
-          Don't worry - you can try again
+          We were unable to verify your identity
         </p>
       </div>
 
       {rejectReason && (
         <Alert
-          type="warning"
+          type="error"
           message="Reason"
           description={rejectReason}
           showIcon
@@ -302,9 +333,125 @@ export default function StatusPage() {
       )}
 
       <div style={getCardStyle()}>
-        <div style={{ 
-          fontSize: token.fontSizeSM, 
-          fontWeight: fontWeights.semibold, 
+        <p style={{
+          fontSize: token.fontSize,
+          color: '#ffffff',
+          marginBottom: 0,
+        }}>
+          If you believe this is an error, please contact our support team for assistance.
+        </p>
+      </div>
+
+      <Button
+        size="large"
+        block
+        onClick={() => window.location.href = '/support'}
+        style={getButtonStyle(false)}
+      >
+        Contact Support
+      </Button>
+    </motion.div>
+  );
+
+  const renderIncomplete = () => (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: token.marginLG, textAlign: 'center' }}
+    >
+      <div style={{
+        width: 100,
+        height: 100,
+        borderRadius: '50%',
+        background: 'rgba(251, 191, 36, 0.2)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
+        <ClockCircleOutlined style={{ fontSize: 50, color: '#FBBF24' }} />
+      </div>
+
+      <div>
+        <h2 style={{
+          fontSize: isMobile ? 22 : 28,
+          fontWeight: fontWeights.bold,
+          color: '#ffffff',
+          marginBottom: token.marginXS,
+          textShadow: '0 2px 4px rgba(0,0,0,0.3)',
+        }}>
+          Complete Your Verification
+        </h2>
+        <p style={{
+          fontSize: token.fontSize,
+          color: 'rgba(255,255,255,0.8)',
+          maxWidth: 300,
+        }}>
+          You started the verification process but didn't finish. Please complete it to continue.
+        </p>
+      </div>
+
+      <Button
+        type="primary"
+        size="large"
+        block
+        onClick={() => router.push('/onboarding/verify')}
+        style={getButtonStyle()}
+      >
+        Continue Verification <ArrowRightOutlined />
+      </Button>
+    </motion.div>
+  );
+
+  const renderRetry = () => (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: token.marginLG, textAlign: 'center' }}
+    >
+      <div style={{
+        width: 100,
+        height: 100,
+        borderRadius: '50%',
+        background: 'rgba(251, 191, 36, 0.2)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
+        <ReloadOutlined style={{ fontSize: 50, color: '#FBBF24' }} />
+      </div>
+
+      <div>
+        <h2 style={{
+          fontSize: isMobile ? 22 : 28,
+          fontWeight: fontWeights.bold,
+          color: '#ffffff',
+          marginBottom: token.marginXS,
+          textShadow: '0 2px 4px rgba(0,0,0,0.3)',
+        }}>
+          Please Try Again
+        </h2>
+        <p style={{
+          fontSize: token.fontSize,
+          color: 'rgba(255,255,255,0.8)',
+        }}>
+          Your verification needs another attempt
+        </p>
+      </div>
+
+      {rejectReason && (
+        <Alert
+          type="warning"
+          message="What happened"
+          description={rejectReason}
+          showIcon
+          style={{ width: '100%', textAlign: 'left' }}
+        />
+      )}
+
+      <div style={getCardStyle()}>
+        <div style={{
+          fontSize: token.fontSizeSM,
+          fontWeight: fontWeights.semibold,
           color: 'rgba(255,255,255,0.7)',
           marginBottom: token.marginSM,
         }}>
@@ -314,7 +461,7 @@ export default function StatusPage() {
           '🪪 Use a valid, unexpired ID',
           '💡 Ensure good lighting',
           '📝 Make sure text is readable',
-          '👤 Match the name to your account',
+          '📱 Use a physical document, not a photo of it',
         ].map((tip, index) => (
           <div key={index} style={{
             display: 'flex',
@@ -382,6 +529,8 @@ export default function StatusPage() {
         {status === 'loading' && renderLoading()}
         {status === 'approved' && renderApproved()}
         {status === 'pending' && renderPending()}
+        {status === 'incomplete' && renderIncomplete()}
+        {status === 'retry' && renderRetry()}
         {status === 'rejected' && renderRejected()}
         {status === 'error' && renderError()}
       </OnboardingLayout>

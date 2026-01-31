@@ -108,6 +108,12 @@ model Kyc {
   veriffStatus       String? // approved, declined, resubmission_requested, expired, abandoned
   veriffReason       String? // Decline reason if applicable
 
+  // Document data extracted from Veriff
+  documentCountry  String?  // ISO 3166 country code from document
+  documentState    String?  // ISO 3166-2 subdivision code from document
+  documentType     String?  // DRIVERS_LICENSE, ID_CARD, PASSPORT, etc.
+  stateValidated   Boolean  @default(false)
+
   // Onboarding Progress
   currentStep Int @default(0) // 0: welcome, 1: personal, 2: address, 3: verify, 4: complete
 
@@ -120,6 +126,56 @@ model Kyc {
   updatedAt DateTime @updatedAt
 
   @@map("kyc")
+}
+
+// ============================================
+// KYC REGIONAL RESTRICTIONS
+// ============================================
+
+model AllowedCountry {
+  id             String   @id @default(uuid())
+  countryCode    String   @unique  // ISO 3166-1 alpha-2 (US, CA, GB)
+  countryName    String
+  isActive       Boolean  @default(true)
+  allowAllStates Boolean  @default(false)  // If true, all states allowed
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  allowedStates  AllowedState[]
+
+  @@map("allowed_countries")
+}
+
+model AllowedState {
+  id          String   @id @default(uuid())
+  countryId   String
+  country     AllowedCountry @relation(fields: [countryId], references: [id], onDelete: Cascade)
+  stateCode   String   // ISO 3166-2 subdivision (CA, NY, TX)
+  stateName   String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([countryId, stateCode])
+  @@map("allowed_states")
+}
+
+model KycRejectionLog {
+  id                   String   @id @default(uuid())
+  kycId                String
+  userId               String
+  rejectionType        String   // STATE_MISMATCH, RESTRICTED_STATE, RESTRICTED_COUNTRY, COUNTRY_MISMATCH
+  userProvidedCountry  String?
+  userProvidedState    String?
+  documentCountry      String?
+  documentState        String?
+  reason               String
+  veriffSessionId      String?
+  createdAt            DateTime @default(now())
+
+  @@index([userId])
+  @@index([kycId])
+  @@map("kyc_rejection_logs")
 }
 
 // ============================================

@@ -14,7 +14,7 @@ import { createVeriffSession, checkVeriffDecision, ApiError } from '@/services/a
 const { useToken } = theme;
 const { useBreakpoint } = Grid;
 
-type VerifyState = 'prepare' | 'loading' | 'verifying' | 'processing' | 'error';
+type VerifyState = 'prepare' | 'loading' | 'verifying' | 'waiting' | 'processing' | 'error';
 
 // Theme colors
 const themeColors = {
@@ -55,14 +55,14 @@ export default function VerifyPage() {
     }
   }, [user, router]);
 
-  // Poll for decision when processing
+  // Poll for status updates when waiting or processing
   useEffect(() => {
-    if (state !== 'processing') return;
+    if (state !== 'waiting' && state !== 'processing') return;
 
     const pollInterval = setInterval(async () => {
       try {
         const decision = await checkVeriffDecision();
-        
+
         if (decision.status === 'APPROVED') {
           clearInterval(pollInterval);
           message.success('Verification approved!');
@@ -71,11 +71,14 @@ export default function VerifyPage() {
           clearInterval(pollInterval);
           message.error('Verification was not successful');
           router.push('/onboarding/status');
+        } else if (decision.status === 'SUBMITTED') {
+          // User has submitted, switch to processing view
+          setState('processing');
         } else if (pollingCount >= 60) {
           clearInterval(pollInterval);
           router.push('/onboarding/status');
         }
-        
+
         setPollingCount((prev) => prev + 1);
       } catch {
         // Continue polling
@@ -93,9 +96,9 @@ export default function VerifyPage() {
       const sessionData = await createVeriffSession();
 
       if (sessionData.sessionUrl) {
-        window.open(sessionData.sessionUrl, '_blank');
-        setState('processing');
-        message.info('Complete verification in the new tab');
+        // Redirect to Veriff in same tab - user will be redirected back to status page
+        window.location.href = sessionData.sessionUrl;
+        return;
       } else {
         try {
           const VeriffModule = await import('@veriff/js-sdk');
@@ -271,6 +274,55 @@ export default function VerifyPage() {
     </div>
   );
 
+  const renderWaiting = () => (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      style={{ padding: token.paddingXL, textAlign: 'center' }}
+    >
+      <div style={{
+        width: 80,
+        height: 80,
+        borderRadius: '50%',
+        background: 'rgba(99, 102, 241, 0.2)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        margin: '0 auto',
+        marginBottom: token.marginLG,
+      }}>
+        <CameraOutlined style={{ fontSize: 36, color: themeColors.light }} />
+      </div>
+      <h3 style={{
+        fontSize: token.fontSizeLG,
+        fontWeight: fontWeights.bold,
+        color: '#ffffff',
+        marginBottom: token.marginSM,
+      }}>
+        Complete in Other Tab
+      </h3>
+      <p style={{
+        fontSize: token.fontSize,
+        color: 'rgba(255,255,255,0.7)',
+        marginBottom: token.marginLG,
+        maxWidth: 300,
+        margin: `0 auto ${token.marginLG}px`,
+      }}>
+        A new tab has opened for identity verification. Complete the process there.
+      </p>
+      <Button
+        type="text"
+        onClick={() => {
+          setState('prepare');
+          message.info('You can restart verification when ready.');
+        }}
+        style={{ color: 'rgba(255,255,255,0.6)' }}
+      >
+        I closed the tab - start over
+      </Button>
+    </motion.div>
+  );
+
   const renderProcessing = () => (
     <motion.div
       initial={{ opacity: 0 }}
@@ -333,11 +385,15 @@ export default function VerifyPage() {
 
       <OnboardingLayout
         currentStep={3}
-        title={state === 'processing' ? 'Processing...' : 'Identity Verification'}
+        title={
+          state === 'processing' ? 'Processing...' :
+          state === 'waiting' ? 'Verification in Progress' :
+          'Identity Verification'
+        }
         subtitle={
-          state === 'processing'
-            ? "We're reviewing your documents"
-            : 'Quick ID scan and selfie to verify you'
+          state === 'processing' ? "We're reviewing your documents" :
+          state === 'waiting' ? 'Complete verification in the other tab' :
+          'Quick ID scan and selfie to verify you'
         }
         showBack={state === 'prepare'}
         onBack={() => router.push('/onboarding/address')}
@@ -345,6 +401,7 @@ export default function VerifyPage() {
         {state === 'prepare' && renderPrepare()}
         {state === 'loading' && renderLoading()}
         {state === 'verifying' && renderVerifying()}
+        {state === 'waiting' && renderWaiting()}
         {state === 'processing' && renderProcessing()}
         {state === 'error' && renderError()}
       </OnboardingLayout>

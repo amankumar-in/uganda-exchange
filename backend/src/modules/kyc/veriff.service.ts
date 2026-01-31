@@ -29,14 +29,32 @@ interface VeriffDecision {
     nationality: string | null;
     idNumber: string | null;
     gender: string | null;
+    addresses?: Array<{
+      fullAddress?: string;
+      parsedAddress?: {
+        city?: string;
+        state?: string;
+        country?: string;
+        postcode?: string;
+        street?: string;
+        houseNumber?: string;
+      };
+    }>;
   } | null;
   document: {
     number: string | null;
     type: string;
     country: string;
+    state?: string | null;  // Document issuing state (for driver's licenses, state IDs)
     validFrom: string | null;
     validUntil: string | null;
   } | null;
+}
+
+export interface ExtractedLocation {
+  country: string | null;
+  state: string | null;
+  source: 'document' | 'address' | null;
 }
 
 interface VeriffWebhookPayload {
@@ -197,8 +215,49 @@ export class VeriffService {
     } else if (veriffStatus === 'submitted' || veriffStatus === 'started') {
       return 'SUBMITTED';
     }
-    
+
     return 'PENDING';
+  }
+
+  /**
+   * Extract location data from Veriff decision
+   * Priority: document.state > person.addresses[0].parsedAddress.state
+   */
+  extractLocationFromDecision(decision: VeriffDecision): ExtractedLocation {
+    // Priority 1: Document state (for driver's licenses, state IDs)
+    if (decision.document?.state) {
+      return {
+        country: decision.document.country || null,
+        state: decision.document.state,
+        source: 'document',
+      };
+    }
+
+    // Priority 2: Parsed address from document
+    if (decision.person?.addresses?.length) {
+      const firstAddress = decision.person.addresses[0];
+      if (firstAddress.parsedAddress?.state) {
+        return {
+          country: firstAddress.parsedAddress.country || decision.document?.country || null,
+          state: firstAddress.parsedAddress.state,
+          source: 'address',
+        };
+      }
+    }
+
+    // No state information available (e.g., passport)
+    return {
+      country: decision.document?.country || null,
+      state: null,
+      source: null,
+    };
+  }
+
+  /**
+   * Get the document type from decision
+   */
+  getDocumentType(decision: VeriffDecision): string | null {
+    return decision.document?.type || null;
   }
 }
 
