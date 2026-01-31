@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { theme, Grid } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
+import { PlusOutlined, SyncOutlined } from '@ant-design/icons';
 import { fontWeights } from '@/theme/themeConfig';
 import { useThemeMode } from '@/context/ThemeContext';
 
@@ -12,7 +12,7 @@ const { useBreakpoint } = Grid;
 interface StatCardProps {
   title: string;
   value: string | number;
-  subtitle?: string;
+  subtitle?: string | React.ReactNode;
   icon?: React.ReactNode;
   color?: string;
   gradient?: string;
@@ -22,6 +22,9 @@ interface StatCardProps {
   };
   onDepositClick?: () => void;
   showDepositButton?: boolean;
+  onSyncClick?: () => void;
+  showSyncButton?: boolean;
+  syncLoading?: boolean;
 }
 
 const StatCard: React.FC<StatCardProps> = ({
@@ -34,6 +37,9 @@ const StatCard: React.FC<StatCardProps> = ({
   trend,
   onDepositClick,
   showDepositButton = false,
+  onSyncClick,
+  showSyncButton = false,
+  syncLoading = false,
 }) => {
   const { token } = useToken();
   const { mode } = useThemeMode();
@@ -367,6 +373,29 @@ const StatCard: React.FC<StatCardProps> = ({
               Add Cash
             </button>
           )}
+          {showSyncButton && onSyncClick && (
+            <button
+              onClick={onSyncClick}
+              disabled={syncLoading}
+              style={{
+                background: token.colorWarningBg,
+                border: 'none',
+                borderRadius: token.borderRadius,
+                padding: `${token.paddingXS}px ${token.paddingSM}px`,
+                color: token.colorWarning,
+                fontSize: token.fontSizeSM,
+                fontWeight: fontWeights.semibold,
+                cursor: syncLoading ? 'not-allowed' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                opacity: syncLoading ? 0.6 : 1,
+              }}
+            >
+              <SyncOutlined spin={syncLoading} style={{ fontSize: 11 }} />
+              {syncLoading ? 'Syncing...' : 'Update'}
+            </button>
+          )}
         </div>
 
         {/* Value */}
@@ -446,6 +475,30 @@ const StatCard: React.FC<StatCardProps> = ({
           >
             <PlusOutlined />
             <span>Deposit Cash</span>
+          </button>
+        )}
+        {showSyncButton && onSyncClick && (
+          <button
+            onClick={onSyncClick}
+            disabled={syncLoading}
+            style={{
+              ...depositButtonStyle,
+              opacity: syncLoading ? 0.6 : 1,
+              cursor: syncLoading ? 'not-allowed' : 'pointer',
+            }}
+            onMouseEnter={(e) => {
+              if (!syncLoading) {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.35)';
+                e.currentTarget.style.transform = 'translateY(-1px)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.25)';
+              e.currentTarget.style.transform = 'translateY(0)';
+            }}
+          >
+            <SyncOutlined spin={syncLoading} />
+            <span>{syncLoading ? 'Syncing...' : 'Update Balance'}</span>
           </button>
         )}
       </div>

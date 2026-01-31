@@ -10,7 +10,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { theme, Spin } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
+import { PlusOutlined, SyncOutlined } from '@ant-design/icons';
 import { useThemeMode } from '@/context/ThemeContext';
 import { fontWeights } from '@/theme/themeConfig';
 import { getPortfolioHistory, PortfolioSnapshot } from '@/services/api/learner';
@@ -24,6 +24,8 @@ interface MobilePortfolioCardProps {
   cashBalance: number;
   mode: 'learner' | 'investor';
   onDepositClick?: () => void;
+  onSyncClick?: () => void;
+  syncLoading?: boolean;
 }
 
 type TimeRange = '1D' | '1W' | '1M' | '6M' | '1Y';
@@ -43,6 +45,8 @@ const MobilePortfolioCard: React.FC<MobilePortfolioCardProps> = ({
   cashBalance,
   mode,
   onDepositClick,
+  onSyncClick,
+  syncLoading = false,
 }) => {
   const { token } = useToken();
   const { mode: themeMode } = useThemeMode();
@@ -181,27 +185,52 @@ const MobilePortfolioCard: React.FC<MobilePortfolioCardProps> = ({
             </div>
           </div>
           
-          {onDepositClick && (
-            <button
-              onClick={onDepositClick}
-              style={{
-                background: token.colorPrimaryBg,
-                border: 'none',
-                borderRadius: token.borderRadius,
-                padding: `${token.paddingXS}px ${token.paddingSM}px`,
-                color: token.colorPrimary,
-                fontSize: token.fontSizeSM,
-                fontWeight: fontWeights.semibold,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 4,
-              }}
-            >
-              <PlusOutlined style={{ fontSize: 11 }} />
-              Add Cash
-            </button>
-          )}
+          <div style={{ display: 'flex', gap: 8 }}>
+            {onSyncClick && (
+              <button
+                onClick={onSyncClick}
+                disabled={syncLoading}
+                style={{
+                  background: token.colorWarningBg,
+                  border: 'none',
+                  borderRadius: token.borderRadius,
+                  padding: `${token.paddingXS}px ${token.paddingSM}px`,
+                  color: token.colorWarning,
+                  fontSize: token.fontSizeSM,
+                  fontWeight: fontWeights.semibold,
+                  cursor: syncLoading ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  opacity: syncLoading ? 0.6 : 1,
+                }}
+              >
+                <SyncOutlined spin={syncLoading} style={{ fontSize: 11 }} />
+                {syncLoading ? 'Syncing' : 'Update'}
+              </button>
+            )}
+            {onDepositClick && (
+              <button
+                onClick={onDepositClick}
+                style={{
+                  background: token.colorPrimaryBg,
+                  border: 'none',
+                  borderRadius: token.borderRadius,
+                  padding: `${token.paddingXS}px ${token.paddingSM}px`,
+                  color: token.colorPrimary,
+                  fontSize: token.fontSizeSM,
+                  fontWeight: fontWeights.semibold,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                }}
+              >
+                <PlusOutlined style={{ fontSize: 11 }} />
+                Add Cash
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Change indicator */}

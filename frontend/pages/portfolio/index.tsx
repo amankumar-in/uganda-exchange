@@ -14,6 +14,7 @@ import {
   BankOutlined,
   LineChartOutlined,
   StopOutlined,
+  SyncOutlined,
 } from '@ant-design/icons';
 import { motion, AnimatePresence } from 'motion/react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
@@ -57,6 +58,7 @@ const WalletPage: NextPageWithLayout = () => {
   const [withdrawModalVisible, setWithdrawModalVisible] = useState(false);
   const [depositSuccessVisible, setDepositSuccessVisible] = useState(false);
   const [depositAmount, setDepositAmount] = useState<number | null>(null);
+  const [syncLoading, setSyncLoading] = useState(false);
   const previousBalanceRef = useRef<number>(0);
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
   
@@ -190,6 +192,27 @@ const WalletPage: NextPageWithLayout = () => {
       }
     }
   }, [balances]);
+
+  // Handle manual balance sync for pending deposits
+  const handleSyncBalance = async () => {
+    setSyncLoading(true);
+    try {
+      // Get latest pending deposit transaction
+      const { transactions } = await getFiatTransactions({ type: 'DEPOSIT', limit: 5 });
+      const pendingTx = transactions.find(tx => tx.status === 'PENDING');
+
+      if (pendingTx) {
+        await syncPaymentStatus(pendingTx.id);
+      }
+
+      // Refresh balances regardless
+      await refreshBalances();
+    } catch (error) {
+      console.error('Failed to sync balance:', error);
+    } finally {
+      setSyncLoading(false);
+    }
+  };
 
   // Separate USD and crypto assets
   const usdBalance = useMemo(() => {
@@ -511,6 +534,8 @@ const WalletPage: NextPageWithLayout = () => {
                   cashBalance={fiatBalance}
                   mode={appMode}
                   onDepositClick={() => setDepositModalVisible(true)}
+                  onSyncClick={appMode === 'investor' ? handleSyncBalance : undefined}
+                  syncLoading={syncLoading}
                 />
               </Col>
             ) : isTablet ? (
@@ -570,7 +595,19 @@ const WalletPage: NextPageWithLayout = () => {
                     <StatCard
                       title="Cash Balance"
                       value={`$${fiatBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-                      subtitle="USD"
+                      subtitle={appMode === 'investor' ? (
+                        <span
+                          onClick={handleSyncBalance}
+                          style={{
+                            cursor: syncLoading ? 'not-allowed' : 'pointer',
+                            opacity: syncLoading ? 0.6 : 1,
+                            textDecoration: 'underline',
+                          }}
+                        >
+                          <SyncOutlined spin={syncLoading} style={{ marginRight: 4 }} />
+                          {syncLoading ? 'Updating...' : 'Update Balance'}
+                        </span>
+                      ) : 'USD'}
                       icon={<PlusOutlined />}
                       color={token.colorWarning}
                     />
