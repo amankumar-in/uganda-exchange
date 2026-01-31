@@ -311,7 +311,7 @@ const DashboardPage: NextPageWithLayout = () => {
   }, []);
 
   useEffect(() => {
-    if (!isLoading) {
+    if (!isLoading && !isLoadingBalances) {
       if (!user) {
         router.push('/login?redirect=/overview');
         return;
@@ -320,7 +320,7 @@ const DashboardPage: NextPageWithLayout = () => {
       // KYC banner will be shown in DashboardLayout for non-verified users
       setPageLoading(false);
     }
-  }, [user, isLoading, router]);
+  }, [user, isLoading, isLoadingBalances, router]);
 
   // Fetch watchlist only once
   useEffect(() => {

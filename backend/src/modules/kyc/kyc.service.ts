@@ -196,9 +196,9 @@ export class KycService {
     }
 
     const webhookData = this.veriffService.parseWebhookPayload(payload);
-    const { id: sessionId, attemptId, status, code, reason, reasonCode } = webhookData;
+    const { sessionId, attemptId, status, code, reason, reasonCode, isFullauto } = webhookData;
 
-    this.logger.log(`Veriff webhook received: session=${sessionId}, status=${status}, code=${code}`);
+    this.logger.log(`Veriff webhook received: session=${sessionId}, status=${status}, code=${code}, isFullauto=${isFullauto}`);
 
     // Find KYC by session ID
     const kyc = await this.prisma.client.kyc.findUnique({

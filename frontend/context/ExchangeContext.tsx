@@ -216,7 +216,7 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [candleGranularity, setCandleGranularity] = useState('1H');
   
   const [balances, setBalances] = useState<Balance[]>([]);
-  const [isLoadingBalances, setIsLoadingBalances] = useState(false);
+  const [isLoadingBalances, setIsLoadingBalances] = useState(true); // Start true - will be set false after first fetch
   
   const [orders, setOrders] = useState<InternalOrder[]>([]);
   const [isLoadingOrders, setIsLoadingOrders] = useState(false);
@@ -1231,6 +1231,8 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       // Clear user-specific data on logout
       setBalances([]);
       setOrders([]);
+      setIsLoadingBalances(false); // Not loading when logged out
+      setIsLoadingOrders(false);
     }
   }, [isLoggedIn, appMode, refreshBalances, refreshOrders]);
 

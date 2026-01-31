@@ -57,6 +57,7 @@ export interface ExtractedLocation {
   source: 'document' | 'address' | null;
 }
 
+// Regular webhook payload (status events)
 interface VeriffWebhookPayload {
   id: string;
   attemptId: string;
@@ -69,6 +70,46 @@ interface VeriffWebhookPayload {
   reasonCode: string | null;
   decisionTime: string | null;
   acceptanceTime: string | null;
+}
+
+// Fullauto webhook payload (decision events)
+interface VeriffFullautoPayload {
+  status: string; // "success" or "failed"
+  eventType: string; // "fullauto"
+  sessionId: string;
+  attemptId: string;
+  vendorData: string;
+  time: string;
+  acceptanceTime: string;
+  data: {
+    verification: {
+      decision: string; // "approved", "declined", "resubmission_requested"
+      decisionScore?: number;
+      person?: {
+        firstName?: { value: string | null };
+        lastName?: { value: string | null };
+        dateOfBirth?: { value: string | null };
+      };
+      document?: {
+        type?: { value: string };
+        country?: { value: string };
+        number?: { value: string | null };
+      };
+    };
+  };
+}
+
+// Normalized webhook data for internal use
+export interface NormalizedWebhookData {
+  sessionId: string;
+  attemptId: string;
+  status: string;
+  code: number;
+  reason: string | null;
+  reasonCode: string | null;
+  decisionTime: string | null;
+  acceptanceTime: string | null;
+  isFullauto: boolean;
 }
 
 @Injectable()
@@ -214,10 +255,56 @@ export class VeriffService {
   }
 
   /**
-   * Parse webhook payload
+   * Parse webhook payload - handles both regular and fullauto formats
    */
-  parseWebhookPayload(payload: unknown): VeriffWebhookPayload {
-    return payload as VeriffWebhookPayload;
+  parseWebhookPayload(payload: unknown): NormalizedWebhookData {
+    const p = payload as Record<string, unknown>;
+
+    // Check if this is a fullauto webhook
+    if (p.eventType === 'fullauto') {
+      const fullauto = payload as VeriffFullautoPayload;
+      const decision = fullauto.data?.verification?.decision || 'unknown';
+
+      // Map fullauto decision to code
+      let code = 0;
+      if (decision === 'approved') {
+        code = 9001;
+      } else if (decision === 'declined') {
+        code = 9102; // Generic decline
+      } else if (decision === 'resubmission_requested') {
+        code = 0; // Will be handled by status check
+      }
+
+      console.log(`[Veriff] Fullauto webhook: sessionId=${fullauto.sessionId}, decision=${decision}, code=${code}`);
+
+      return {
+        sessionId: fullauto.sessionId,
+        attemptId: fullauto.attemptId,
+        status: decision, // Use decision as status for fullauto
+        code,
+        reason: null,
+        reasonCode: null,
+        decisionTime: fullauto.time,
+        acceptanceTime: fullauto.acceptanceTime,
+        isFullauto: true,
+      };
+    }
+
+    // Regular webhook format
+    const regular = payload as VeriffWebhookPayload;
+    console.log(`[Veriff] Regular webhook: id=${regular.id}, status=${regular.status}, code=${regular.code}`);
+
+    return {
+      sessionId: regular.id,
+      attemptId: regular.attemptId,
+      status: regular.status,
+      code: regular.code || 0,
+      reason: regular.reason,
+      reasonCode: regular.reasonCode,
+      decisionTime: regular.decisionTime,
+      acceptanceTime: regular.acceptanceTime,
+      isFullauto: false,
+    };
   }
 
   /**
