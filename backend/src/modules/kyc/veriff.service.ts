@@ -166,15 +166,33 @@ export class VeriffService {
    * Verify webhook signature
    */
   verifyWebhookSignature(payload: string, signature: string): boolean {
+    if (!signature) {
+      console.error('[Veriff] Missing signature header');
+      return false;
+    }
+
     const expectedSignature = crypto
       .createHmac('sha256', this.sharedSecretKey)
       .update(payload)
       .digest('hex');
 
-    return crypto.timingSafeEqual(
-      Buffer.from(signature.toLowerCase()),
-      Buffer.from(expectedSignature.toLowerCase()),
-    );
+    // Debug logging (remove in production after debugging)
+    console.log('[Veriff] Signature verification:');
+    console.log('[Veriff]   Received signature:', signature.substring(0, 16) + '...');
+    console.log('[Veriff]   Expected signature:', expectedSignature.substring(0, 16) + '...');
+    console.log('[Veriff]   Payload length:', payload.length);
+    console.log('[Veriff]   Payload preview:', payload.substring(0, 100) + '...');
+
+    // timingSafeEqual requires equal length buffers
+    const sigBuffer = Buffer.from(signature.toLowerCase());
+    const expectedBuffer = Buffer.from(expectedSignature.toLowerCase());
+
+    if (sigBuffer.length !== expectedBuffer.length) {
+      console.error('[Veriff] Signature length mismatch:', sigBuffer.length, 'vs', expectedBuffer.length);
+      return false;
+    }
+
+    return crypto.timingSafeEqual(sigBuffer, expectedBuffer);
   }
 
   /**

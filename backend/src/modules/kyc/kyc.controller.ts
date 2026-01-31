@@ -92,7 +92,19 @@ export class KycController {
     @Headers('x-hmac-signature') signature: string,
     @Body() payload: unknown,
   ) {
-    const rawBody = req.rawBody?.toString() || JSON.stringify(payload);
+    // Raw body is required for HMAC signature verification
+    const rawBodyBuffer = req.rawBody as Buffer;
+
+    if (!rawBodyBuffer) {
+      console.error('[Veriff Webhook] Missing raw body - signature verification will fail');
+      console.error('[Veriff Webhook] req.rawBody type:', typeof req.rawBody);
+      console.error('[Veriff Webhook] Headers:', JSON.stringify(req.headers, null, 2));
+      throw new Error('Missing raw body for webhook signature verification');
+    }
+
+    const rawBody = rawBodyBuffer.toString('utf8');
+    console.log(`[Veriff Webhook] Received webhook, signature: ${signature?.substring(0, 16)}...`);
+
     return this.kycService.handleVeriffWebhook(payload, signature, rawBody);
   }
 }
