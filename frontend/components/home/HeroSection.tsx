@@ -327,7 +327,7 @@ export default function HeroSection() {
         width={500}
         height={600}
         priority
-        sizes="(max-width: 768px) 320px, (max-width: 1024px) 400px, 500px"
+        unoptimized
         style={{
           position: "absolute",
           bottom: 0,

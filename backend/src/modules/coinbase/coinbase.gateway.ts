@@ -11,10 +11,11 @@ import {
 import { Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { PriceCacheService, PriceCache } from './price-cache.service';
+import { getWebSocketCorsOrigins } from '../../cors.utils';
 
 @WebSocketGateway({
   cors: {
-    origin: ['http://localhost:3000', 'http://localhost:3001', process.env.FRONTEND_URL],
+    origin: getWebSocketCorsOrigins(),
     credentials: true,
   },
   namespace: '/prices',
