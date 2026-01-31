@@ -213,43 +213,50 @@ export default function DepositModal({ visible, onClose, onSuccess }: DepositMod
   if (!STRIPE_PUBLISHABLE_KEY || !stripePromise) {
     return (
       <Modal
-        title={isMobile ? undefined : "Deposit Funds"}
         open={visible}
         onCancel={onClose}
         footer={null}
-        width={isMobile ? '100vw' : 520}
-        centered={!isMobile}
-        closable={!isMobile}
-        zIndex={isMobile ? token.zIndexPopupBase + 20 : undefined}
-        styles={isMobile ? {
-          body: { padding: token.paddingLG, paddingTop: 60 },
+        width="100vw"
+        centered={false}
+        closable={false}
+        maskClosable={false}
+        zIndex={token.zIndexPopupBase + 20}
+        styles={{
+          body: {
+            padding: token.paddingLG,
+            paddingTop: 60,
+            minHeight: '100vh',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          },
           wrapper: { borderRadius: 0 },
           mask: { background: token.colorBgContainer },
-        } : undefined}
-        style={isMobile ? { top: 0, margin: 0, padding: 0, maxWidth: '100vw' } : undefined}
-        wrapClassName={isMobile ? 'mobile-fullscreen-modal' : undefined}
+        }}
+        style={{ top: 0, margin: 0, padding: 0, maxWidth: '100vw' }}
+        wrapClassName="fullscreen-modal"
       >
-        {isMobile && (
-          <Button
-            type="text"
-            icon={<CloseOutlined style={{ fontSize: 20 }} />}
-            onClick={onClose}
-            style={{
-              position: 'absolute',
-              top: 16,
-              right: 16,
-              zIndex: 10,
-              width: 40,
-              height: 40,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderRadius: '50%',
-              color: token.colorTextSecondary,
-            }}
-          />
-        )}
-        <div style={{ padding: token.paddingLG, textAlign: 'center' }}>
+        <Button
+          type="text"
+          icon={<CloseOutlined style={{ fontSize: 20 }} />}
+          onClick={onClose}
+          style={{
+            position: 'fixed',
+            top: 16,
+            right: 16,
+            zIndex: 10,
+            width: 40,
+            height: 40,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: '50%',
+            color: token.colorTextSecondary,
+            backgroundColor: token.colorBgElevated,
+            boxShadow: token.boxShadowSecondary,
+          }}
+        />
+        <div style={{ padding: token.paddingLG, textAlign: 'center', maxWidth: 520 }}>
           <Text style={{ color: token.colorError }}>
             Stripe is not configured. Please add NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY to your .env file.
           </Text>
@@ -317,58 +324,70 @@ export default function DepositModal({ visible, onClose, onSuccess }: DepositMod
       open={visible}
       onCancel={handleClose}
       footer={null}
-      width={isMobile ? '100vw' : 520}
-      centered={!isMobile}
+      width="100vw"
+      centered={false}
       closable={false}
-      zIndex={isMobile ? token.zIndexPopupBase + 20 : undefined}
+      maskClosable={false}
+      zIndex={token.zIndexPopupBase + 20}
       styles={{
         body: {
-          padding: isMobile ? token.paddingLG : token.paddingXL,
-          paddingTop: isMobile ? 60 : token.paddingXL,
-          minHeight: isMobile ? '100vh' : undefined,
+          padding: token.paddingLG,
+          paddingTop: 60,
+          minHeight: '100vh',
           boxSizing: 'border-box',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: isMobile ? 'flex-start' : 'center',
         },
-        wrapper: isMobile ? {
+        wrapper: {
           borderRadius: 0,
           minHeight: '100vh',
           boxShadow: 'none',
           overflow: 'hidden',
-        } : undefined,
-        mask: isMobile ? {
+        },
+        mask: {
           background: token.colorBgContainer,
-        } : undefined,
+        },
+        content: {
+          maxWidth: isMobile ? '100%' : 520,
+          width: '100%',
+          margin: '0 auto',
+          boxShadow: 'none',
+          background: 'transparent',
+        },
       }}
-      style={isMobile ? {
+      style={{
         top: 0,
         left: 0,
         margin: 0,
         padding: 0,
         maxWidth: '100vw',
         height: '100vh',
-      } : undefined}
-      wrapClassName={isMobile ? 'mobile-fullscreen-modal' : undefined}
+      }}
+      wrapClassName="fullscreen-modal"
     >
-      {/* Custom Close Button for Mobile */}
-      {isMobile && (
-        <Button
-          type="text"
-          icon={<CloseOutlined style={{ fontSize: 20 }} />}
-          onClick={handleClose}
-          style={{
-            position: 'absolute',
-            top: 16,
-            right: 16,
-            zIndex: 10,
-            width: 40,
-            height: 40,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            borderRadius: '50%',
-            color: token.colorTextSecondary,
-          }}
-        />
-      )}
+      {/* Custom Close Button */}
+      <Button
+        type="text"
+        icon={<CloseOutlined style={{ fontSize: 20 }} />}
+        onClick={handleClose}
+        style={{
+          position: 'fixed',
+          top: 16,
+          right: 16,
+          zIndex: 10,
+          width: 40,
+          height: 40,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderRadius: '50%',
+          color: token.colorTextSecondary,
+          backgroundColor: token.colorBgElevated,
+          boxShadow: token.boxShadowSecondary,
+        }}
+      />
       <AnimatePresence mode="wait">
         {/* Learner Mode Simulation Success */}
         {simulationSuccess && amount ? (

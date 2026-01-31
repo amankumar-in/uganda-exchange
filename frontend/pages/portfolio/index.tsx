@@ -128,8 +128,8 @@ const WalletPage: NextPageWithLayout = () => {
           const { transactions } = await getFiatTransactions({ type: 'DEPOSIT', limit: 1 });
           if (transactions.length > 0) {
             setDepositAmount(transactions[0].amount);
-            if (transactions[0].status === 'COMPLETED') {
-              // Try to sync payment status
+            if (transactions[0].status === 'PENDING') {
+              // Try to sync payment status (webhook hasn't processed yet)
               await syncPaymentStatus(transactions[0].id);
             }
           }
