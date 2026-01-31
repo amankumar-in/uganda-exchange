@@ -178,6 +178,7 @@ export class VeriffService {
 
     // Debug logging (remove in production after debugging)
     console.log('[Veriff] Signature verification:');
+    console.log('[Veriff]   Shared secret key prefix:', this.sharedSecretKey.substring(0, 8) + '...');
     console.log('[Veriff]   Received signature:', signature.substring(0, 16) + '...');
     console.log('[Veriff]   Expected signature:', expectedSignature.substring(0, 16) + '...');
     console.log('[Veriff]   Payload length:', payload.length);

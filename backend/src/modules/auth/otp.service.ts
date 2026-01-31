@@ -68,13 +68,9 @@ export class OtpService {
     
     await this.storeOtp(key, code);
     await this.emailService.sendOTP(email, code, 'email');
-    
-    // Log OTP in development mode for easier testing
-    const nodeEnv = this.configService.get<string>('NODE_ENV');
-    if (nodeEnv === 'development' || nodeEnv !== 'production') {
-      console.log(`📧 [DEV] Email OTP for ${email} (${type}): ${code}`);
-    }
-    
+
+    console.log(`📧 Email OTP for ${email} (${type}): ${code}`);
+
     return code;
   }
 
