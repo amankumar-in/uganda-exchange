@@ -112,6 +112,9 @@ export class AuthService {
     // Hash password
     const passwordHash = await bcrypt.hash(password, 10);
 
+    console.log(`[SIGNUP DEBUG] Step 1: Creating user ${email}`);
+    const startCreate = Date.now();
+
     // Create user
     const user = await this.prisma.client.user.create({
       data: {
@@ -126,16 +129,23 @@ export class AuthService {
       },
     });
 
+    console.log(`[SIGNUP DEBUG] Step 2: User created ${user.id} in ${Date.now() - startCreate}ms`);
+
     // Initialize learner account with $10,000 virtual balance
     try {
+      console.log(`[SIGNUP DEBUG] Step 3: Starting learner account initialization for ${user.id}`);
+      const startInit = Date.now();
       await this.learnerService.initializeLearnerAccount(user.id);
+      console.log(`[SIGNUP DEBUG] Step 4: Learner account initialized for ${user.id} in ${Date.now() - startInit}ms`);
       this.logger.log(`Initialized learner account for new user ${user.id}`);
     } catch (error) {
+      console.log(`[SIGNUP DEBUG] Step 4 FAILED: Learner init failed for ${user.id}`, error);
       this.logger.error(`Failed to initialize learner account for user ${user.id}`, error);
       // Don't fail registration if learner account initialization fails
       // It will be created on first learner mode access
     }
 
+    console.log(`[SIGNUP DEBUG] Step 5: Returning success for ${user.id}, total time: ${Date.now() - startCreate}ms`);
     return {
       message: 'Account created successfully. Please login.',
     };

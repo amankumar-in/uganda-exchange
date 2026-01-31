@@ -77,17 +77,24 @@ export class LearnerService {
    * Creates $40,000 USD balance + $15,000 worth of up to 4 college coins
    */
   async initializeLearnerAccount(userId: string): Promise<void> {
+    console.log(`[INIT DEBUG] Starting initializeLearnerAccount for ${userId}`);
+    const startTime = Date.now();
+
     // Check if already initialized
     const existing = await this.prisma.client.learnerFiatBalance.findUnique({
       where: { userId },
     });
 
     if (existing) {
+      console.log(`[INIT DEBUG] Account already exists for ${userId}, returning early`);
       this.logger.log(`Learner account already exists for user ${userId}`);
       return;
     }
 
+    console.log(`[INIT DEBUG] No existing account for ${userId}, creating new one`);
+
     // Create initial fiat balance with $40,000
+    console.log(`[INIT DEBUG] Creating fiat balance for ${userId}`);
     await this.prisma.client.learnerFiatBalance.create({
       data: {
         userId,
@@ -97,6 +104,7 @@ export class LearnerService {
         lockedBalance: 0,
       },
     });
+    console.log(`[INIT DEBUG] Fiat balance created for ${userId}`);
 
     // Track crypto value for portfolio snapshot
     let totalCryptoValue = 0;
@@ -158,6 +166,7 @@ export class LearnerService {
 
     const totalValue = this.CASH_BALANCE + totalCryptoValue;
 
+    console.log(`[INIT DEBUG] Creating portfolio snapshot for ${userId}`);
     await this.prisma.client.learnerPortfolioSnapshot.create({
       data: {
         userId,
@@ -168,12 +177,14 @@ export class LearnerService {
         snapshotDate: today,
       },
     });
+    console.log(`[INIT DEBUG] Portfolio snapshot created for ${userId}`);
 
     if (coinsGiven.length > 0) {
       this.logger.log(`Initialized learner account for user ${userId} with $${this.CASH_BALANCE} cash + ${coinsGiven.length} college coins: ${coinsGiven.join(', ')}`);
     } else {
       this.logger.log(`Initialized learner account for user ${userId} with $${this.CASH_BALANCE} cash (no college coins available)`);
     }
+    console.log(`[INIT DEBUG] Completed initializeLearnerAccount for ${userId} in ${Date.now() - startTime}ms`);
   }
 
   /**
@@ -223,8 +234,13 @@ export class LearnerService {
    * Get all learner balances (fiat + crypto)
    */
   async getLearnerBalances(userId: string): Promise<LearnerBalanceResponse[]> {
+    console.log(`[BALANCE DEBUG] getLearnerBalances called for ${userId}`);
+    const startTime = Date.now();
+
     // Ensure account is initialized
+    console.log(`[BALANCE DEBUG] Calling initializeLearnerAccount for ${userId}`);
     await this.initializeLearnerAccount(userId);
+    console.log(`[BALANCE DEBUG] initializeLearnerAccount returned for ${userId} in ${Date.now() - startTime}ms`);
 
     const [fiatBalance, cryptoBalances] = await Promise.all([
       this.prisma.client.learnerFiatBalance.findUnique({
@@ -234,6 +250,8 @@ export class LearnerService {
         where: { userId },
       }),
     ]);
+
+    console.log(`[BALANCE DEBUG] Queried balances for ${userId}: fiat=${fiatBalance ? 'exists' : 'null'}, crypto count=${cryptoBalances.length}`);
 
     const balances: LearnerBalanceResponse[] = [];
 
@@ -257,6 +275,7 @@ export class LearnerService {
       });
     }
 
+    console.log(`[BALANCE DEBUG] Returning ${balances.length} balances for ${userId} in ${Date.now() - startTime}ms`);
     return balances;
   }
 
