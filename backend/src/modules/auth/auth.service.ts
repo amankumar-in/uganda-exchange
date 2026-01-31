@@ -161,9 +161,17 @@ export class AuthService {
 
     console.log(`[LOGIN DEBUG] Login attempt for email: ${email}`);
 
-    // Find user
+    // Find user with KYC data for name
     const user = await this.prisma.client.user.findUnique({
       where: { email },
+      include: {
+        kyc: {
+          select: {
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
     });
 
     if (!user) {
@@ -205,6 +213,8 @@ export class AuthService {
         role: user.role,
         emailVerified: user.emailVerified,
         phoneVerified: user.phoneVerified,
+        firstName: user.kyc?.firstName || null,
+        lastName: user.kyc?.lastName || null,
       },
     };
   }
