@@ -140,6 +140,8 @@ export class VeriffService {
    * Get verification decision from Veriff
    */
   async getDecision(sessionId: string): Promise<VeriffDecision | null> {
+    console.log(`[Veriff getDecision] Fetching decision for session: ${sessionId}`);
+
     const response = await fetch(`${this.baseUrl}/sessions/${sessionId}/decision`, {
       method: 'GET',
       headers: {
@@ -149,16 +151,21 @@ export class VeriffService {
       },
     });
 
+    console.log(`[Veriff getDecision] Response status: ${response.status}`);
+
     if (!response.ok) {
       if (response.status === 404) {
+        console.log(`[Veriff getDecision] 404 - Decision not yet available`);
         return null; // Decision not yet available
       }
       const error = await response.text();
+      console.log(`[Veriff getDecision] Error response: ${error}`);
       this.logger.error(`Veriff decision fetch failed: ${error}`);
       throw new Error(`Failed to get Veriff decision: ${error}`);
     }
 
     const data = await response.json();
+    console.log(`[Veriff getDecision] Success - status: ${data.verification?.status}, code: ${data.verification?.code}`);
     return data.verification as VeriffDecision;
   }
 

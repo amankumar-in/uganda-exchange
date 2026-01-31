@@ -519,13 +519,18 @@ export class KycService {
       where: { userId },
     });
 
+    console.log(`[CheckDecision] userId=${userId}, sessionId=${kyc?.veriffSessionId}, dbStatus=${kyc?.status}`);
+
     if (!kyc || !kyc.veriffSessionId) {
       throw new NotFoundException('No active verification session');
     }
 
     const decision = await this.veriffService.getDecision(kyc.veriffSessionId);
 
+    console.log(`[CheckDecision] Veriff response:`, decision ? { status: decision.status, code: decision.code } : 'null');
+
     if (!decision) {
+      console.log(`[CheckDecision] No decision from Veriff, returning db status: ${kyc.status}`);
       return {
         status: kyc.status || 'PENDING',
         veriffStatus: kyc.veriffStatus || null,

@@ -159,19 +159,25 @@ export class AuthService {
     // Normalize email to lowercase for case-insensitive matching
     const email = loginDto.email.toLowerCase().trim();
 
+    console.log(`[LOGIN DEBUG] Login attempt for email: ${email}`);
+
     // Find user
     const user = await this.prisma.client.user.findUnique({
       where: { email },
     });
 
     if (!user) {
+      console.log(`[LOGIN DEBUG] No user found for email: ${email}`);
       throw new UnauthorizedException('Invalid email or password');
     }
+
+    console.log(`[LOGIN DEBUG] Found user: id=${user.id}, email=${user.email}`);
 
     // Verify password
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
 
     if (!isPasswordValid) {
+      console.log(`[LOGIN DEBUG] Invalid password for user: ${user.id}`);
       throw new UnauthorizedException('Invalid email or password');
     }
 
@@ -180,6 +186,8 @@ export class AuthService {
       sub: user.id,
       email: user.email,
     });
+
+    console.log(`[LOGIN DEBUG] Login successful: id=${user.id}, email=${user.email}`);
 
     // Return user info (excluding sensitive data)
     return {
