@@ -49,6 +49,7 @@
     "coinbase-api": "^1.1.7",
     "country-state-city": "^3.2.1",
     "csv-parse": "^6.1.0",
+    "ethers": "^6.16.0",
     "ioredis": "^5.8.2",
     "mime-types": "^3.0.2",
     "passport": "^0.7.0",

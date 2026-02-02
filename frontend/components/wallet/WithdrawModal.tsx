@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Modal, Form, InputNumber, Button, message, theme, Typography, Select, Space, Empty, Divider, Tag } from 'antd';
+import { Modal, Form, InputNumber, Button, message, theme, Typography, Select, Space, Empty, Divider, Tag, Alert } from 'antd';
 import { BankOutlined, ArrowRightOutlined, PlusOutlined, CheckCircleOutlined, ExperimentOutlined } from '@ant-design/icons';
 import { createWithdrawal, getBankAccounts, type BankAccount } from '@/services/api/fiat';
 import { fontWeights } from '@/theme/themeConfig';
@@ -27,6 +27,7 @@ export default function WithdrawModal({ visible, onClose, onSuccess, availableBa
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
   const [simulationSuccess, setSimulationSuccess] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState<number | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { appMode } = useExchange();
   const isLearnerMode = appMode === 'learner';
 
@@ -36,6 +37,7 @@ export default function WithdrawModal({ visible, onClose, onSuccess, availableBa
       loadBankAccounts();
       setSimulationSuccess(false);
       setWithdrawAmount(null);
+      setErrorMessage(null);
     } else {
       form.resetFields();
     }
@@ -80,7 +82,7 @@ export default function WithdrawModal({ visible, onClose, onSuccess, availableBa
         form.resetFields();
       }
     } catch (error: any) {
-      message.error(error.message || 'Failed to create withdrawal');
+      setErrorMessage(error.message || 'Failed to create withdrawal');
     } finally {
       setLoading(false);
     }
@@ -258,6 +260,19 @@ export default function WithdrawModal({ visible, onClose, onSuccess, availableBa
                   Learner Mode - This withdrawal will be simulated
                 </Text>
               </div>
+            )}
+
+            {/* Error Alert */}
+            {errorMessage && (
+              <Alert
+                type="error"
+                showIcon
+                message="Withdrawal Failed"
+                description={errorMessage}
+                closable
+                onClose={() => setErrorMessage(null)}
+                style={{ marginBottom: token.marginMD }}
+              />
             )}
 
             <Form

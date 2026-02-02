@@ -22,6 +22,7 @@ import { UploadsModule } from './modules/uploads/uploads.module';
 import { P2PModule } from './modules/p2p/p2p.module';
 import { TokensModule } from './modules/tokens/tokens.module';
 import { CronModule } from './modules/cron/cron.module';
+import { TuitTransferModule } from './modules/tuit-transfer/tuit-transfer.module';
 
 @Module({
   imports: [
@@ -66,6 +67,8 @@ import { CronModule } from './modules/cron/cron.module';
     TokensModule,
     // Cron jobs
     CronModule,
+    // TUIT Transfer (vesting migration)
+    TuitTransferModule,
   ],
   controllers: [AppController, TestController],
   providers: [AppService, PrismaService, EmailService],

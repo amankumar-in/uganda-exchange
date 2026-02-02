@@ -58,6 +58,10 @@ model User {
   learnerTrades            LearnerTrade[]
   learnerPortfolioSnapshots LearnerPortfolioSnapshot[]
 
+  // TUIT Transfer (Vesting Migration)
+  tuitTransfers            TuitTransfer[]
+  tuitConversionRequests   TuitConversionRequest[]
+
   @@map("users")
 }
 
@@ -936,6 +940,103 @@ model PortfolioSnapshot {
   @@unique([userId, snapshotDate])
   @@index([userId, snapshotDate])
   @@map("portfolio_snapshots")
+}
+
+// ============================================
+// TUIT TRANSFER (Vesting Contract Migration)
+// ============================================
+
+// Authorized wallets from CSV - stores investor allocation data
+model TuitAuthorizedWallet {
+  id            String   @id @default(uuid())
+  name          String   // Investor name from CSV
+  email         String?  // Email (can be null, can repeat)
+  walletAddress String   @unique // Wallet address (unique identifier)
+
+  // Status tracking
+  isActive      Boolean  @default(true) // Admin can deactivate
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  transfers     TuitTransfer[]
+
+  @@index([email])
+  @@map("tuit_authorized_wallets")
+}
+
+// Flow 1: Transfer from vesting allocation to platform balance
+model TuitTransfer {
+  id                    String   @id @default(uuid())
+
+  // User who claimed the transfer
+  userId                String
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Authorized wallet used for this transfer
+  authorizedWalletId    String
+  authorizedWallet      TuitAuthorizedWallet @relation(fields: [authorizedWalletId], references: [id])
+
+  // Email used for verification (may differ from user's email)
+  verificationEmail     String
+
+  // Amounts from smart contract at time of transfer
+  totalAllocated        Decimal  @db.Decimal(30, 18) // Total tokens allocated
+  totalUnlocked         Decimal  @db.Decimal(30, 18) // Total unlocked
+  totalWithdrawn        Decimal  @db.Decimal(30, 18) // Already withdrawn to external wallet
+  amountCredited        Decimal  @db.Decimal(30, 18) // Amount credited to platform (available at time)
+
+  // Status
+  status                TuitTransferStatus @default(COMPLETED)
+
+  createdAt             DateTime @default(now())
+
+  @@unique([authorizedWalletId]) // One transfer per authorized wallet
+  @@unique([userId, authorizedWalletId]) // User can only claim each wallet once
+  @@index([userId])
+  @@map("tuit_transfers")
+}
+
+enum TuitTransferStatus {
+  COMPLETED  // Successfully credited to user
+  FAILED     // Failed to credit (for logging)
+}
+
+// Flow 2: Conversion request for already withdrawn tokens
+model TuitConversionRequest {
+  id                String   @id @default(uuid())
+
+  // User requesting conversion
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Transaction details
+  txHash            String   @unique // Transaction hash of transfer to deposit wallet
+
+  // Amount (parsed from transaction by admin or auto-detected)
+  amount            Decimal? @db.Decimal(30, 18) // Amount of TUIT in the transaction
+
+  // Status
+  status            TuitConversionStatus @default(PENDING)
+
+  // Admin review
+  reviewedBy        String?  // Admin user ID who reviewed
+  reviewNotes       String?  // Admin notes
+  reviewedAt        DateTime?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@map("tuit_conversion_requests")
+}
+
+enum TuitConversionStatus {
+  PENDING    // Awaiting admin review
+  APPROVED   // Approved and credited
+  REJECTED   // Rejected by admin
 }
 
 // ============================================

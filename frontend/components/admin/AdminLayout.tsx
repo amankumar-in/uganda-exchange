@@ -9,6 +9,7 @@ import {
   TeamOutlined,
   DollarOutlined,
   GlobalOutlined,
+  SwapOutlined,
 } from '@ant-design/icons';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
@@ -94,6 +95,11 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
       key: 'media',
       icon: <FolderOutlined />,
       label: <Link href="/admin/media">Media Manager</Link>,
+    },
+    {
+      key: 'tuit-transfer',
+      icon: <SwapOutlined />,
+      label: <Link href="/admin/tuit-transfer">TUIT Transfer</Link>,
     },
   ];
 

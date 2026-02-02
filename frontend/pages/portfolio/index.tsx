@@ -13,7 +13,7 @@ import {
   CheckCircleOutlined,
   BankOutlined,
   LineChartOutlined,
-  StopOutlined,
+  LinkOutlined,
   SyncOutlined,
 } from '@ant-design/icons';
 import { motion, AnimatePresence } from 'motion/react';
@@ -679,8 +679,11 @@ const WalletPage: NextPageWithLayout = () => {
               >
                 <BankOutlined /> Bank Accounts
               </Button>
-              <Button style={{ ...buttonStyle, opacity: 0.4 }} disabled>
-                <StopOutlined /> Crypto Deposit
+              <Button
+                style={buttonStyle}
+                onClick={() => router.push('/tuit-transfer')}
+              >
+                <LinkOutlined /> Link TUIT Wallet
               </Button>
             </div>
           </motion.div>
@@ -719,18 +722,17 @@ const WalletPage: NextPageWithLayout = () => {
                 <BankOutlined />
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>Banks</span>
               </Button>
-              <Button 
+              <Button
                 style={{
                   ...buttonStyle,
                   backgroundColor: token.colorWarningBg,
                   color: token.colorWarning,
                   border: `1px solid ${token.colorWarning}40`,
-                  opacity: 0.4,
                 }}
-                disabled
+                onClick={() => router.push('/tuit-transfer')}
               >
-                <StopOutlined />
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>Crypto</span>
+                <LinkOutlined />
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>TUIT</span>
               </Button>
             </div>
           </motion.div>

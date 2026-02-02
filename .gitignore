@@ -12,6 +12,7 @@ node_modules/
 # testing
 /coverage
 **/coverage
+**/tuitwallet/
 
 # next.js (frontend)
 .next/
@@ -49,3 +50,5 @@ next-env.d.ts
 
 # prisma - keep migrations in git for production deployments
 # backend/prisma/migrations/
+tuit-transfer-data - Sheet1.csv
+tuit-transfer-flow.md
