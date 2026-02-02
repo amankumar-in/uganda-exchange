@@ -67,6 +67,73 @@ export class OrdersService {
     const { userId, productId, side, amount } = dto;
     const [asset, quote] = productId.split('-');
 
+    // === TOKEN PERMISSION ENFORCEMENT ===
+    const baseToken = await this.tokensService.findBySymbol(asset);
+    if (baseToken) {
+      // Check buy/sell permissions
+      if (side === 'BUY' && !baseToken.allowBuy) {
+        throw new BadRequestException(
+          `Buying ${asset} is currently disabled. Please check back later or contact support.`
+        );
+      }
+      if (side === 'SELL' && !baseToken.allowSell) {
+        throw new BadRequestException(
+          `Selling ${asset} is currently disabled. Please check back later or contact support.`
+        );
+      }
+
+      // Check trading pair permissions
+      const pairChecks: Record<string, boolean | null> = {
+        'USD': baseToken.allowTradeUsd,
+        'USDT': baseToken.allowTradeUsdt,
+        'ETH': baseToken.allowTradeEth,
+        'TUIT': baseToken.allowTradeTuit,
+      };
+      if (pairChecks[quote] === false) {
+        throw new BadRequestException(`${asset}-${quote} trading pair is not available.`);
+      }
+
+      // Enforce transaction limits (calculate USD value first)
+      const tokenPrice = baseToken.currentPrice || Number(baseToken.manualPrice) || 0;
+      let usdValueForLimits: number;
+
+      if (side === 'BUY' && quote === 'USD') {
+        usdValueForLimits = amount;
+      } else if (side === 'SELL') {
+        usdValueForLimits = amount * tokenPrice;
+      } else {
+        // BUY with non-USD quote - convert to USD
+        const quoteCustom = await this.tokensService.findBySymbol(quote);
+        let quoteUsdPrice = 1;
+        if (quoteCustom) {
+          quoteUsdPrice = quoteCustom.currentPrice || Number(quoteCustom.manualPrice) || 1;
+        } else if (quote !== 'USD') {
+          try {
+            const quoteProduct = await this.coinbaseService.getProduct(`${quote}-USD`);
+            quoteUsdPrice = parseFloat(quoteProduct.price || '1');
+          } catch {
+            quoteUsdPrice = 1;
+          }
+        }
+        usdValueForLimits = amount * quoteUsdPrice;
+      }
+
+      const minAmount = Number(baseToken.minTransactionAmount) || 0;
+      const maxAmount = Number(baseToken.maxTransactionAmount) || 0;
+
+      if (minAmount > 0 && usdValueForLimits > 0 && usdValueForLimits < minAmount) {
+        throw new BadRequestException(
+          `Minimum transaction for ${asset} is $${minAmount}. Your order is $${usdValueForLimits.toFixed(2)}.`
+        );
+      }
+      if (maxAmount > 0 && usdValueForLimits > maxAmount) {
+        throw new BadRequestException(
+          `Maximum transaction for ${asset} is $${maxAmount}. Your order is $${usdValueForLimits.toFixed(2)}.`
+        );
+      }
+    }
+    // === END PERMISSION ENFORCEMENT ===
+
     // Validate minimum order size: BUY orders must be at least $1 USD
     if (side === 'BUY') {
       let usdValue: number;

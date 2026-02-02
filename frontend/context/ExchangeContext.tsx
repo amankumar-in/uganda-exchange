@@ -70,6 +70,14 @@ interface TradingPair {
   peggedPercentage?: number;
   isCustomToken?: boolean;
   coingeckoId?: string;
+  // Token permissions
+  permissions?: {
+    allowBuy: boolean;
+    allowSell: boolean;
+    allowP2P: boolean;
+    minTransactionAmount: number;
+    maxTransactionAmount: number;
+  };
 }
 
 interface ExchangeContextType {
@@ -347,10 +355,21 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         if (!token.isActive) return;
         const price = token.currentPrice || token.manualPrice || 0;
         const icon = token.iconUrl || getIconUrl(token.symbol);
+
+        // Build permissions object for this token
+        const permissions = {
+          allowBuy: token.allowBuy ?? true,
+          allowSell: token.allowSell ?? true,
+          allowP2P: token.allowP2P ?? true,
+          minTransactionAmount: Number(token.minTransactionAmount) || 0,
+          maxTransactionAmount: Number(token.maxTransactionAmount) || 0,
+        };
+
         if (token.allowTradeUsd) {
           customPairs.push({
             symbol: `${token.symbol}-USD`, name: token.name, price, change: token.change24h || 0,
             volume: '0', quote: 'USD', baseCurrency: token.symbol, quoteCurrency: 'USD', iconUrl: icon, isCustomToken: true, coingeckoId: token.coingeckoId,
+            permissions,
           });
         }
         if (token.allowTradeUsdt) {
@@ -358,6 +377,7 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           customPairs.push({
             symbol: `${token.symbol}-USDT`, name: token.name, price: usdtPrice, change: token.change24h || 0,
             volume: '0', quote: 'USDT', baseCurrency: token.symbol, quoteCurrency: 'USDT', iconUrl: icon, isCustomToken: true,
+            permissions,
           });
         }
         if (token.allowTradeEth) {
@@ -366,6 +386,7 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             symbol: `${token.symbol}-ETH`, name: token.name, price: ethPrice, change: token.change24h || 0,
             volume: '0', quote: 'ETH', baseCurrency: token.symbol, quoteCurrency: 'ETH', iconUrl: icon, isCustomToken: true,
             peggedToAsset: token.peggedToAsset, peggedPercentage: token.peggedPercentage,
+            permissions,
           });
         }
       });

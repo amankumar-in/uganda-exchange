@@ -74,6 +74,13 @@ interface TradingPair {
   quoteCurrency: string;
   iconUrl: string;
   isCollegeCoin?: boolean;
+  permissions?: {
+    allowBuy: boolean;
+    allowSell: boolean;
+    allowP2P: boolean;
+    minTransactionAmount: number;
+    maxTransactionAmount: number;
+  };
 }
 
 interface BuySellFormProps {
@@ -172,13 +179,24 @@ const BuySellForm: React.FC<BuySellFormProps> = ({
   
   const loading = isLoading || isTrading || isSubmitting;
   const isBuy = side === 'BUY';
-  
+
   // Get selected pair data
   const selectedPair = useMemo(() => {
     return usdPairs.find(p => p.baseCurrency === selectedAsset) || null;
   }, [usdPairs, selectedAsset]);
-  
+
   const price = selectedPair?.price || 0;
+
+  // Get permission restrictions from selected pair
+  const permissions = (selectedPair as TradingPair | null)?.permissions;
+  const isBuyRestricted = permissions && !permissions.allowBuy;
+  const isSellRestricted = permissions && !permissions.allowSell;
+
+  // Token-specific transaction limits (from admin settings)
+  const tokenMinAmount = permissions?.minTransactionAmount || 0;
+  const tokenMaxAmount = permissions?.maxTransactionAmount || 0;
+  const isBelowTokenMin = tokenMinAmount > 0 && cashAmountNum > 0 && cashAmountNum < tokenMinAmount;
+  const isAboveTokenMax = tokenMaxAmount > 0 && cashAmountNum > 0 && cashAmountNum > tokenMaxAmount;
   
   // Balances
   const cashBalance = getBalance('USD');
@@ -375,16 +393,20 @@ const BuySellForm: React.FC<BuySellFormProps> = ({
     : cashAmountNum - fee;
 
   // Button disabled state - calculate once for consistent styling
-  const isButtonDisabled = 
+  const isButtonDisabled =
     !selectedPair ||
-    !cashAmountNum || 
-    cashAmountNum <= 0 || 
+    !cashAmountNum ||
+    cashAmountNum <= 0 ||
     cashAmountNum < 1 || // Minimum $1 USD order value
-    !amountNum || 
-    amountNum <= 0 || 
+    isBelowTokenMin ||
+    isAboveTokenMax ||
+    !amountNum ||
+    amountNum <= 0 ||
     price <= 0 ||
     (isBuy && cashAmountNum > cashBalance + 0.01) ||
-    (!isBuy && amountNum > tokenBalance);
+    (!isBuy && amountNum > tokenBalance) ||
+    (isBuy && isBuyRestricted) ||
+    (!isBuy && isSellRestricted);
 
   // State for fee details expansion
   const [showFeeDetails, setShowFeeDetails] = useState(false);
@@ -771,9 +793,47 @@ const BuySellForm: React.FC<BuySellFormProps> = ({
         </div>
       </div>
       
-      {/* Minimum Order Value Warning */}
+      {/* Permission Restriction Warnings */}
       <AnimatePresence>
-        {cashAmountNum > 0 && cashAmountNum < 1 && (
+        {permissions && isBuy && isBuyRestricted && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              marginBottom: token.marginSM,
+              fontSize: token.fontSize,
+              color: token.colorError,
+              fontWeight: fontWeights.medium,
+            }}
+          >
+            <InfoCircleOutlined style={{ marginRight: 4 }} />
+            Buying {selectedAsset} is currently not available.
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {permissions && !isBuy && isSellRestricted && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              marginBottom: token.marginSM,
+              fontSize: token.fontSize,
+              color: token.colorError,
+              fontWeight: fontWeights.medium,
+            }}
+          >
+            <InfoCircleOutlined style={{ marginRight: 4 }} />
+            Selling {selectedAsset} is currently not available.
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Minimum Order Value Warning (system-wide $1 minimum) */}
+      <AnimatePresence>
+        {cashAmountNum > 0 && cashAmountNum < 1 && !isBelowTokenMin && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -787,6 +847,46 @@ const BuySellForm: React.FC<BuySellFormProps> = ({
           >
             <InfoCircleOutlined style={{ marginRight: 4 }} />
             Minimum order value is $1.00
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Token-specific Minimum Transaction Warning */}
+      <AnimatePresence>
+        {isBelowTokenMin && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              marginBottom: token.marginSM,
+              fontSize: token.fontSize,
+              color: token.colorWarning,
+              fontWeight: fontWeights.medium,
+            }}
+          >
+            <InfoCircleOutlined style={{ marginRight: 4 }} />
+            Minimum transaction for {selectedAsset} is ${tokenMinAmount.toFixed(2)} (current: ${cashAmountNum.toFixed(2)})
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Token-specific Maximum Transaction Warning */}
+      <AnimatePresence>
+        {isAboveTokenMax && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              marginBottom: token.marginSM,
+              fontSize: token.fontSize,
+              color: token.colorError,
+              fontWeight: fontWeights.medium,
+            }}
+          >
+            <InfoCircleOutlined style={{ marginRight: 4 }} />
+            Maximum transaction for {selectedAsset} is ${tokenMaxAmount.toFixed(2)} (current: ${cashAmountNum.toFixed(2)})
           </motion.div>
         )}
       </AnimatePresence>

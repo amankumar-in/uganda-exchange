@@ -1,5 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
+import { TokensService } from '../tokens/tokens.service';
 
 export interface BalanceResponse {
   asset: string;
@@ -13,7 +14,36 @@ export interface BalanceResponse {
 export class AssetsService {
   private readonly logger = new Logger(AssetsService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private tokensService: TokensService,
+  ) {}
+
+  /**
+   * Validate that deposits are allowed for this asset
+   * Call this from any crypto deposit endpoint
+   */
+  async validateDepositPermission(asset: string): Promise<void> {
+    const token = await this.tokensService.findBySymbol(asset);
+    if (token && !token.allowDeposit) {
+      throw new BadRequestException(
+        `Deposits for ${asset} are currently disabled.`
+      );
+    }
+  }
+
+  /**
+   * Validate that withdrawals are allowed for this asset
+   * Call this from any crypto withdrawal endpoint
+   */
+  async validateWithdrawPermission(asset: string): Promise<void> {
+    const token = await this.tokensService.findBySymbol(asset);
+    if (token && !token.allowWithdraw) {
+      throw new BadRequestException(
+        `Withdrawals for ${asset} are currently disabled.`
+      );
+    }
+  }
 
   /**
    * Get all balances for a user

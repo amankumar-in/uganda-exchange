@@ -17,7 +17,9 @@ import {
   List,
   Avatar,
   Tag,
-  Tooltip
+  Tooltip,
+  Checkbox,
+  Alert
 } from 'antd';
 import {
   SaveOutlined,
@@ -133,15 +135,15 @@ export const TokenForm: React.FC<TokenFormProps> = ({
     if (cleanValues.maxTransactionAmount !== undefined) cleanValues.maxTransactionAmount = Number(cleanValues.maxTransactionAmount);
     
     if (priceSource === 'coingecko') {
-      delete cleanValues.contractAddress;
-      delete cleanValues.chain;
+      cleanValues.contractAddress = null;
+      cleanValues.chain = null;
     } else if (priceSource === 'contract') {
-      delete cleanValues.coingeckoId;
+      cleanValues.coingeckoId = null;
     } else {
       // Manual
-      delete cleanValues.coingeckoId;
-      delete cleanValues.contractAddress;
-      delete cleanValues.chain;
+      cleanValues.coingeckoId = null;
+      cleanValues.contractAddress = null;
+      cleanValues.chain = null;
     }
 
     await onSubmit(cleanValues);
@@ -247,64 +249,131 @@ export const TokenForm: React.FC<TokenFormProps> = ({
           </Form.Item>
         </Card>
 
-        {/* Permissions / Toggles */}
-        <Card title="Permissions & Toggles" extra={<Tag color="orange">Step 3</Tag>}>
+        {/* Permissions & Controls */}
+        <Card title="Permissions & Controls" extra={<Tag color="orange">Step 3</Tag>}>
           <Row gutter={[24, 24]}>
+            {/* MARKET ACCESS */}
             <Col span={8}>
-               <Divider titlePlacement="left">Market</Divider>
-               <Form.Item name="allowBuy" valuePropName="checked" style={{ marginBottom: 8 }}>
-                 <Switch checkedChildren="Buy ON" unCheckedChildren="Buy OFF" />
-               </Form.Item>
-               <Form.Item name="allowSell" valuePropName="checked" style={{ marginBottom: 8 }}>
-                 <Switch checkedChildren="Sell ON" unCheckedChildren="Sell OFF" />
-               </Form.Item>
-               <Form.Item name="allowP2P" valuePropName="checked" style={{ marginBottom: 8 }}>
-                 <Switch checkedChildren="P2P ON" unCheckedChildren="P2P OFF" />
-               </Form.Item>
+              <Divider>Market Access</Divider>
+
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 16 }}>
+                <Form.Item name="allowBuy" valuePropName="checked" style={{ marginBottom: 0 }}>
+                  <Switch />
+                </Form.Item>
+                <div>
+                  <div style={{ fontWeight: 600, marginBottom: 4 }}>Allow Buying</div>
+                  <div style={{ fontSize: 12, color: '#666' }}>
+                    Users can purchase this token on the exchange
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 16 }}>
+                <Form.Item name="allowSell" valuePropName="checked" style={{ marginBottom: 0 }}>
+                  <Switch />
+                </Form.Item>
+                <div>
+                  <div style={{ fontWeight: 600, marginBottom: 4 }}>Allow Selling</div>
+                  <div style={{ fontSize: 12, color: '#666' }}>
+                    Users can sell this token on the exchange
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                <Form.Item name="allowP2P" valuePropName="checked" style={{ marginBottom: 0 }}>
+                  <Switch />
+                </Form.Item>
+                <div>
+                  <div style={{ fontWeight: 600, marginBottom: 4 }}>Allow P2P Trading</div>
+                  <div style={{ fontSize: 12, color: '#666' }}>
+                    Users can create peer-to-peer ads and trades
+                  </div>
+                </div>
+              </div>
             </Col>
-            
+
+            {/* WALLET OPERATIONS */}
             <Col span={8}>
-              <Divider titlePlacement="left">Wallet</Divider>
-               <Form.Item name="allowDeposit" valuePropName="checked" style={{ marginBottom: 8 }}>
-                 <Switch checkedChildren="Deposits ON" unCheckedChildren="Deposits OFF" />
-               </Form.Item>
-               <Form.Item name="allowWithdraw" valuePropName="checked" style={{ marginBottom: 8 }}>
-                 <Switch checkedChildren="Withdrawals ON" unCheckedChildren="Withdrawals OFF" />
-               </Form.Item>
+              <Divider>Wallet Operations</Divider>
+
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 16 }}>
+                <Form.Item name="allowDeposit" valuePropName="checked" style={{ marginBottom: 0 }}>
+                  <Switch />
+                </Form.Item>
+                <div>
+                  <div style={{ fontWeight: 600, marginBottom: 4 }}>Allow Deposits</div>
+                  <div style={{ fontSize: 12, color: '#666' }}>
+                    Users can deposit this token from external wallets
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                <Form.Item name="allowWithdraw" valuePropName="checked" style={{ marginBottom: 0 }}>
+                  <Switch />
+                </Form.Item>
+                <div>
+                  <div style={{ fontWeight: 600, marginBottom: 4 }}>Allow Withdrawals</div>
+                  <div style={{ fontSize: 12, color: '#666' }}>
+                    Users can withdraw this token to external wallets
+                  </div>
+                </div>
+              </div>
             </Col>
-            
+
+            {/* TRADING PAIRS */}
             <Col span={8}>
-              <Divider titlePlacement="left">Trading Pairs</Divider>
-               <Form.Item name="allowTradeUsd" valuePropName="checked" style={{ marginBottom: 8 }}>
-                 <Switch checkedChildren="USD Pair" unCheckedChildren="No USD" />
-               </Form.Item>
-               <Form.Item name="allowTradeUsdt" valuePropName="checked" style={{ marginBottom: 8 }}>
-                 <Switch checkedChildren="USDT Pair" unCheckedChildren="No USDT" />
-               </Form.Item>
-               <Form.Item name="allowTradeEth" valuePropName="checked" style={{ marginBottom: 8 }}>
-                 <Switch checkedChildren="ETH Pair" unCheckedChildren="No ETH" />
-               </Form.Item>
-               <Form.Item name="allowTradeTuit" valuePropName="checked" style={{ marginBottom: 8 }}>
-                 <Switch checkedChildren="TUIT Pair" unCheckedChildren="No TUIT" />
-               </Form.Item>
+              <Divider>Trading Pairs</Divider>
+              <div style={{ fontSize: 12, color: '#666', marginBottom: 12 }}>
+                Enable quote currencies users can trade this token against
+              </div>
+
+              <Form.Item name="allowTradeUsd" valuePropName="checked" style={{ marginBottom: 8 }}>
+                <Checkbox>USD Pair (TOKEN-USD)</Checkbox>
+              </Form.Item>
+              <Form.Item name="allowTradeUsdt" valuePropName="checked" style={{ marginBottom: 8 }}>
+                <Checkbox>USDT Pair (TOKEN-USDT)</Checkbox>
+              </Form.Item>
+              <Form.Item name="allowTradeEth" valuePropName="checked" style={{ marginBottom: 8 }}>
+                <Checkbox>ETH Pair (TOKEN-ETH)</Checkbox>
+              </Form.Item>
+              <Form.Item name="allowTradeTuit" valuePropName="checked">
+                <Checkbox>TUIT Pair (TOKEN-TUIT)</Checkbox>
+              </Form.Item>
             </Col>
           </Row>
         </Card>
 
-        {/* Limits */}
+        {/* Transaction Limits */}
         <Card title="Transaction Limits" extra={<Tag color="green">Step 4</Tag>}>
-           <Row gutter={24}>
-             <Col span={12}>
-                <Form.Item name="minTransactionAmount" label="Min Transaction ($)">
-                   <InputNumber style={{ width: '100%' }} prefix="$" />
-                </Form.Item>
-             </Col>
-             <Col span={12}>
-                <Form.Item name="maxTransactionAmount" label="Max Transaction ($)">
-                   <InputNumber style={{ width: '100%' }} prefix="$" />
-                </Form.Item>
-             </Col>
-           </Row>
+          <Alert
+            message="Per-Transaction Limits"
+            description="These limits apply to each individual transaction in USD equivalent. Set to 0 for no limit."
+            type="info"
+            showIcon
+            style={{ marginBottom: 16 }}
+          />
+          <Row gutter={24}>
+            <Col span={12}>
+              <Form.Item
+                name="minTransactionAmount"
+                label="Minimum Transaction Amount (USD)"
+                tooltip="Users cannot trade less than this USD value per transaction"
+              >
+                <InputNumber style={{ width: '100%' }} prefix="$" min={0} placeholder="0" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="maxTransactionAmount"
+                label="Maximum Transaction Amount (USD)"
+                tooltip="Users cannot trade more than this USD value per transaction"
+              >
+                <InputNumber style={{ width: '100%' }} prefix="$" min={0} placeholder="0" />
+              </Form.Item>
+            </Col>
+          </Row>
         </Card>
         
         {/* Metadata */}

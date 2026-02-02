@@ -1,7 +1,7 @@
 import React from 'react';
 
 interface PriceFormatterProps {
-  price?: number | null;
+  price?: number | string | null;
   quote?: string;
   className?: string;
   style?: React.CSSProperties;
@@ -11,8 +11,10 @@ interface PriceFormatterProps {
  * Formats low-value crypto prices using a compact subscript notation.
  * Example: $0.00000123 becomes $0.0₅123
  */
-const PriceFormatter: React.FC<PriceFormatterProps> = ({ price, quote = 'USD', className, style }) => {
-  if (price === undefined || price === null) return null;
+const PriceFormatter: React.FC<PriceFormatterProps> = ({ price: rawPrice, quote = 'USD', className, style }) => {
+  if (rawPrice === undefined || rawPrice === null) return null;
+  const price = typeof rawPrice === 'string' ? parseFloat(rawPrice) : Number(rawPrice);
+  if (isNaN(price)) return null;
   const prefix = quote === 'USD' ? '$' : '';
   const suffix = quote !== 'USD' ? ` ${quote}` : '';
 

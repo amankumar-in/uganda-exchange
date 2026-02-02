@@ -7,6 +7,7 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
+import { TokensService } from '../tokens/tokens.service';
 import { Prisma, P2PTradeStatus, P2PEscrowStatus, P2PAdStatus } from '@prisma/client';
 import {
   CreatePaymentMethodDto,
@@ -42,7 +43,10 @@ function generateTradeNumber(): string {
 export class P2PService {
   private readonly logger = new Logger(P2PService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private tokensService: TokensService,
+  ) {}
 
   // ============================================
   // PAYMENT METHODS
@@ -141,6 +145,12 @@ export class P2PService {
   // ============================================
 
   async createAd(userId: string, dto: CreateAdDto) {
+    // Check P2P permission for this token
+    const token = await this.tokensService.findBySymbol(dto.asset);
+    if (token && !token.allowP2P) {
+      throw new BadRequestException(`P2P trading for ${dto.asset} is currently disabled.`);
+    }
+
     // Validate payment methods belong to user and are active
     const paymentMethods = await this.prisma.client.p2PPaymentMethod.findMany({
       where: {
@@ -516,6 +526,12 @@ export class P2PService {
 
     if (!ad) {
       throw new NotFoundException('Ad not found');
+    }
+
+    // Check P2P permission for this token
+    const token = await this.tokensService.findBySymbol(ad.asset);
+    if (token && !token.allowP2P) {
+      throw new BadRequestException(`P2P trading for ${ad.asset} is currently disabled.`);
     }
 
     // Check ad is active

@@ -77,8 +77,19 @@ const TradeFormModal: React.FC<TradeFormModalProps> = ({
   const usdValue = getUsdValue();
   const isBelowMinimum = totalNum > 0 && usdValue < MIN_ORDER_VALUE_USD;
 
-  // Get current pair data for icon
+  // Get current pair data for icon and permissions
   const currentPair = pairs.find(p => p.symbol === symbol || p.baseCurrency === baseAsset);
+
+  // Get permission restrictions from current pair
+  const permissions = (currentPair as any)?.permissions;
+  const isBuyRestricted = permissions && !permissions.allowBuy;
+  const isSellRestricted = permissions && !permissions.allowSell;
+
+  // Token-specific transaction limits (from admin settings)
+  const tokenMinAmount = permissions?.minTransactionAmount || 0;
+  const tokenMaxAmount = permissions?.maxTransactionAmount || 0;
+  const isBelowTokenMin = tokenMinAmount > 0 && totalNum > 0 && usdValue < tokenMinAmount;
+  const isAboveTokenMax = tokenMaxAmount > 0 && totalNum > 0 && usdValue > tokenMaxAmount;
 
   // Reset form when modal opens/closes or pair changes
   useEffect(() => {
@@ -187,7 +198,18 @@ const TradeFormModal: React.FC<TradeFormModalProps> = ({
   const insufficientBalance = (isBuy && totalNum > quoteBalance + 0.01) || (!isBuy && amountNum > baseBalance);
 
   // Button disabled state - calculate once for consistent styling
-  const isButtonDisabled = !amountNum || amountNum <= 0 || !totalNum || totalNum <= 0 || price <= 0 || isBelowMinimum || insufficientBalance;
+  const isButtonDisabled =
+    !amountNum ||
+    amountNum <= 0 ||
+    !totalNum ||
+    totalNum <= 0 ||
+    price <= 0 ||
+    isBelowMinimum ||
+    isBelowTokenMin ||
+    isAboveTokenMax ||
+    insufficientBalance ||
+    (isBuy && isBuyRestricted) ||
+    (!isBuy && isSellRestricted);
 
   // Custom input with addon
   const InputWithAddon = ({ 
@@ -477,9 +499,59 @@ const TradeFormModal: React.FC<TradeFormModalProps> = ({
           </>
         )}
 
-        {/* Minimum Order Value Warning */}
+        {/* Permission Restriction Warnings */}
         <AnimatePresence>
-          {isBelowMinimum && (
+          {permissions && isBuy && isBuyRestricted && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              style={{
+                marginBottom: token.marginMD,
+                padding: token.paddingMD,
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                borderRadius: 12,
+                border: '1px solid rgba(239, 68, 68, 0.2)',
+                fontSize: token.fontSizeSM,
+                color: '#EF4444',
+                display: 'flex',
+                alignItems: 'center',
+                gap: token.marginXS,
+              }}
+            >
+              <InfoCircleOutlined />
+              Buying {baseAsset} is currently not available.
+            </motion.div>
+          )}
+        </AnimatePresence>
+        <AnimatePresence>
+          {permissions && !isBuy && isSellRestricted && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              style={{
+                marginBottom: token.marginMD,
+                padding: token.paddingMD,
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                borderRadius: 12,
+                border: '1px solid rgba(239, 68, 68, 0.2)',
+                fontSize: token.fontSizeSM,
+                color: '#EF4444',
+                display: 'flex',
+                alignItems: 'center',
+                gap: token.marginXS,
+              }}
+            >
+              <InfoCircleOutlined />
+              Selling {baseAsset} is currently not available.
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Minimum Order Value Warning (system-wide $1 minimum) */}
+        <AnimatePresence>
+          {isBelowMinimum && !isBelowTokenMin && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
@@ -502,6 +574,58 @@ const TradeFormModal: React.FC<TradeFormModalProps> = ({
               {quoteAsset !== 'USD' && usdValue > 0 && (
                 <span> (current: ${usdValue.toFixed(2)})</span>
               )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Token-specific Minimum Transaction Warning */}
+        <AnimatePresence>
+          {isBelowTokenMin && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              style={{
+                marginBottom: token.marginMD,
+                padding: token.paddingMD,
+                backgroundColor: 'rgba(251, 191, 36, 0.1)',
+                borderRadius: 12,
+                border: '1px solid rgba(251, 191, 36, 0.2)',
+                fontSize: token.fontSizeSM,
+                color: '#F59E0B',
+                display: 'flex',
+                alignItems: 'center',
+                gap: token.marginXS,
+              }}
+            >
+              <InfoCircleOutlined />
+              Minimum transaction for {baseAsset} is ${tokenMinAmount.toFixed(2)} (current: ${usdValue.toFixed(2)})
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Token-specific Maximum Transaction Warning */}
+        <AnimatePresence>
+          {isAboveTokenMax && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              style={{
+                marginBottom: token.marginMD,
+                padding: token.paddingMD,
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                borderRadius: 12,
+                border: '1px solid rgba(239, 68, 68, 0.2)',
+                fontSize: token.fontSizeSM,
+                color: '#EF4444',
+                display: 'flex',
+                alignItems: 'center',
+                gap: token.marginXS,
+              }}
+            >
+              <InfoCircleOutlined />
+              Maximum transaction for {baseAsset} is ${tokenMaxAmount.toFixed(2)} (current: ${usdValue.toFixed(2)})
             </motion.div>
           )}
         </AnimatePresence>
