@@ -192,19 +192,19 @@ const BuySellForm: React.FC<BuySellFormProps> = ({
   const isBuyRestricted = permissions && !permissions.allowBuy;
   const isSellRestricted = permissions && !permissions.allowSell;
 
+  // Balances
+  const cashBalance = getBalance('USD');
+  const tokenBalance = getBalance(selectedAsset);
+
+  // Parsed amounts
+  const amountNum = parseFloat(amount) || 0;
+  const cashAmountNum = parseFloat(cashAmount) || 0;
+
   // Token-specific transaction limits (from admin settings)
   const tokenMinAmount = permissions?.minTransactionAmount || 0;
   const tokenMaxAmount = permissions?.maxTransactionAmount || 0;
   const isBelowTokenMin = tokenMinAmount > 0 && cashAmountNum > 0 && cashAmountNum < tokenMinAmount;
   const isAboveTokenMax = tokenMaxAmount > 0 && cashAmountNum > 0 && cashAmountNum > tokenMaxAmount;
-  
-  // Balances
-  const cashBalance = getBalance('USD');
-  const tokenBalance = getBalance(selectedAsset);
-  
-  // Parsed amounts
-  const amountNum = parseFloat(amount) || 0;
-  const cashAmountNum = parseFloat(cashAmount) || 0;
   
   // Filter tokens for picker
   const filteredTokens = useMemo(() => {
