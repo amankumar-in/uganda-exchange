@@ -23,6 +23,9 @@ import { P2PModule } from './modules/p2p/p2p.module';
 import { TokensModule } from './modules/tokens/tokens.module';
 import { CronModule } from './modules/cron/cron.module';
 import { TuitTransferModule } from './modules/tuit-transfer/tuit-transfer.module';
+import { MiningModule } from './modules/mining/mining.module';
+import { BridgeModule } from './modules/bridge/bridge.module';
+import { GlobalSettingsModule } from './modules/global-settings/global-settings.module';
 
 @Module({
   imports: [
@@ -69,6 +72,12 @@ import { TuitTransferModule } from './modules/tuit-transfer/tuit-transfer.module
     CronModule,
     // TUIT Transfer (vesting migration)
     TuitTransferModule,
+    // College Coin Mining
+    MiningModule,
+    // CFC Bridge (server-to-server)
+    BridgeModule,
+    // Global Asset Settings
+    GlobalSettingsModule,
   ],
   controllers: [AppController, TestController],
   providers: [AppService, PrismaService, EmailService],

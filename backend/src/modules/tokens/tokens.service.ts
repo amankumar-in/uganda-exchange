@@ -4,24 +4,44 @@ import { PrismaService } from '../../prisma.service';
 import { CreateTokenDto } from './dto/create-token.dto';
 import { UpdateTokenDto } from './dto/update-token.dto';
 import { Token } from '@prisma/client';
+import { GlobalSettingsService } from '../global-settings/global-settings.service';
 
 @Injectable()
 export class TokensService {
   private readonly logger = new Logger(TokensService.name);
-  
+
   // Simple in-memory cache for pricing to avoid hitting rate limits
   private priceCache: Map<string, { price: number; change24h?: number; timestamp: number }> = new Map();
   private readonly CACHE_TTL = 60 * 1000; // 60 seconds
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private globalSettingsService: GlobalSettingsService,
+  ) {}
 
   async create(createTokenDto: CreateTokenDto) {
-    const token = await this.prisma.client.token.create({
-      data: {
-        ...createTokenDto,
-        symbol: createTokenDto.symbol.toUpperCase(),
-      },
-    });
+    // Fetch global defaults and apply for any field not explicitly provided
+    const defaults = await this.globalSettingsService.getSettings();
+
+    const data = {
+      allowBuy: createTokenDto.allowBuy ?? defaults.defaultAllowBuy,
+      allowSell: createTokenDto.allowSell ?? defaults.defaultAllowSell,
+      allowP2P: createTokenDto.allowP2P ?? defaults.defaultAllowP2P,
+      allowDeposit: createTokenDto.allowDeposit ?? defaults.defaultAllowDeposit,
+      allowWithdraw: createTokenDto.allowWithdraw ?? defaults.defaultAllowWithdraw,
+      allowTradeUsd: createTokenDto.allowTradeUsd ?? defaults.defaultAllowTradeUsd,
+      allowTradeUsdt: createTokenDto.allowTradeUsdt ?? defaults.defaultAllowTradeUsdt,
+      allowTradeEth: createTokenDto.allowTradeEth ?? defaults.defaultAllowTradeEth,
+      allowTradeTuit: createTokenDto.allowTradeTuit ?? defaults.defaultAllowTradeTuit,
+      minTransactionAmount: createTokenDto.minTransactionAmount ?? Number(defaults.defaultMinTransaction),
+      maxTransactionAmount: createTokenDto.maxTransactionAmount ?? Number(defaults.defaultMaxTransaction),
+      miningBaseRate: createTokenDto.miningBaseRate ?? defaults.defaultMiningBaseRate,
+      miningSessionHours: createTokenDto.miningSessionHours ?? defaults.defaultMiningSessionHours,
+      ...createTokenDto,
+      symbol: createTokenDto.symbol.toUpperCase(),
+    };
+
+    const token = await this.prisma.client.token.create({ data });
     this.logger.log(`Created new token: ${token.symbol}`);
     return token;
   }

@@ -24,6 +24,7 @@ import {
   SearchOutlined,
   ShoppingCartOutlined,
   BookOutlined,
+  BankOutlined,
 } from '@ant-design/icons';
 import { motion } from 'motion/react';
 import { fontWeights } from '@/theme/themeConfig';
@@ -68,6 +69,7 @@ const getActiveKeyFromPath = (pathname: string): string => {
   if (pathname.startsWith('/buy-sell')) return 'buy-sell';
   if (pathname.startsWith('/p2p')) return 'p2p';
   if (pathname.startsWith('/markets')) return 'markets';
+  if (pathname.startsWith('/college-coins')) return 'college-coins';
   if (pathname.startsWith('/portfolio')) return 'portfolio';
   if (pathname.startsWith('/transactions')) return 'transactions';
   if (pathname.startsWith('/tuition-center')) return 'tuition-center';
@@ -158,6 +160,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       '/p2p',
       '/tuition-center',
       '/markets',
+      '/college-coins',
       // Sub-pages
       '/overview/watchlist',
       '/tuition-center/kyc-101',
@@ -250,6 +253,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     { key: 'buy-sell', label: 'Buy & Sell', icon: <ShoppingCartOutlined />, href: '/buy-sell', gradient: '' },
     { key: 'p2p', label: 'P2P', icon: <TeamOutlined />, href: '/p2p', gradient: '' },
     { key: 'markets', label: 'Markets', icon: <LineChartOutlined />, href: '/markets', gradient: '' },
+    { key: 'college-coins', label: 'College Coins', icon: <BankOutlined />, href: '/college-coins', gradient: '' },
     { key: 'portfolio', label: 'Portfolio', icon: <WalletOutlined />, href: '/portfolio', gradient: '' },
     { key: 'transactions', label: 'Transactions', icon: <HistoryOutlined />, href: '/transactions', gradient: '' },
     { key: 'tuition-center', label: 'Tuition Center', icon: <BookOutlined />, href: '/tuition-center', gradient: '', highlighted: true },

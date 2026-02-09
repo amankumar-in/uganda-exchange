@@ -106,4 +106,39 @@ export class CreateTokenDto {
   @IsString()
   @IsOptional()
   discord?: string;
+
+  // Mining & College Coin
+  @IsBoolean()
+  @IsOptional()
+  isCollegeCoin?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  miningAllowed?: boolean;
+
+  @IsNumber()
+  @IsOptional()
+  @Min(0)
+  miningBaseRate?: number;
+
+  @IsNumber()
+  @IsOptional()
+  @Min(1)
+  miningSessionHours?: number;
+
+  @IsString()
+  @IsOptional()
+  collegeName?: string;
+
+  @IsString()
+  @IsOptional()
+  collegeCountry?: string;
+
+  @IsString()
+  @IsOptional()
+  collegeLogo?: string;
+
+  @IsString()
+  @IsOptional()
+  collegeCfcId?: string;
 }

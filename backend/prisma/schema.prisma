@@ -62,6 +62,13 @@ model User {
   tuitTransfers            TuitTransfer[]
   tuitConversionRequests   TuitConversionRequest[]
 
+  // College Coin Mining & CFC Integration
+  miningProfile            UserMiningProfile?
+  miningSessions           MiningSession[]
+  miningColleges           UserMiningCollege[]
+  cfcLink                  CfcLink?
+  migrationRecords         MigrationRecord[]
+
   @@map("users")
 }
 
@@ -904,6 +911,16 @@ model Token {
   minTransactionAmount Decimal @default(10)   @db.Decimal(20, 8)
   maxTransactionAmount Decimal @default(5000) @db.Decimal(20, 8)
 
+  // College Coin specific fields
+  isCollegeCoin      Boolean  @default(false)
+  miningAllowed      Boolean  @default(false)
+  collegeCfcId       String?  // CFC MongoDB college _id (for migration linkage)
+  collegeName        String?
+  collegeCountry     String?
+  collegeLogo        String?
+  miningBaseRate     Float    @default(0.25)  // tokens per hour
+  miningSessionHours Int      @default(24)    // session duration in hours
+
   // Status & Metadata
   isActive          Boolean  @default(true)
   description       String?  @db.Text
@@ -911,14 +928,44 @@ model Token {
   whitepaper        String?
   twitter           String?
   discord           String?
-  
+
   updatedAt         DateTime @updatedAt
   createdAt         DateTime @default(now())
+
+  // Relations
+  miningSessions      MiningSession[]
+  miningCollegeUsers  UserMiningCollege[] @relation("MiningCollegeTokens")
 
   @@map("tokens")
 }
 
+model GlobalAssetSettings {
+  id                    String  @id @default("singleton")
 
+  // Default permission toggles
+  defaultAllowBuy       Boolean @default(false)
+  defaultAllowSell      Boolean @default(false)
+  defaultAllowP2P       Boolean @default(false)
+  defaultAllowDeposit   Boolean @default(false)
+  defaultAllowWithdraw  Boolean @default(false)
+  defaultAllowTradeUsd  Boolean @default(false)
+  defaultAllowTradeUsdt Boolean @default(false)
+  defaultAllowTradeEth  Boolean @default(false)
+  defaultAllowTradeTuit Boolean @default(false)
+
+  // Default transaction limits
+  defaultMinTransaction Decimal @default(10)   @db.Decimal(20, 8)
+  defaultMaxTransaction Decimal @default(5000) @db.Decimal(20, 8)
+
+  // Default mining settings
+  defaultMiningBaseRate     Float @default(0.25)
+  defaultMiningSessionHours Int   @default(24)
+
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  @@map("global_asset_settings")
+}
 
 // Live mode portfolio snapshots (for investor mode growth chart)
 model PortfolioSnapshot {
@@ -1037,6 +1084,117 @@ enum TuitConversionStatus {
   PENDING    // Awaiting admin review
   APPROVED   // Approved and credited
   REJECTED   // Rejected by admin
+}
+
+// ============================================
+// COLLEGE COIN MINING & CFC INTEGRATION
+// ============================================
+
+model MiningSession {
+  id          String              @id @default(uuid())
+  userId      String
+  user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenId     String
+  token       Token               @relation(fields: [tokenId], references: [id], onDelete: Cascade)
+  startTime   DateTime
+  endTime     DateTime
+  earningRate Float
+  tokensEarned Float              @default(0)
+  isActive    Boolean             @default(true)
+  stoppedAt   DateTime?
+  status      MiningSessionStatus @default(ACTIVE)
+
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  @@index([userId, tokenId, isActive])
+  @@index([endTime, isActive])
+  @@index([userId, isActive, endTime])
+  @@map("mining_sessions")
+}
+
+enum MiningSessionStatus {
+  ACTIVE
+  COMPLETED
+  EXPIRED
+  CANCELLED
+}
+
+model UserMiningCollege {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenId   String
+  token     Token    @relation("MiningCollegeTokens", fields: [tokenId], references: [id], onDelete: Cascade)
+  addedAt   DateTime @default(now())
+
+  @@unique([userId, tokenId])
+  @@index([userId])
+  @@map("user_mining_colleges")
+}
+
+model UserMiningProfile {
+  id                  String              @id @default(uuid())
+  userId              String              @unique
+  user                User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cfcUserId           String?
+  cfcMigrationDate    DateTime?
+  cfcMigrationStatus  CfcMigrationStatus  @default(NOT_STARTED)
+  totalTokensMined    Float               @default(0)
+
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  @@map("user_mining_profiles")
+}
+
+enum CfcMigrationStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}
+
+model CfcLink {
+  id              String        @id @default(uuid())
+  userId          String        @unique
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cfcUserId       String        @unique
+  cfcEmail        String
+  bridgeToken     String
+  bridgeTokenHash String
+  status          CfcLinkStatus @default(ACTIVE)
+  linkedAt        DateTime      @default(now())
+  revokedAt       DateTime?
+
+  @@map("cfc_links")
+}
+
+enum CfcLinkStatus {
+  ACTIVE
+  REVOKED
+}
+
+model MigrationRecord {
+  id              String                @id @default(uuid())
+  userId          String
+  user            User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cfcWalletId     String                @unique
+  collegeCfcId    String
+  tokenSymbol     String
+  amount          Float
+  status          MigrationRecordStatus @default(PENDING)
+  migratedAt      DateTime              @default(now())
+  errorMessage    String?
+
+  @@index([userId])
+  @@map("migration_records")
+}
+
+enum MigrationRecordStatus {
+  PENDING
+  COMPLETED
+  FAILED
 }
 
 // ============================================

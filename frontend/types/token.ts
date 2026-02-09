@@ -30,6 +30,16 @@ export interface Token {
   minTransactionAmount: number;
   maxTransactionAmount: number;
 
+  // Mining & College Coin
+  isCollegeCoin: boolean;
+  miningAllowed: boolean;
+  miningBaseRate: number;
+  miningSessionHours: number;
+  collegeName?: string;
+  collegeCountry?: string;
+  collegeLogo?: string;
+  collegeCfcId?: string;
+
   // Metadata
   isActive: boolean;
   description?: string;
@@ -40,6 +50,25 @@ export interface Token {
 
   createdAt: string;
   updatedAt: string;
+}
+
+export interface GlobalAssetSettings {
+  id: string;
+  defaultAllowBuy: boolean;
+  defaultAllowSell: boolean;
+  defaultAllowP2P: boolean;
+  defaultAllowDeposit: boolean;
+  defaultAllowWithdraw: boolean;
+  defaultAllowTradeUsd: boolean;
+  defaultAllowTradeUsdt: boolean;
+  defaultAllowTradeEth: boolean;
+  defaultAllowTradeTuit: boolean;
+  defaultMinTransaction: number;
+  defaultMaxTransaction: number;
+  defaultMiningBaseRate: number;
+  defaultMiningSessionHours: number;
+  updatedAt: string;
+  createdAt: string;
 }
 
 export interface CreateTokenDto extends Omit<Token, 'id' | 'createdAt' | 'updatedAt' | 'currentPrice'> {}

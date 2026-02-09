@@ -15,6 +15,8 @@ import {
   LineChartOutlined,
   LinkOutlined,
   SyncOutlined,
+  ThunderboltOutlined,
+  RightOutlined,
 } from '@ant-design/icons';
 import { motion, AnimatePresence } from 'motion/react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
@@ -30,11 +32,177 @@ import WithdrawModal from '@/components/wallet/WithdrawModal';
 import { getFiatTransactions, syncPaymentStatus } from '@/services/api/fiat';
 import { createPortfolioSnapshot } from '@/services/api/learner';
 import { createInvestorPortfolioSnapshot } from '@/services/api/assets';
+import { getMiningStatus, MiningStatus } from '@/services/api/mining';
 import type { NextPageWithLayout } from '../_app';
 
 const { useToken } = theme;
 const { useBreakpoint } = Grid;
 const { Title, Text } = Typography;
+
+// Self-updating mining balance row — each row owns its own RAF ticker
+// Exact same pattern as /college-coins/[symbol].tsx
+const MiningBalanceRow = ({
+  coin,
+  isMobile,
+  isLast,
+  onClick,
+}: {
+  coin: {
+    tokenId: string;
+    symbol: string;
+    name: string;
+    collegeName: string | null;
+    iconUrl: string | null;
+    walletBalance: number;
+    isMining: boolean;
+    earningRate: number;
+    sessionStartTime: string | null;
+  };
+  isMobile: boolean;
+  isLast: boolean;
+  onClick: () => void;
+}) => {
+  const { token } = useToken();
+  const animationRef = useRef<number | null>(null);
+  const totalRef = useRef<HTMLDivElement>(null);
+  const earningsRef = useRef<HTMLSpanElement>(null);
+
+  // Live counter — direct DOM updates, no React re-renders
+  useEffect(() => {
+    if (!coin.isMining || !coin.sessionStartTime) {
+      if (animationRef.current) cancelAnimationFrame(animationRef.current);
+      if (totalRef.current) totalRef.current.textContent = coin.walletBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+      return;
+    }
+
+    const startMs = new Date(coin.sessionStartTime).getTime();
+    const rate = coin.earningRate;
+
+    const tick = () => {
+      const elapsed = (Date.now() - startMs) / (1000 * 60 * 60);
+      const earned = Math.max(0, elapsed * rate);
+      if (totalRef.current) totalRef.current.textContent = (coin.walletBalance + earned).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+      if (earningsRef.current) earningsRef.current.textContent = ` +${earned.toFixed(4)}`;
+      animationRef.current = requestAnimationFrame(tick);
+    };
+
+    tick();
+
+    return () => {
+      if (animationRef.current) cancelAnimationFrame(animationRef.current);
+    };
+  }, [coin.isMining, coin.sessionStartTime, coin.earningRate, coin.walletBalance]);
+
+  return (
+    <div
+      onClick={onClick}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: isMobile ? token.marginXS : token.marginMD,
+        padding: isMobile ? `${token.paddingSM}px ${token.paddingMD}px` : `${token.paddingMD}px ${token.paddingLG}px`,
+        cursor: 'pointer',
+        transition: 'background-color 0.2s',
+        borderBottom: isLast ? 'none' : `1px solid ${token.colorBorderSecondary}`,
+      }}
+      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = token.colorBgTextHover; }}
+      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
+    >
+      {/* Icon */}
+      <div style={{
+        width: isMobile ? 36 : 44,
+        height: isMobile ? 36 : 44,
+        borderRadius: '50%',
+        backgroundColor: coin.iconUrl ? 'transparent' : token.colorPrimary,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: token.colorWhite,
+        fontSize: isMobile ? 14 : 16,
+        fontWeight: fontWeights.bold,
+        flexShrink: 0,
+        overflow: 'hidden',
+      }}>
+        {coin.iconUrl ? (
+          <img
+            src={coin.iconUrl}
+            alt={coin.symbol}
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.style.display = 'none';
+              const parent = target.parentElement;
+              if (parent) {
+                parent.style.backgroundColor = token.colorPrimary;
+                parent.textContent = coin.symbol.charAt(0);
+              }
+            }}
+          />
+        ) : coin.symbol.charAt(0)}
+      </div>
+
+      {/* Name + Status */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{
+            fontSize: isMobile ? token.fontSizeSM : token.fontSize,
+            fontWeight: fontWeights.semibold,
+            color: token.colorText,
+          }}>
+            {coin.symbol}
+          </span>
+          {coin.isMining && (
+            <span style={{
+              width: 6,
+              height: 6,
+              borderRadius: '50%',
+              backgroundColor: token.colorSuccess,
+              display: 'inline-block',
+              boxShadow: `0 0 4px ${token.colorSuccess}`,
+              animation: 'pulse 2s infinite',
+            }} />
+          )}
+        </div>
+        <div style={{
+          fontSize: token.fontSizeSM,
+          color: token.colorTextSecondary,
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+        }}>
+          {coin.collegeName || coin.name}
+        </div>
+      </div>
+
+      {/* Balance Section */}
+      <div style={{ textAlign: 'right', flexShrink: 0 }}>
+        <div
+          ref={totalRef}
+          style={{
+            fontSize: isMobile ? token.fontSizeSM : token.fontSize,
+            fontWeight: fontWeights.semibold,
+            color: token.colorText,
+            fontVariantNumeric: 'tabular-nums',
+          }}
+        />
+        <div style={{
+          fontSize: 11,
+          color: token.colorTextTertiary,
+          fontVariantNumeric: 'tabular-nums',
+        }}>
+          {coin.isMining ? (
+            <>
+              <span>{coin.walletBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              <span ref={earningsRef} style={{ color: token.colorSuccess }} />
+            </>
+          ) : (
+            <span>Wallet: {coin.walletBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const WalletPage: NextPageWithLayout = () => {
   const router = useRouter();
@@ -59,6 +227,7 @@ const WalletPage: NextPageWithLayout = () => {
   const [depositSuccessVisible, setDepositSuccessVisible] = useState(false);
   const [depositAmount, setDepositAmount] = useState<number | null>(null);
   const [syncLoading, setSyncLoading] = useState(false);
+  const [miningStatus, setMiningStatus] = useState<MiningStatus | null>(null);
   const previousBalanceRef = useRef<number>(0);
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
   
@@ -89,6 +258,16 @@ const WalletPage: NextPageWithLayout = () => {
       refreshOrders();
     }
   }, [pageLoading, user, refreshBalances, refreshOrders]);
+
+  // Fetch mining status for college coin balances
+  useEffect(() => {
+    if (!pageLoading && user) {
+      getMiningStatus()
+        .then(res => { if (res.success) setMiningStatus(res.data); })
+        .catch(() => {}); // silent fail — section just won't show
+    }
+  }, [pageLoading, user]);
+
 
   // Create portfolio snapshot when page loads (for growth chart) - both modes
   useEffect(() => {
@@ -401,6 +580,30 @@ const WalletPage: NextPageWithLayout = () => {
     return usdAsset ? parseFloat(usdAsset.value.replace(/[^0-9.-]/g, '')) || 0 : 0;
   }, [assetsWithValues]);
 
+  // Build college coin data from mining status
+  const collegeCoinRows = useMemo(() => {
+    if (!miningStatus || miningStatus.miningColleges.length === 0) return [];
+    return miningStatus.miningColleges.map(college => {
+      const walletBal = balances.find(b => b.asset === college.symbol);
+      const walletBalance = walletBal?.balance ?? 0;
+      const activeSession = miningStatus.activeSessions.find(s => s.tokenId === college.tokenId);
+      const isMining = !!activeSession && !activeSession.isExpired;
+
+      return {
+        tokenId: college.tokenId,
+        symbol: college.symbol,
+        name: college.name,
+        collegeName: college.collegeName,
+        collegeCountry: college.collegeCountry,
+        iconUrl: college.iconUrl ?? college.collegeLogo,
+        walletBalance,
+        isMining,
+        earningRate: activeSession?.earningRate ?? college.miningBaseRate,
+        sessionStartTime: isMining ? activeSession!.startTime : null,
+      };
+    });
+  }, [miningStatus, balances]);
+
   const sectionStyle: React.CSSProperties = {
     marginBottom: token.marginXL,
   };
@@ -516,6 +719,12 @@ const WalletPage: NextPageWithLayout = () => {
         <title>Wallet - InTuition Exchange</title>
         <meta name="description" content="Manage your crypto assets" />
       </Head>
+      <style jsx global>{`
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.4; }
+        }
+      `}</style>
 
       {/* Balance Stats */}
       <motion.div
@@ -774,6 +983,55 @@ const WalletPage: NextPageWithLayout = () => {
             </div>
           )}
         </motion.div>
+
+        {/* College Coin Balances */}
+        {collegeCoinRows.length > 0 && (
+          <motion.div
+            style={sectionStyle}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.45 }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: token.marginMD }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: token.marginXS }}>
+                <ThunderboltOutlined style={{ color: token.colorWarning }} />
+                <span style={{ fontSize: token.fontSizeHeading4, fontWeight: fontWeights.bold, color: token.colorText }}>College Coin Balances</span>
+              </div>
+              <Button
+                type="link"
+                size="small"
+                onClick={() => router.push('/college-coins')}
+                style={{ fontWeight: fontWeights.medium, padding: 0 }}
+              >
+                View All <RightOutlined style={{ fontSize: 10 }} />
+              </Button>
+            </div>
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              backgroundColor: token.colorBgContainer,
+              borderRadius: token.borderRadiusLG,
+              border: `1px solid ${token.colorBorderSecondary}`,
+              overflow: 'hidden',
+            }}>
+              {collegeCoinRows.map((coin, index) => (
+                <motion.div
+                  key={coin.tokenId}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.3, delay: 0.5 + index * 0.08 }}
+                >
+                  <MiningBalanceRow
+                    coin={coin}
+                    isMobile={isMobile}
+                    isLast={index === collegeCoinRows.length - 1}
+                    onClick={() => router.push('/college-coins')}
+                  />
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        )}
 
         {/* Recent Orders - Collapsible */}
         <motion.div

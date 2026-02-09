@@ -51,7 +51,9 @@ export const TokenForm: React.FC<TokenFormProps> = ({
 }) => {
   const router = useRouter();
   const [form] = Form.useForm();
-  
+  const miningAllowed = Form.useWatch('miningAllowed', form);
+  const isCollegeCoin = Form.useWatch('isCollegeCoin', form);
+
   // Price Source Logic
   const [priceSource, setPriceSource] = useState<'coingecko' | 'contract' | 'manual'>('coingecko');
   
@@ -133,6 +135,8 @@ export const TokenForm: React.FC<TokenFormProps> = ({
     if (cleanValues.manualPrice !== undefined) cleanValues.manualPrice = Number(cleanValues.manualPrice);
     if (cleanValues.minTransactionAmount !== undefined) cleanValues.minTransactionAmount = Number(cleanValues.minTransactionAmount);
     if (cleanValues.maxTransactionAmount !== undefined) cleanValues.maxTransactionAmount = Number(cleanValues.maxTransactionAmount);
+    if (cleanValues.miningBaseRate !== undefined) cleanValues.miningBaseRate = Number(cleanValues.miningBaseRate);
+    if (cleanValues.miningSessionHours !== undefined) cleanValues.miningSessionHours = Number(cleanValues.miningSessionHours);
     
     if (priceSource === 'coingecko') {
       cleanValues.contractAddress = null;
@@ -342,6 +346,73 @@ export const TokenForm: React.FC<TokenFormProps> = ({
                 <Checkbox>TUIT Pair (TOKEN-TUIT)</Checkbox>
               </Form.Item>
             </Col>
+          </Row>
+
+          <Divider>Mining</Divider>
+          <Row gutter={[24, 16]}>
+            <Col span={8}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                <Form.Item name="miningAllowed" valuePropName="checked" style={{ marginBottom: 0 }}>
+                  <Switch />
+                </Form.Item>
+                <div>
+                  <div style={{ fontWeight: 600, marginBottom: 4 }}>Mining Enabled</div>
+                  <div style={{ fontSize: 12, color: '#666' }}>
+                    Allow users to mine this token
+                  </div>
+                </div>
+              </div>
+            </Col>
+            {miningAllowed && (
+              <>
+                <Col span={8}>
+                  <Form.Item name="miningBaseRate" label="Base Mining Rate (tokens/hr)">
+                    <InputNumber style={{ width: '100%' }} min={0} step={0.01} precision={4} placeholder="0.25" />
+                  </Form.Item>
+                </Col>
+                <Col span={8}>
+                  <Form.Item name="miningSessionHours" label="Session Duration (hours)">
+                    <InputNumber style={{ width: '100%' }} min={1} max={720} precision={0} placeholder="24" />
+                  </Form.Item>
+                </Col>
+              </>
+            )}
+          </Row>
+
+          <Divider>College Coin</Divider>
+          <Row gutter={[24, 16]}>
+            <Col span={8}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                <Form.Item name="isCollegeCoin" valuePropName="checked" style={{ marginBottom: 0 }}>
+                  <Switch />
+                </Form.Item>
+                <div>
+                  <div style={{ fontWeight: 600, marginBottom: 4 }}>College Coin</div>
+                  <div style={{ fontSize: 12, color: '#666' }}>
+                    This is a college-affiliated token
+                  </div>
+                </div>
+              </div>
+            </Col>
+            {isCollegeCoin && (
+              <>
+                <Col span={8}>
+                  <Form.Item name="collegeName" label="College Name">
+                    <Input placeholder="e.g. UC Berkeley" />
+                  </Form.Item>
+                </Col>
+                <Col span={8}>
+                  <Form.Item name="collegeCountry" label="Country">
+                    <Input placeholder="e.g. United States" />
+                  </Form.Item>
+                </Col>
+                <Col span={24}>
+                  <Form.Item name="collegeLogo" label="College Logo URL">
+                    <Input placeholder="https://..." prefix={<LinkOutlined />} />
+                  </Form.Item>
+                </Col>
+              </>
+            )}
           </Row>
         </Card>
 

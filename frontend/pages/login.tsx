@@ -20,6 +20,7 @@ import {
   TeamOutlined,
   TrophyOutlined,
   ArrowLeftOutlined,
+  LinkOutlined,
 } from '@ant-design/icons';
 import { motion } from 'motion/react';
 import LoadingButton from '@/components/auth/LoadingButton';
@@ -45,6 +46,7 @@ export default function LoginPage() {
 
   const isDark = mode === 'dark';
   const isMobile = mounted ? !screens.md : false;
+  const isBridgeFlow = typeof router.query.redirect === 'string' && router.query.redirect.includes('/bridge/authorize');
 
   useEffect(() => {
     setMounted(true);
@@ -416,6 +418,27 @@ export default function LoginPage() {
               zIndex: 1,
             }}
           >
+            {/* Bridge flow banner */}
+            {isBridgeFlow && (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  padding: `${token.paddingSM + 2}px ${token.paddingMD}px`,
+                  borderRadius: token.borderRadius,
+                  background: '#fff3cd',
+                  border: '1px solid #ffc107',
+                  marginBottom: token.marginMD,
+                }}
+              >
+                <LinkOutlined style={{ fontSize: 18, color: '#856404', flexShrink: 0 }} />
+                <Text style={{ fontSize: token.fontSizeSM, color: '#856404' }}>
+                  <strong>Coins for College</strong> wants to connect to your Exchange account. Sign in to continue.
+                </Text>
+              </div>
+            )}
+
             {/* Form Header */}
             <div style={{ marginBottom: isMobile ? token.marginMD : token.marginXL }}>
               <Title
@@ -427,10 +450,12 @@ export default function LoginPage() {
                   marginBottom: 4,
                 }}
               >
-                Sign in to your account
+                {isBridgeFlow ? 'Sign in to link your account' : 'Sign in to your account'}
               </Title>
               <Text style={{ fontSize: isMobile ? token.fontSizeSM : token.fontSize, color: token.colorTextSecondary }}>
-                Enter your credentials to access your dashboard
+                {isBridgeFlow
+                  ? 'Log in to your InTuition Exchange account to approve the connection'
+                  : 'Enter your credentials to access your dashboard'}
               </Text>
             </div>
 

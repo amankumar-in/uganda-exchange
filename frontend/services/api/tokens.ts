@@ -1,7 +1,15 @@
 
-import { Token, CreateTokenDto, UpdateTokenDto } from '../../types/token';
+import { Token, CreateTokenDto, UpdateTokenDto, GlobalAssetSettings } from '../../types/token';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+
+function getAuthHeaders(): Record<string, string> {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+  return {
+    'Content-Type': 'application/json',
+    ...(token && { Authorization: `Bearer ${token}` }),
+  };
+}
 
 /**
  * Tokens API Service
@@ -84,5 +92,29 @@ export const TokensApi = {
     const res = await fetch(`${API_BASE_URL}/tokens/search-coingecko?query=${encodeURIComponent(query)}`);
     if (!res.ok) return [];
     return res.json();
-  }
+  },
+
+  /**
+   * Get global asset settings (admin)
+   */
+  getGlobalSettings: async (): Promise<GlobalAssetSettings> => {
+    const res = await fetch(`${API_BASE_URL}/admin/global-settings`, {
+      headers: getAuthHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to fetch global settings');
+    return res.json();
+  },
+
+  /**
+   * Update global asset settings (admin)
+   */
+  updateGlobalSettings: async (data: Partial<GlobalAssetSettings>): Promise<GlobalAssetSettings> => {
+    const res = await fetch(`${API_BASE_URL}/admin/global-settings`, {
+      method: 'PATCH',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error('Failed to update global settings');
+    return res.json();
+  },
 };
