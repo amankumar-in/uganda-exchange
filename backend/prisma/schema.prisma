@@ -912,6 +912,7 @@ model Token {
   maxTransactionAmount Decimal @default(5000) @db.Decimal(20, 8)
 
   // College Coin specific fields
+  /// Real college token from CFC (for mining/trading). NOT related to DemoCollegeCoin.
   isCollegeCoin      Boolean  @default(false)
   miningAllowed      Boolean  @default(false)
   collegeCfcId       String?  // CFC MongoDB college _id (for migration linkage)

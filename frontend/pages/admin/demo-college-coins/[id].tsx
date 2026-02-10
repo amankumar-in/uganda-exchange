@@ -33,7 +33,7 @@ export default function EditCollegeCoinPage() {
         setReferenceTokens(tokensResponse.tokens);
       } catch (error: any) {
         message.error('Failed to load token data');
-        router.push('/admin/college-coins');
+        router.push('/admin/demo-college-coins');
       } finally {
         setFetching(false);
       }
@@ -49,7 +49,7 @@ export default function EditCollegeCoinPage() {
     try {
       const result = await updateCollegeCoin(id, data);
       message.success(result.message || 'Token updated successfully');
-      router.push('/admin/college-coins');
+      router.push('/admin/demo-college-coins');
     } catch (error: any) {
       message.error(error.message || 'Failed to update token');
     } finally {
@@ -59,7 +59,7 @@ export default function EditCollegeCoinPage() {
 
   if (fetching) {
     return (
-      <AdminLayout selectedKey="college-coins">
+      <AdminLayout selectedKey="demo-college-coins">
         <div style={{ display: 'flex', justifyContent: 'center', padding: 48 }}>
           <Spin size="large" />
         </div>
@@ -69,7 +69,7 @@ export default function EditCollegeCoinPage() {
 
   if (!coin) {
     return (
-      <AdminLayout selectedKey="college-coins">
+      <AdminLayout selectedKey="demo-college-coins">
         <div style={{ textAlign: 'center', padding: 48 }}>
           Token not found
         </div>
@@ -78,7 +78,7 @@ export default function EditCollegeCoinPage() {
   }
 
   return (
-    <AdminLayout selectedKey="college-coins">
+    <AdminLayout selectedKey="demo-college-coins">
       <CollegeCoinForm
         initialData={coin}
         referenceTokens={referenceTokens}
@@ -89,4 +89,3 @@ export default function EditCollegeCoinPage() {
     </AdminLayout>
   );
 }
-

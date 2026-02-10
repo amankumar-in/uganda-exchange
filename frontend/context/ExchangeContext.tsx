@@ -17,7 +17,7 @@ import {
 } from '@/services/api/coinbase';
 import { getBalances, Balance } from '@/services/api/assets';
 import { getLearnerBalances, getLearnerOrders, placeLearnerTrade, LearnerOrder, createPortfolioSnapshot } from '@/services/api/learner';
-import { getDemoCollegeCoins, DemoCollegeCoin } from '@/services/api/college-coins';
+import { getDemoCollegeCoins, DemoCollegeCoin } from '@/services/api/demo-college-coins';
 import { getCoinOHLC } from '@/services/api/coingecko';
 import { TokensApi } from '@/services/api/tokens';
 import { getInternalOrderBook } from '@/services/api/orders';
@@ -64,8 +64,8 @@ interface TradingPair {
   iconUrl: string;
   _rawVolume24h?: number;
   _usdVolume?: number;
-  // Demo college coin fields
-  isCollegeCoin?: boolean;
+  // Demo college coin fields (practice coins pegged to real crypto, NOT Token.isCollegeCoin for real college tokens)
+  isDemoCollegeCoin?: boolean;
   peggedToAsset?: string;
   peggedPercentage?: number;
   isCustomToken?: boolean;
@@ -345,7 +345,7 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           symbol: `${coin.ticker}-USD`, name: coin.name, price: coin.currentPrice || 0,
           change: refPair?.change || 0, volume: '0', quote: 'USD', baseCurrency: coin.ticker, quoteCurrency: 'USD',
           iconUrl: resolveUploadUrl(coin.iconUrl) || `https://ui-avatars.com/api/?name=${coin.ticker}&size=64&background=667eea&color=ffffff&bold=true`,
-          isCollegeCoin: true, peggedToAsset: coin.peggedToAsset, peggedPercentage: coin.peggedPercentage,
+          isDemoCollegeCoin: true, peggedToAsset: coin.peggedToAsset, peggedPercentage: coin.peggedPercentage,
         };
       });
 
@@ -431,7 +431,7 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         }
         
         // College coin update - use reference token's price
-        if (pair.isCollegeCoin && pair.peggedToAsset && pair.peggedPercentage) {
+        if (pair.isDemoCollegeCoin && pair.peggedToAsset && pair.peggedPercentage) {
           const refSymbol = `${pair.peggedToAsset}-USD`;
           const refUpdate = pricesData[refSymbol];
           if (refUpdate) {
@@ -701,10 +701,10 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }
       
       // Check if this is a college coin
-      const isCollegeCoin = currentPair?.isCollegeCoin === true;
-      const isSynthetic = (quoteAsset === 'ETH' || quoteAsset === 'USDT') && currentPair && !isCollegeCoin;
+      const isDemoCollegeCoin = currentPair?.isDemoCollegeCoin === true;
+      const isSynthetic = (quoteAsset === 'ETH' || quoteAsset === 'USDT') && currentPair && !isDemoCollegeCoin;
       
-      if (isCollegeCoin && currentPair.peggedToAsset && currentPair.peggedPercentage) {
+      if (isDemoCollegeCoin && currentPair.peggedToAsset && currentPair.peggedPercentage) {
         // For college coins, fetch reference token candles and scale by percentage
         coinbasePair = `${currentPair.peggedToAsset}-USD`;
         conversionRate = currentPair.peggedPercentage / 100;
@@ -722,7 +722,7 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const candleData = await getCandles(coinbasePair, gran, start, now);
       
       // Convert candle prices if synthetic pair or college coin
-      const needsConversion = isSynthetic || isCollegeCoin;
+      const needsConversion = isSynthetic || isDemoCollegeCoin;
       const convertedCandles = needsConversion ? candleData.map(candle => ({
         ...candle,
         open: (parseFloat(candle.open) * conversionRate).toString(),
@@ -817,13 +817,13 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const currentPair = currentPairs.find(p => p.symbol === selectedPair);
       
       // Check if this is a college coin
-      const isCollegeCoin = currentPair?.isCollegeCoin === true;
-      const isSynthetic = (quoteAsset === 'ETH' || quoteAsset === 'USDT') && currentPair && !isCollegeCoin;
+      const isDemoCollegeCoin = currentPair?.isDemoCollegeCoin === true;
+      const isSynthetic = (quoteAsset === 'ETH' || quoteAsset === 'USDT') && currentPair && !isDemoCollegeCoin;
       
       let coinbasePair = selectedPair;
       let conversionRate = 1;
       
-      if (isCollegeCoin && currentPair.peggedToAsset && currentPair.peggedPercentage) {
+      if (isDemoCollegeCoin && currentPair.peggedToAsset && currentPair.peggedPercentage) {
         // For college coins, fetch reference token trades and scale by percentage
         coinbasePair = `${currentPair.peggedToAsset}-USD`;
         conversionRate = currentPair.peggedPercentage / 100;
@@ -848,7 +848,7 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const tradesData = await getPublicTrades(coinbasePair, 50);
       
       // Convert trade prices if synthetic pair or college coin
-      const needsConversion = isSynthetic || isCollegeCoin;
+      const needsConversion = isSynthetic || isDemoCollegeCoin;
       const convertedTrades = needsConversion ? tradesData.map(trade => ({
         ...trade,
         price: (parseFloat(trade.price) * conversionRate).toString(),
@@ -888,13 +888,13 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }
 
       // Check if this is a college coin
-      const isCollegeCoin = currentPair?.isCollegeCoin === true;
-      const isSynthetic = (quoteAsset === 'ETH' || quoteAsset === 'USDT') && currentPair && !isCollegeCoin;
+      const isDemoCollegeCoin = currentPair?.isDemoCollegeCoin === true;
+      const isSynthetic = (quoteAsset === 'ETH' || quoteAsset === 'USDT') && currentPair && !isDemoCollegeCoin;
       
       let coinbasePair = selectedPair;
       let conversionRate = 1;
       
-      if (isCollegeCoin && currentPair.peggedToAsset && currentPair.peggedPercentage) {
+      if (isDemoCollegeCoin && currentPair.peggedToAsset && currentPair.peggedPercentage) {
         // For college coins, fetch reference token order book and scale by percentage
         coinbasePair = `${currentPair.peggedToAsset}-USD`;
         conversionRate = currentPair.peggedPercentage / 100;
@@ -912,7 +912,7 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const bookData = await getOrderBook(coinbasePair, 15);
       
       // Convert order book prices if synthetic pair or college coin
-      const needsConversion = isSynthetic || isCollegeCoin;
+      const needsConversion = isSynthetic || isDemoCollegeCoin;
       const convertedBook = needsConversion ? {
         ...bookData,
         bids: bookData.bids.map(bid => ({
@@ -1233,7 +1233,7 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       // 1. Current pair is the default BTC-USD AND
       // 2. There's no URL pair parameter
       if (selectedPair === 'BTC-USD' && !urlPair) {
-        const firstCollegeCoin = pairs.find(p => p.isCollegeCoin);
+        const firstCollegeCoin = pairs.find(p => p.isDemoCollegeCoin);
         if (firstCollegeCoin) {
           setSelectedPair(firstCollegeCoin.symbol);
         }
@@ -1261,7 +1261,7 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   useEffect(() => {
     if (appMode === 'investor' && pairs.length > 0) {
       const currentPair = pairs.find(p => p.symbol === selectedPair);
-      if (currentPair?.isCollegeCoin) {
+      if (currentPair?.isDemoCollegeCoin) {
         // Reset to BTC-USD when switching to investor mode with a college coin selected
         setSelectedPair('BTC-USD');
       }

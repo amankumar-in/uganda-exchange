@@ -13,6 +13,7 @@ export class UploadsController {
    * Serve college coin icons
    * GET /api/uploads/college-coins/:filename
    */
+  // Upload path kept as 'college-coins' for backward compatibility with existing icon URLs in DB
   @Get('college-coins/:filename')
   async serveCollegeCoinIcon(
     @Param('filename') filename: string,

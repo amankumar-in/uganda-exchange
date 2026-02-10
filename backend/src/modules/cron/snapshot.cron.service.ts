@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../../prisma.service';
 import { CoinbaseService } from '../coinbase/coinbase.service';
-import { CollegeCoinsService } from '../college-coins/college-coins.service';
+import { DemoCollegeCoinsService } from '../demo-college-coins/demo-college-coins.service';
 import { Prisma } from '@prisma/client';
 
 @Injectable()
@@ -13,7 +13,7 @@ export class SnapshotCronService {
   constructor(
     private prisma: PrismaService,
     private coinbaseService: CoinbaseService,
-    private collegeCoinsService: CollegeCoinsService,
+    private collegeCoinsService: DemoCollegeCoinsService,
   ) {}
 
   // Run at Midnight UTC every day

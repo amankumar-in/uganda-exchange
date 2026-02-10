@@ -30,7 +30,7 @@ import {
   importCollegeCoins,
   DemoCollegeCoin,
 } from '../../../services/api/admin';
-import { resolveUploadUrl } from '../../../services/api/college-coins';
+import { resolveUploadUrl } from '../../../services/api/demo-college-coins';
 
 const { Text } = Typography;
 
@@ -210,7 +210,7 @@ export default function AdminCollegeCoinsPage() {
       width: 80,
       render: (_: any, record: DemoCollegeCoin) => (
         <Space size={4}>
-          <Button type="text" size="small" icon={<EditOutlined />} onClick={() => router.push(`/admin/college-coins/${record.id}`)} />
+          <Button type="text" size="small" icon={<EditOutlined />} onClick={() => router.push(`/admin/demo-college-coins/${record.id}`)} />
           <Button type="text" size="small" danger icon={<DeleteOutlined />} onClick={() => handleDelete(record.id, record.ticker)} />
         </Space>
       ),
@@ -218,13 +218,13 @@ export default function AdminCollegeCoinsPage() {
   ];
 
   return (
-    <AdminLayout selectedKey="college-coins">
+    <AdminLayout selectedKey="demo-college-coins">
       <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
         Demo college coins for <strong>Learner Mode</strong> – pegged to real crypto, for practice trading.
       </Text>
 
       <Space style={{ marginBottom: 16 }}>
-        <Link href="/admin/college-coins/new">
+        <Link href="/admin/demo-college-coins/new">
           <Button type="primary" icon={<PlusOutlined />}>Add Token</Button>
         </Link>
         <Button icon={<ImportOutlined />} onClick={() => setImportModalVisible(true)}>Import CSV</Button>

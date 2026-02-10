@@ -31,7 +31,7 @@ export default function NewCollegeCoinPage() {
     try {
       const result = await createCollegeCoin(data);
       message.success(result.message || 'Token created successfully');
-      router.push('/admin/college-coins');
+      router.push('/admin/demo-college-coins');
     } catch (error: any) {
       message.error(error.message || 'Failed to create token');
     } finally {
@@ -40,7 +40,7 @@ export default function NewCollegeCoinPage() {
   };
 
   return (
-    <AdminLayout selectedKey="college-coins">
+    <AdminLayout selectedKey="demo-college-coins">
       <CollegeCoinForm
         referenceTokens={referenceTokens}
         onSubmit={handleSubmit}
@@ -49,4 +49,3 @@ export default function NewCollegeCoinPage() {
     </AdminLayout>
   );
 }
-

@@ -16,7 +16,7 @@ import { WatchlistModule } from './modules/watchlist/watchlist.module';
 import { CoinGeckoModule } from './modules/coingecko/coingecko.module';
 import { SettingsModule } from './modules/settings/settings.module';
 import { LearnerModule } from './modules/learner/learner.module';
-import { CollegeCoinsModule } from './modules/college-coins/college-coins.module';
+import { DemoCollegeCoinsModule } from './modules/demo-college-coins/demo-college-coins.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
 import { P2PModule } from './modules/p2p/p2p.module';
@@ -60,7 +60,7 @@ import { GlobalSettingsModule } from './modules/global-settings/global-settings.
     // Learner mode (virtual trading) module
     LearnerModule,
     // Demo college coins module
-    CollegeCoinsModule,
+    DemoCollegeCoinsModule,
     // Admin panel module
     AdminModule,
     // Public file serving for uploads

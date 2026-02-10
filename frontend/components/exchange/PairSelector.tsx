@@ -21,7 +21,7 @@ interface TradingPair {
   baseCurrency?: string;
   quoteCurrency?: string;
   iconUrl?: string;
-  isCollegeCoin?: boolean; // Flag for demo college coins
+  isDemoCollegeCoin?: boolean; // Flag for demo college coins
 }
 
 interface PairSelectorProps {
@@ -102,7 +102,7 @@ const PairSelector: React.FC<PairSelectorProps> = ({
       const currentPair = pairs.find(p => p.symbol === urlPair.toUpperCase());
       if (currentPair) {
         if (isLearnerMode) {
-          if (currentPair.isCollegeCoin) {
+          if (currentPair.isDemoCollegeCoin) {
             setActiveQuote('Colleges');
           } else {
             setActiveQuote('Popular');
@@ -128,14 +128,14 @@ const PairSelector: React.FC<PairSelectorProps> = ({
       if (isLearnerMode) {
         if (activeQuote === 'Popular') {
           // Show USD pairs that are NOT college coins
-          matchesQuote = pair.quote === 'USD' && !pair.isCollegeCoin;
+          matchesQuote = pair.quote === 'USD' && !pair.isDemoCollegeCoin;
         } else if (activeQuote === 'Colleges') {
           // Show only college coins
-          matchesQuote = pair.isCollegeCoin === true;
+          matchesQuote = pair.isDemoCollegeCoin === true;
         }
       } else {
         // Investor mode: filter by quote currency, but exclude college coins
-        matchesQuote = pair.quote === activeQuote && !pair.isCollegeCoin;
+        matchesQuote = pair.quote === activeQuote && !pair.isDemoCollegeCoin;
       }
       
       const matchesSearch = search === '' || 

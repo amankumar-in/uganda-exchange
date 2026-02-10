@@ -73,7 +73,7 @@ interface TradingPair {
   baseCurrency: string;
   quoteCurrency: string;
   iconUrl: string;
-  isCollegeCoin?: boolean;
+  isDemoCollegeCoin?: boolean;
   permissions?: {
     allowBuy: boolean;
     allowSell: boolean;
@@ -132,13 +132,13 @@ const BuySellForm: React.FC<BuySellFormProps> = ({
           // In learner mode, include all USD pairs (both regular and college coins)
           // In investor mode, exclude college coins
           if (isLearnerMode) return true;
-          return !(p as TradingPair).isCollegeCoin;
+          return !(p as TradingPair).isDemoCollegeCoin;
         }
         return false;
       })
       .sort((a, b) => {
-        const aIsCollege = (a as TradingPair).isCollegeCoin ? 1 : 0;
-        const bIsCollege = (b as TradingPair).isCollegeCoin ? 1 : 0;
+        const aIsCollege = (a as TradingPair).isDemoCollegeCoin ? 1 : 0;
+        const bIsCollege = (b as TradingPair).isDemoCollegeCoin ? 1 : 0;
         
         // In learner mode: college coins FIRST, then by volume
         // In investor mode: college coins hidden anyway, just sort by volume
@@ -170,7 +170,7 @@ const BuySellForm: React.FC<BuySellFormProps> = ({
       setSelectedAsset(initialAsset);
     } else if (!initialAsset && isLearnerMode && pairs.length > 0) {
       // Default to first college coin in learner mode
-      const firstCollegeCoin = pairs.find(p => (p as TradingPair).isCollegeCoin && p.quote === 'USD');
+      const firstCollegeCoin = pairs.find(p => (p as TradingPair).isDemoCollegeCoin && p.quote === 'USD');
       if (firstCollegeCoin && selectedAsset === 'BTC') {
         setSelectedAsset(firstCollegeCoin.baseCurrency);
       }
@@ -1155,7 +1155,7 @@ const BuySellForm: React.FC<BuySellFormProps> = ({
                         <span style={{ fontWeight: fontWeights.semibold, color: token.colorText, fontSize: token.fontSize }}>
                           {pair.baseCurrency}
                         </span>
-                        {(pair as TradingPair).isCollegeCoin && (
+                        {(pair as TradingPair).isDemoCollegeCoin && (
                           <span style={{ fontSize: 10, color: '#fff', background: 'linear-gradient(135deg, #8E2DE2 0%, #4A00E0 100%)', padding: '2px 6px', borderRadius: 4 }}>
                             College
                           </span>
@@ -1281,7 +1281,7 @@ const BuySellForm: React.FC<BuySellFormProps> = ({
                         }}>
                           {pair.baseCurrency}
                         </span>
-                        {(pair as TradingPair).isCollegeCoin && (
+                        {(pair as TradingPair).isDemoCollegeCoin && (
                           <span style={{
                             fontSize: 10,
                             color: '#fff',

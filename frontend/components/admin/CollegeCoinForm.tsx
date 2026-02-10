@@ -32,7 +32,7 @@ import {
 import { useRouter } from 'next/router';
 import dayjs from 'dayjs';
 import { DemoCollegeCoin, ReferenceToken, listMedia, MediaFile } from '../../services/api/admin';
-import { resolveUploadUrl } from '../../services/api/college-coins';
+import { resolveUploadUrl } from '../../services/api/demo-college-coins';
 
 const { TextArea } = Input;
 const { Text } = Typography;

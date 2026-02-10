@@ -4,12 +4,12 @@ import {
   Param,
   UseGuards,
 } from '@nestjs/common';
-import { CollegeCoinsService } from './college-coins.service';
+import { DemoCollegeCoinsService } from './demo-college-coins.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
-@Controller('college-coins')
-export class CollegeCoinsController {
-  constructor(private readonly collegeCoinsService: CollegeCoinsService) {}
+@Controller('demo-college-coins')
+export class DemoCollegeCoinsController {
+  constructor(private readonly collegeCoinsService: DemoCollegeCoinsService) {}
 
   /**
    * Get list of reference tokens that can be used for pegging
@@ -43,7 +43,7 @@ export class CollegeCoinsController {
   @Get(':ticker')
   async findByTicker(@Param('ticker') ticker: string) {
     const coin = await this.collegeCoinsService.findByTicker(ticker);
-    
+
     if (!coin) {
       return {
         success: false,
@@ -78,4 +78,3 @@ export class CollegeCoinsController {
     };
   }
 }
-

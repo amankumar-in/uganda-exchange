@@ -24,10 +24,10 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AdminGuard } from './admin.guard';
 import { AdminService, UpdateUserDto, UpdateKycStatusDto, BalanceAdjustmentDto } from './admin.service';
 import {
-  CollegeCoinsService,
+  DemoCollegeCoinsService,
   CreateDemoCollegeCoinDto,
   UpdateDemoCollegeCoinDto,
-} from '../college-coins/college-coins.service';
+} from '../demo-college-coins/demo-college-coins.service';
 import { KycRestrictionsService } from '../kyc/kyc-restrictions.service';
 import {
   CreateCountryDto,
@@ -44,6 +44,7 @@ import * as csv from 'csv-parse/sync';
 const uploadsBasePath = join(process.cwd(), 'uploads');
 
 // Configure multer storage for college coin icons
+// Upload path kept as 'college-coins' for backward compatibility with existing icon URLs in DB
 const iconUploadPath = join(uploadsBasePath, 'college-coins');
 
 // Ensure directory exists
@@ -103,7 +104,7 @@ export { uploadsBasePath, iconUploadPath, mediaUploadPath };
 export class AdminController {
   constructor(
     private readonly adminService: AdminService,
-    private readonly collegeCoinsService: CollegeCoinsService,
+    private readonly collegeCoinsService: DemoCollegeCoinsService,
     private readonly kycRestrictionsService: KycRestrictionsService,
   ) {}
 
@@ -359,7 +360,7 @@ export class AdminController {
   /**
    * Get list of reference tokens for pegging
    */
-  @Get('college-coins/reference-tokens')
+  @Get('demo-college-coins/reference-tokens')
   getReferenceTokens() {
     return {
       success: true,
@@ -370,7 +371,7 @@ export class AdminController {
   /**
    * Get all demo college coins (including inactive)
    */
-  @Get('college-coins')
+  @Get('demo-college-coins')
   async getCollegeCoins() {
     const coins = await this.collegeCoinsService.findAll(true);
     return {
@@ -382,7 +383,7 @@ export class AdminController {
   /**
    * Get single demo college coin
    */
-  @Get('college-coins/:id')
+  @Get('demo-college-coins/:id')
   async getCollegeCoin(@Param('id') id: string) {
     const coin = await this.collegeCoinsService.findById(id);
     return {
@@ -394,7 +395,7 @@ export class AdminController {
   /**
    * Create a new demo college coin
    */
-  @Post('college-coins')
+  @Post('demo-college-coins')
   @UseInterceptors(
     FileInterceptor('icon', {
       storage: iconStorage,
@@ -461,7 +462,7 @@ export class AdminController {
   /**
    * Update a demo college coin
    */
-  @Patch('college-coins/:id')
+  @Patch('demo-college-coins/:id')
   @UseInterceptors(
     FileInterceptor('icon', {
       storage: iconStorage,
@@ -538,7 +539,7 @@ export class AdminController {
   /**
    * Delete a demo college coin
    */
-  @Delete('college-coins/:id')
+  @Delete('demo-college-coins/:id')
   async deleteCollegeCoin(@Param('id') id: string) {
     await this.collegeCoinsService.delete(id);
     return {
@@ -551,7 +552,7 @@ export class AdminController {
    * Import demo college coins from CSV
    * CSV columns: ticker,name,peggedToAsset,peggedPercentage,iconUrl,description,website,whitepaper,twitter,discord,categories,genesisDate,isActive
    */
-  @Post('college-coins/import')
+  @Post('demo-college-coins/import')
   @UseInterceptors(
     FileInterceptor('file', {
       limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max

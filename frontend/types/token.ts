@@ -31,6 +31,7 @@ export interface Token {
   maxTransactionAmount: number;
 
   // Mining & College Coin
+  // Real college token flag (NOT demo/practice coins – see TradingPair.isDemoCollegeCoin for those)
   isCollegeCoin: boolean;
   miningAllowed: boolean;
   miningBaseRate: number;

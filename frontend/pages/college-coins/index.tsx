@@ -31,6 +31,9 @@ import { TokensApi } from '@/services/api/tokens';
 import { useMiningSocket } from '@/hooks/useMiningSocket';
 import type { NextPageWithLayout } from '../_app';
 
+// Shows REAL college tokens (Token.isCollegeCoin) for mining.
+// Demo/practice coins are managed at /admin/demo-college-coins and use TradingPair.isDemoCollegeCoin.
+
 const { useToken } = theme;
 const { useBreakpoint } = Grid;
 

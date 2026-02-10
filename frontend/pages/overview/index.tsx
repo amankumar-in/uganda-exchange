@@ -397,7 +397,7 @@ const DashboardPage: NextPageWithLayout = () => {
   const usdPairs = useMemo(() => {
     let filtered = pairs.filter((p) => p.quote === 'USD');
     if (!isLearnerMode) {
-      filtered = filtered.filter((p) => !p.isCollegeCoin);
+      filtered = filtered.filter((p) => !p.isDemoCollegeCoin);
     }
     return filtered;
   }, [pairs, isLearnerMode]);
@@ -419,8 +419,8 @@ const DashboardPage: NextPageWithLayout = () => {
   const marketMovers = useMemo(() => {
     if (isLearnerMode) {
       // Separate college coins and regular coins
-      const collegeCoins = usdPairs.filter(p => p.isCollegeCoin);
-      const regularCoins = usdPairs.filter(p => !p.isCollegeCoin);
+      const collegeCoins = usdPairs.filter(p => p.isDemoCollegeCoin);
+      const regularCoins = usdPairs.filter(p => !p.isDemoCollegeCoin);
       
       // Separate gainers and losers for each group
       const collegeGainers = collegeCoins.filter(p => p.change > 0);
@@ -1247,7 +1247,7 @@ const DashboardPage: NextPageWithLayout = () => {
             name: p.name,
             iconUrl: p.iconUrl,
             price: p.price,
-            isCollegeCoin: p.isCollegeCoin,
+            isDemoCollegeCoin: p.isDemoCollegeCoin,
           }))}
         />
     </>

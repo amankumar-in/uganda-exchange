@@ -85,7 +85,7 @@ export default function WatchlistPage() {
     
     // In investor mode, filter out college coins
     if (!isLearnerMode) {
-      usdPairs = usdPairs.filter((pair) => !pair.isCollegeCoin);
+      usdPairs = usdPairs.filter((pair) => !pair.isDemoCollegeCoin);
     }
     
     // Deduplicate by base currency
@@ -99,8 +99,8 @@ export default function WatchlistPage() {
     return Array.from(uniqueTokens.values()).sort((a, b) => {
       // In learner mode: college coins first, then alphabetical
       if (isLearnerMode) {
-        const aIsCollege = a.isCollegeCoin ? 1 : 0;
-        const bIsCollege = b.isCollegeCoin ? 1 : 0;
+        const aIsCollege = a.isDemoCollegeCoin ? 1 : 0;
+        const bIsCollege = b.isDemoCollegeCoin ? 1 : 0;
         if (aIsCollege !== bIsCollege) {
           return bIsCollege - aIsCollege; // College coins first
         }
@@ -119,8 +119,8 @@ export default function WatchlistPage() {
     // In learner mode, sort with college coins first
     if (isLearnerMode) {
       return filtered.sort((a, b) => {
-        const aIsCollege = a.isCollegeCoin ? 1 : 0;
-        const bIsCollege = b.isCollegeCoin ? 1 : 0;
+        const aIsCollege = a.isDemoCollegeCoin ? 1 : 0;
+        const bIsCollege = b.isDemoCollegeCoin ? 1 : 0;
         if (aIsCollege !== bIsCollege) {
           return bIsCollege - aIsCollege; // College coins first
         }

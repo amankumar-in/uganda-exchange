@@ -40,7 +40,7 @@ interface TradingPairExtended {
   quoteCurrency: string;
   iconUrl: string;
   _usdVolume?: number;
-  isCollegeCoin?: boolean;
+  isDemoCollegeCoin?: boolean;
 }
 
 // Filter pill component - responsive sizing
@@ -486,8 +486,8 @@ export default function MarketsPage() {
   }, [pageLoading, isAuthenticated]);
 
   // Filter to USD pairs, separating college coins
-  const usdPairs = useMemo(() => pairs.filter((p) => p.quote === 'USD' && !(p as TradingPairExtended).isCollegeCoin), [pairs]);
-  const collegePairs = useMemo(() => pairs.filter((p) => (p as TradingPairExtended).isCollegeCoin === true), [pairs]);
+  const usdPairs = useMemo(() => pairs.filter((p) => p.quote === 'USD' && !(p as TradingPairExtended).isDemoCollegeCoin), [pairs]);
+  const collegePairs = useMemo(() => pairs.filter((p) => (p as TradingPairExtended).isDemoCollegeCoin === true), [pairs]);
 
   const filteredPairs = useMemo(() => {
     // For colleges filter, use college pairs

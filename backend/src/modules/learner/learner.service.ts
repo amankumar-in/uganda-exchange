@@ -2,7 +2,7 @@ import { Injectable, Logger, BadRequestException, Inject, forwardRef } from '@ne
 import { PrismaService } from '../../prisma.service';
 import { Prisma, TradeStatus, OrderType } from '@prisma/client';
 import { CoinbaseService, OrderValidationResult } from '../coinbase/coinbase.service';
-import { CollegeCoinsService } from '../college-coins/college-coins.service';
+import { DemoCollegeCoinsService } from '../demo-college-coins/demo-college-coins.service';
 import { TokensService } from '../tokens/tokens.service';
 
 export interface LearnerBalanceResponse {
@@ -63,8 +63,8 @@ export class LearnerService {
   constructor(
     private prisma: PrismaService,
     private coinbaseService: CoinbaseService,
-    @Inject(forwardRef(() => CollegeCoinsService))
-    private collegeCoinsService: CollegeCoinsService,
+    @Inject(forwardRef(() => DemoCollegeCoinsService))
+    private collegeCoinsService: DemoCollegeCoinsService,
     private tokensService: TokensService,
   ) {}
 

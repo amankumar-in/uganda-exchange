@@ -490,7 +490,7 @@ export async function getReferenceTokens(): Promise<{
   success: boolean;
   tokens: ReferenceToken[];
 }> {
-  return adminApiCall('/admin/college-coins/reference-tokens', {
+  return adminApiCall('/admin/demo-college-coins/reference-tokens', {
     method: 'GET',
   });
 }
@@ -502,7 +502,7 @@ export async function getCollegeCoins(): Promise<{
   success: boolean;
   coins: DemoCollegeCoin[];
 }> {
-  return adminApiCall('/admin/college-coins', {
+  return adminApiCall('/admin/demo-college-coins', {
     method: 'GET',
   });
 }
@@ -514,7 +514,7 @@ export async function getCollegeCoin(id: string): Promise<{
   success: boolean;
   coin: DemoCollegeCoin;
 }> {
-  return adminApiCall(`/admin/college-coins/${id}`, {
+  return adminApiCall(`/admin/demo-college-coins/${id}`, {
     method: 'GET',
   });
 }
@@ -559,7 +559,7 @@ export async function createCollegeCoin(data: {
   if (data.icon) formData.append('icon', data.icon);
   if (data.iconUrl && !data.icon) formData.append('iconUrl', data.iconUrl);
 
-  return adminApiCall('/admin/college-coins', {
+  return adminApiCall('/admin/demo-college-coins', {
     method: 'POST',
     body: formData,
   });
@@ -608,7 +608,7 @@ export async function updateCollegeCoin(
   if (data.icon) formData.append('icon', data.icon);
   if (data.iconUrl && !data.icon) formData.append('iconUrl', data.iconUrl);
 
-  return adminApiCall(`/admin/college-coins/${id}`, {
+  return adminApiCall(`/admin/demo-college-coins/${id}`, {
     method: 'PATCH',
     body: formData,
   });
@@ -621,7 +621,7 @@ export async function deleteCollegeCoin(id: string): Promise<{
   success: boolean;
   message: string;
 }> {
-  return adminApiCall(`/admin/college-coins/${id}`, {
+  return adminApiCall(`/admin/demo-college-coins/${id}`, {
     method: 'DELETE',
   });
 }
@@ -642,7 +642,7 @@ export async function importCollegeCoins(file: File): Promise<{
   const formData = new FormData();
   formData.append('file', file);
 
-  return adminApiCall('/admin/college-coins/import', {
+  return adminApiCall('/admin/demo-college-coins/import', {
     method: 'POST',
     body: formData,
   });

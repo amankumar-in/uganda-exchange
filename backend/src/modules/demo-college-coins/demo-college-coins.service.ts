@@ -82,8 +82,8 @@ export interface UpdateDemoCollegeCoinDto {
 }
 
 @Injectable()
-export class CollegeCoinsService {
-  private readonly logger = new Logger(CollegeCoinsService.name);
+export class DemoCollegeCoinsService {
+  private readonly logger = new Logger(DemoCollegeCoinsService.name);
 
   constructor(
     private prisma: PrismaService,
@@ -341,4 +341,3 @@ export class CollegeCoinsService {
     };
   }
 }
-

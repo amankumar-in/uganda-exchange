@@ -87,9 +87,9 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
       label: <Link href="/admin/assets">Asset Manager</Link>,
     },
     {
-      key: 'college-coins',
+      key: 'demo-college-coins',
       icon: <ThunderboltOutlined />,
-      label: <Link href="/admin/college-coins">Demo College Coins</Link>,
+      label: <Link href="/admin/demo-college-coins">Demo College Coins</Link>,
     },
     {
       key: 'media',
@@ -196,7 +196,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                     {selectedKey === 'users' && 'User Management'}
                     {selectedKey === 'p2p-disputes' && 'P2P Disputes'}
                     {selectedKey === 'kyc-restrictions' && 'KYC Restrictions'}
-                    {selectedKey === 'college-coins' && 'Demo College Coins (Learner Mode)'}
+                    {selectedKey === 'demo-college-coins' && 'Demo College Coins (Learner Mode)'}
                     {selectedKey === 'media' && 'Media Manager'}
                   </>
                 )}

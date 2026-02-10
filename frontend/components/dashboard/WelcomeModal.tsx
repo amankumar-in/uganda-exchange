@@ -23,7 +23,7 @@ interface WelcomeModalProps {
     name: string;
     iconUrl: string;
     price: number;
-    isCollegeCoin?: boolean;
+    isDemoCollegeCoin?: boolean;
   }>;
 }
 
@@ -64,7 +64,7 @@ export default function WelcomeModal({
     .filter((b) => b.asset !== 'USD' && b.balance > 0)
     .map((b) => {
       const pair = pairs.find(
-        (p) => p.baseCurrency === b.asset && p.isCollegeCoin
+        (p) => p.baseCurrency === b.asset && p.isDemoCollegeCoin
       );
       return {
         asset: b.asset,

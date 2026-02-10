@@ -38,7 +38,7 @@ import {
   formatLargeNumber,
   formatSupply,
 } from '@/services/api/coingecko';
-import { getDemoCollegeCoin, DemoCollegeCoin, resolveUploadUrl } from '@/services/api/college-coins';
+import { getDemoCollegeCoin, DemoCollegeCoin, resolveUploadUrl } from '@/services/api/demo-college-coins';
 import { TokensApi } from '@/services/api/tokens';
 import { Token } from '@/types/token';
 

@@ -3,13 +3,13 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { SnapshotCronService } from './snapshot.cron.service';
 import { PrismaService } from '../../prisma.service';
 import { CoinbaseModule } from '../coinbase/coinbase.module';
-import { CollegeCoinsModule } from '../college-coins/college-coins.module';
+import { DemoCollegeCoinsModule } from '../demo-college-coins/demo-college-coins.module';
 
 @Module({
   imports: [
     ScheduleModule.forRoot(),
     CoinbaseModule,
-    CollegeCoinsModule,
+    DemoCollegeCoinsModule,
   ],
   providers: [SnapshotCronService, PrismaService],
 })

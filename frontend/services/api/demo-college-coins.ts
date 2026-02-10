@@ -66,7 +66,7 @@ export async function getDemoCollegeCoins(): Promise<{
   success: boolean;
   coins: DemoCollegeCoin[];
 }> {
-  return apiCall('/college-coins');
+  return apiCall('/demo-college-coins');
 }
 
 /**
@@ -77,7 +77,7 @@ export async function getDemoCollegeCoin(ticker: string): Promise<{
   success: boolean;
   coin: DemoCollegeCoin;
 }> {
-  return apiCall(`/college-coins/${ticker}`);
+  return apiCall(`/demo-college-coins/${ticker}`);
 }
 
 /**
@@ -88,6 +88,5 @@ export async function getReferenceTokens(): Promise<{
   success: boolean;
   tokens: { symbol: string; name: string }[];
 }> {
-  return apiCall('/college-coins/reference-tokens');
+  return apiCall('/demo-college-coins/reference-tokens');
 }
-

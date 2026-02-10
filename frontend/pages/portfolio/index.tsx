@@ -494,7 +494,7 @@ const WalletPage: NextPageWithLayout = () => {
       .map((balance) => {
         // Check both regular pairs and college coin pairs
         const usdPair = pairs.find(
-          (p) => p.baseCurrency === balance.asset && (p.quote === 'USD' || p.isCollegeCoin),
+          (p) => p.baseCurrency === balance.asset && (p.quote === 'USD' || p.isDemoCollegeCoin),
         );
         const price = usdPair?.price || 0;
         const usdValue = balance.balance * price;
