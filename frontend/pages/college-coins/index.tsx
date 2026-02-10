@@ -562,15 +562,15 @@ const CollegeCoinsPage: NextPageWithLayout = () => {
     }
   }, [user, isLoading, router]);
 
-  const fetchMiningStatus = useCallback(async () => {
+  const fetchMiningStatus = useCallback(async (showLoading = true) => {
     try {
-      setLoadingStatus(true);
+      if (showLoading) setLoadingStatus(true);
       const res = await getMiningStatus();
       setMiningStatus(res.data);
     } catch (err) {
       console.error('Failed to fetch mining status:', err);
     } finally {
-      setLoadingStatus(false);
+      if (showLoading) setLoadingStatus(false);
     }
   }, []);
 
@@ -601,7 +601,7 @@ const CollegeCoinsPage: NextPageWithLayout = () => {
 
   useEffect(() => {
     if (!pageLoading && user && miningStatus) {
-      const interval = setInterval(fetchMiningStatus, 30000);
+      const interval = setInterval(() => fetchMiningStatus(false), 30000);
       return () => clearInterval(interval);
     }
   }, [pageLoading, user, miningStatus, fetchMiningStatus]);
