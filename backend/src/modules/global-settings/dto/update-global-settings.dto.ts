@@ -56,4 +56,8 @@ export class UpdateGlobalSettingsDto {
   @IsOptional()
   @Min(1)
   defaultMiningSessionHours?: number;
+
+  @IsBoolean()
+  @IsOptional()
+  applyToExisting?: boolean;
 }

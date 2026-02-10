@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
-import { Table, Button, Space, Tag, message, Avatar, Tooltip, Input, Radio, Drawer, Form, Switch, InputNumber, Divider, Alert } from 'antd';
+import { Table, Button, Space, Tag, message, Avatar, Tooltip, Input, Radio, Drawer, Form, Switch, InputNumber, Divider, Alert, Checkbox } from 'antd';
 import {
   PlusOutlined, EditOutlined, DeleteOutlined, CheckCircleOutlined,
   CloseCircleOutlined, SyncOutlined, SettingOutlined, ThunderboltOutlined,
@@ -25,6 +25,7 @@ export default function AssetManagerPage() {
   // Global Settings Drawer
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsLoading, setSettingsLoading] = useState(false);
+  const [applyToExisting, setApplyToExisting] = useState(false);
   const [settingsForm] = Form.useForm();
 
   useEffect(() => {
@@ -93,6 +94,7 @@ export default function AssetManagerPage() {
   const openSettings = async () => {
     setSettingsOpen(true);
     setSettingsLoading(true);
+    setApplyToExisting(false);
     try {
       const settings = await TokensApi.getGlobalSettings();
       settingsForm.setFieldsValue(settings);
@@ -106,10 +108,12 @@ export default function AssetManagerPage() {
   const saveSettings = async () => {
     try {
       const values = await settingsForm.validateFields();
+      const { id, createdAt, updatedAt, ...payload } = values;
       setSettingsLoading(true);
-      await TokensApi.updateGlobalSettings(values);
-      message.success('Global settings saved');
+      await TokensApi.updateGlobalSettings({ ...payload, applyToExisting });
+      message.success(applyToExisting ? 'Global settings saved and applied to all existing tokens' : 'Global settings saved');
       setSettingsOpen(false);
+      if (applyToExisting) fetchTokens();
     } catch (error) {
       message.error('Failed to save settings');
     } finally {
@@ -364,6 +368,23 @@ export default function AssetManagerPage() {
               <InputNumber min={1} max={720} precision={0} style={{ width: 150 }} />
             </Form.Item>
           </Space>
+
+          <Divider />
+          <Checkbox
+            checked={applyToExisting}
+            onChange={e => setApplyToExisting(e.target.checked)}
+          >
+            Also apply to all existing tokens
+          </Checkbox>
+          {applyToExisting && (
+            <Alert
+              message="Warning: This will overwrite individual token settings"
+              description="All existing tokens will be reset to the default values configured above. Any per-token customizations will be lost."
+              type="warning"
+              showIcon
+              style={{ marginTop: 12 }}
+            />
+          )}
         </Form>
       </Drawer>
     </AdminLayout>
