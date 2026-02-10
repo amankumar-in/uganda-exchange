@@ -109,6 +109,10 @@ export default function AssetManagerPage() {
     try {
       const values = await settingsForm.validateFields();
       const { id, createdAt, updatedAt, ...payload } = values;
+      if (payload.defaultMinTransaction !== undefined) payload.defaultMinTransaction = Number(payload.defaultMinTransaction);
+      if (payload.defaultMaxTransaction !== undefined) payload.defaultMaxTransaction = Number(payload.defaultMaxTransaction);
+      if (payload.defaultMiningBaseRate !== undefined) payload.defaultMiningBaseRate = Number(payload.defaultMiningBaseRate);
+      if (payload.defaultMiningSessionHours !== undefined) payload.defaultMiningSessionHours = Number(payload.defaultMiningSessionHours);
       setSettingsLoading(true);
       await TokensApi.updateGlobalSettings({ ...payload, applyToExisting });
       message.success(applyToExisting ? 'Global settings saved and applied to all existing tokens' : 'Global settings saved');
