@@ -199,7 +199,7 @@ export default function RegisterPage() {
     { required: true, message: 'Please enter a password' },
     { min: 8, message: 'Password must be at least 8 characters' },
     {
-      pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/,
+      pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])/,
       message: 'Must include uppercase, lowercase, number, and special character',
     },
   ];
