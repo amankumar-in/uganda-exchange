@@ -30,8 +30,8 @@ import { useExchange } from '@/context/ExchangeContext';
 import DepositModal from '@/components/wallet/DepositModal';
 import WithdrawModal from '@/components/wallet/WithdrawModal';
 import { getFiatTransactions, syncPaymentStatus } from '@/services/api/fiat';
-import { createPortfolioSnapshot } from '@/services/api/learner';
-import { createInvestorPortfolioSnapshot } from '@/services/api/assets';
+import { createPortfolioSnapshot, getLearnerBalances } from '@/services/api/learner';
+import { createInvestorPortfolioSnapshot, getBalances } from '@/services/api/assets';
 import { getMiningStatus, MiningStatus } from '@/services/api/mining';
 import type { NextPageWithLayout } from '../_app';
 
@@ -228,6 +228,9 @@ const WalletPage: NextPageWithLayout = () => {
   const [depositAmount, setDepositAmount] = useState<number | null>(null);
   const [syncLoading, setSyncLoading] = useState(false);
   const [miningStatus, setMiningStatus] = useState<MiningStatus | null>(null);
+  const [viewMode, setViewMode] = useState<'learner' | 'investor'>(appMode);
+  const [viewBalances, setViewBalances] = useState<typeof balances>([]);
+  const [isLoadingViewBalances, setIsLoadingViewBalances] = useState(false);
   const previousBalanceRef = useRef<number>(0);
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
   
@@ -250,6 +253,40 @@ const WalletPage: NextPageWithLayout = () => {
       setPageLoading(false);
     }
   }, [user, isLoading, router]);
+
+  // Sync viewMode default to appMode
+  useEffect(() => {
+    setViewMode(appMode);
+  }, [appMode]);
+
+  // Fetch balances for viewMode — use context balances when viewMode matches appMode,
+  // otherwise fetch the alternate mode's balances directly
+  useEffect(() => {
+    if (viewMode === appMode) {
+      setViewBalances(balances);
+      return;
+    }
+    // Fetch the other mode's balances
+    let cancelled = false;
+    const fetchAlt = async () => {
+      setIsLoadingViewBalances(true);
+      try {
+        if (viewMode === 'learner') {
+          const { balances: learnerBals } = await getLearnerBalances();
+          if (!cancelled) setViewBalances(learnerBals);
+        } else {
+          const investorBals = await getBalances();
+          if (!cancelled) setViewBalances(investorBals);
+        }
+      } catch (err) {
+        console.error('Failed to fetch alternate mode balances:', err);
+      } finally {
+        if (!cancelled) setIsLoadingViewBalances(false);
+      }
+    };
+    fetchAlt();
+    return () => { cancelled = true; };
+  }, [viewMode, appMode, balances]);
 
   // Refresh balances and orders when page loads
   useEffect(() => {
@@ -393,9 +430,9 @@ const WalletPage: NextPageWithLayout = () => {
     }
   };
 
-  // Separate USD and crypto assets
+  // Separate USD and crypto assets — use viewBalances for display
   const usdBalance = useMemo(() => {
-    const usd = balances.find((b) => b.asset === 'USD');
+    const usd = viewBalances.find((b) => b.asset === 'USD');
     return usd ? {
       symbol: 'USD',
       name: 'US Dollar',
@@ -416,7 +453,7 @@ const WalletPage: NextPageWithLayout = () => {
       color: '#4CAF50',
       iconUrl: undefined,
     } : null;
-  }, [balances]);
+  }, [viewBalances]);
 
   // Always show these 4 tokens: BTC, ETH, USDT, TUIT
   const REQUIRED_ASSETS = ['BTC', 'ETH', 'USDT', 'TUIT'];
@@ -433,7 +470,7 @@ const WalletPage: NextPageWithLayout = () => {
 
     // Create a map of existing balances
     const balanceMap = new Map(
-      balances
+      viewBalances
         .filter((b) => b.asset !== 'USD')
         .map((b) => [b.asset, b])
     );
@@ -489,7 +526,7 @@ const WalletPage: NextPageWithLayout = () => {
     });
 
     // Add any other assets the user has (not in required list)
-    const otherAssets = balances
+    const otherAssets = viewBalances
       .filter((b) => b.asset !== 'USD' && !REQUIRED_ASSETS.includes(b.asset))
       .map((balance) => {
         // Check both regular pairs and college coin pairs
@@ -547,7 +584,7 @@ const WalletPage: NextPageWithLayout = () => {
       if (bIsRequired) return 1;
       return 0;
     });
-  }, [balances, pairs, token.colorPrimary]);
+  }, [viewBalances, pairs, token.colorPrimary]);
   
   // Combine for total calculations
   const assetsWithValues = useMemo(() => {
@@ -584,7 +621,7 @@ const WalletPage: NextPageWithLayout = () => {
   const collegeCoinRows = useMemo(() => {
     if (!miningStatus || miningStatus.miningColleges.length === 0) return [];
     return miningStatus.miningColleges.map(college => {
-      const walletBal = balances.find(b => b.asset === college.symbol);
+      const walletBal = viewBalances.find(b => b.asset === college.symbol);
       const walletBalance = walletBal?.balance ?? 0;
       const activeSession = miningStatus.activeSessions.find(s => s.tokenId === college.tokenId);
       const isMining = !!activeSession && !activeSession.isExpired;
@@ -602,7 +639,7 @@ const WalletPage: NextPageWithLayout = () => {
         sessionStartTime: isMining ? activeSession!.startTime : null,
       };
     });
-  }, [miningStatus, balances]);
+  }, [miningStatus, viewBalances]);
 
   const sectionStyle: React.CSSProperties = {
     marginBottom: token.marginXL,
@@ -741,9 +778,9 @@ const WalletPage: NextPageWithLayout = () => {
                   totalBalance={totalBalance}
                   cryptoBalance={cryptoBalance}
                   cashBalance={fiatBalance}
-                  mode={appMode}
+                  mode={viewMode}
                   onDepositClick={() => setDepositModalVisible(true)}
-                  onSyncClick={appMode === 'investor' ? handleSyncBalance : undefined}
+                  onSyncClick={viewMode === 'investor' ? handleSyncBalance : undefined}
                   syncLoading={syncLoading}
                 />
               </Col>
@@ -804,7 +841,7 @@ const WalletPage: NextPageWithLayout = () => {
                     <StatCard
                       title="Cash Balance"
                       value={`$${fiatBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-                      subtitle={appMode === 'investor' ? (
+                      subtitle={viewMode === 'investor' ? (
                         <span
                           onClick={handleSyncBalance}
                           style={{
@@ -847,15 +884,15 @@ const WalletPage: NextPageWithLayout = () => {
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: token.marginSM, marginBottom: token.marginSM }}>
-                <LineChartOutlined style={{ fontSize: token.fontSizeLG, color: appMode === 'learner' ? '#F59E0B' : '#6366F1' }} />
+                <LineChartOutlined style={{ fontSize: token.fontSizeLG, color: viewMode === 'learner' ? '#F59E0B' : '#6366F1' }} />
                 <span style={{ fontWeight: fontWeights.semibold, color: token.colorText }}>
                   Portfolio Growth
                 </span>
-                <Tag color={appMode === 'learner' ? 'orange' : 'blue'} style={{ marginLeft: 'auto' }}>
-                  {appMode === 'learner' ? 'Learner Mode' : 'Investor Mode'}
+                <Tag color={viewMode === 'learner' ? 'orange' : 'blue'} style={{ marginLeft: 'auto' }}>
+                  {viewMode === 'learner' ? 'Learner Mode' : 'Investor Mode'}
                 </Tag>
               </div>
-              <PortfolioGrowthChart mode={appMode} height={350} currentBalance={totalBalance} />
+              <PortfolioGrowthChart mode={viewMode} height={350} currentBalance={totalBalance} />
             </Card>
           </motion.div>
         )}
@@ -954,8 +991,25 @@ const WalletPage: NextPageWithLayout = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.4 }}
         >
-          <div style={sectionTitleStyle}>Crypto Assets</div>
-          {isLoadingBalances ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: token.marginSM, marginBottom: token.marginMD }}>
+            <div style={{ ...sectionTitleStyle, marginBottom: 0 }}>Crypto Assets</div>
+            <Tag
+              icon={<SwapOutlined />}
+              color={viewMode === 'learner' ? 'blue' : 'orange'}
+              onClick={() => setViewMode(prev => prev === 'learner' ? 'investor' : 'learner')}
+              style={{
+                cursor: 'pointer',
+                fontSize: isMobile ? 11 : 12,
+                fontWeight: fontWeights.semibold,
+                padding: isMobile ? '2px 8px' : '4px 12px',
+                borderRadius: 20,
+                userSelect: 'none',
+              }}
+            >
+              {viewMode === 'learner' ? 'Switch to Investor balances' : 'Switch to Learner balances'}
+            </Tag>
+          </div>
+          {(isLoadingBalances || isLoadingViewBalances) ? (
             <Skeleton active paragraph={{ rows: 4 }} />
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: token.marginSM }}>
