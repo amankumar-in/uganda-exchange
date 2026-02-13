@@ -29,6 +29,15 @@ const nextConfig: NextConfig = {
   // Next.js 16 uses Turbopack by default which handles code splitting automatically
   // The optimizePackageImports above already optimizes large libraries
   // Turbopack provides better code splitting out of the box
+
+  async rewrites() {
+    return [
+      {
+        source: "/intuition-financials",
+        destination: "/intuition-financials/index.html",
+      },
+    ];
+  },
 };
 
 export default withBundleAnalyzer(nextConfig);
