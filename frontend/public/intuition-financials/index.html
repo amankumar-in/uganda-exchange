@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InTuition Exchange - Seed Round</title>
+    <link rel="stylesheet" href="/intuition-financials/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <img src="/intuition-financials/intuition-icon.svg" alt="InTuition" class="logo-icon">
+                <span class="logo-text">InTuition Exchange</span>
+            </div>
+            <div class="header-badge">Seed Round</div>
+        </div>
+    </header>
+
+    <!-- Tab Navigation -->
+    <nav class="tab-nav">
+        <div class="tab-container">
+            <button class="tab-btn active" data-tab="overview">Overview</button>
+            <button class="tab-btn" data-tab="cap-table">Cap Table</button>
+            <button class="tab-btn" data-tab="market">Market Opportunity</button>
+            <button class="tab-btn" data-tab="growth">Growth Projections</button>
+            <button class="tab-btn" data-tab="revenue">Revenue & Financials</button>
+            <button class="tab-btn" data-tab="exit">Exit Scenarios</button>
+            <button class="tab-btn" data-tab="benchmarks">Benchmarks</button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        
+        <!-- Overview Tab -->
+        <section id="overview" class="tab-content active">
+            <div class="section-header">
+                <h1>Seed Round Overview</h1>
+                <p class="subtitle">InTuition Exchange - Pre-Launch Equity Round</p>
+            </div>
+
+            <!-- Key Stats with Dividers -->
+            <div class="stats-row">
+                <div class="stat-item highlight">
+                    <span class="stat-label">Raising</span>
+                    <span class="stat-value">$500,000</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Pre-Money Valuation</span>
+                    <span class="stat-value">$7.5M</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Post-Money Valuation</span>
+                    <span class="stat-value">$8M</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Investor Ownership</span>
+                    <span class="stat-value">6.25%</span>
+                </div>
+            </div>
+
+            <!-- Round Terms and Track Record + Projections Row -->
+            <div class="two-column">
+                <div class="card">
+                    <h3>Round Terms</h3>
+                    <table class="data-table">
+                        <tbody>
+                            <tr>
+                                <td>Instrument</td>
+                                <td><strong>Equity (Seed / Pre-Launch)</strong></td>
+                            </tr>
+                            <tr>
+                                <td>Amount Raised</td>
+                                <td><strong>$500,000</strong></td>
+                            </tr>
+                            <tr>
+                                <td>Pre-Money Valuation</td>
+                                <td><strong>$7,500,000</strong></td>
+                            </tr>
+                            <tr>
+                                <td>Post-Money Valuation</td>
+                                <td><strong>$8,000,000</strong></td>
+                            </tr>
+                            <tr>
+                                <td>New Investor Ownership</td>
+                                <td><strong>6.25%</strong></td>
+                            </tr>
+                            <tr>
+                                <td>Existing Holders</td>
+                                <td><strong>93.75%</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Track Record + Year 3 Projections Column -->
+                <div class="stacked-cards">
+                    <div class="card highlight-card">
+                        <div class="highlight-icon">📈</div>
+                        <div class="highlight-content">
+                            <h3>Proven Track Record</h3>
+                            <p>Our team previously built and operated a crypto exchange that achieved <strong>profitability within 1 month</strong> of launch. The platform was shut down due to our custodian (Prime Trust) filing for bankruptcy — not due to product-market fit issues.</p>
+                        </div>
+                    </div>
+
+                    <!-- Year 3 Projections with Dividers -->
+                    <div class="stats-stacked">
+                        <div class="stat-item">
+                            <span class="stat-label">Year 3 Active Users</span>
+                            <span class="stat-value">1.2M</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Year 3 Annual Volume</span>
+                            <span class="stat-value">$30B</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Year 3 Annual Revenue</span>
+                            <span class="stat-value">$45M</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Year 3 Colleges</span>
+                            <span class="stat-value">1,350</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Cap Table Tab -->
+        <section id="cap-table" class="tab-content">
+            <div class="section-header">
+                <h1>Cap Table</h1>
+                <p class="subtitle">Post-money ownership breakdown</p>
+            </div>
+
+            <div class="two-column">
+                <div class="card">
+                    <h3>Detailed Cap Table (Post-Money)</h3>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Holder Group</th>
+                                <th>% Ownership</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Founders</td>
+                                <td><strong>75.00%</strong></td>
+                            </tr>
+                            <tr>
+                                <td>ESOP (Employee Pool)</td>
+                                <td><strong>14.10%</strong></td>
+                            </tr>
+                            <tr>
+                                <td>Advisors</td>
+                                <td><strong>4.70%</strong></td>
+                            </tr>
+                            <tr>
+                                <td>New Seed Investor(s)</td>
+                                <td><strong>6.25%</strong></td>
+                            </tr>
+                            <tr class="total-row">
+                                <td>Total</td>
+                                <td><strong>100.00%</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card chart-card">
+                    <h3>Ownership Distribution</h3>
+                    <div id="capTableChart"></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Pre-Round Structure</h3>
+                <p class="card-note">Before the $500k raise at $8M post-money valuation:</p>
+                <table class="data-table compact">
+                    <thead>
+                        <tr>
+                            <th>Holder</th>
+                            <th>Pre-Round %</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Founders</td><td>80%</td></tr>
+                        <tr><td>ESOP</td><td>15%</td></tr>
+                        <tr><td>Advisors</td><td>5%</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Market Opportunity Tab -->
+        <section id="market" class="tab-content">
+            <div class="section-header">
+                <h1>Market Opportunity</h1>
+                <p class="subtitle">Global and India crypto exchange market</p>
+            </div>
+
+            <div class="stats-row">
+                <div class="stat-item">
+                    <span class="stat-label">Global Exchange Market (2024)</span>
+                    <span class="stat-value">$33.4B</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Global Exchange Market (2033)</span>
+                    <span class="stat-value">$88.8B</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">India Crypto Market (2024)</span>
+                    <span class="stat-value">$2.6B</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">India Crypto Market (2033)</span>
+                    <span class="stat-value">$13.9B</span>
+                </div>
+            </div>
+
+            <div class="two-column">
+                <div class="card chart-card">
+                    <h3>Global Crypto Exchange Platform Market</h3>
+                    <div id="globalMarketChart"></div>
+                    <p class="chart-note">CAGR: 11.2% (2025-2033)</p>
+                </div>
+                <div class="card chart-card">
+                    <h3>India Cryptocurrency Market</h3>
+                    <div id="indiaMarketChart"></div>
+                    <p class="chart-note">CAGR: 18.48% (2025-2033)</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Market Size Details</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Market</th>
+                            <th>2024 Size</th>
+                            <th>2033 Size</th>
+                            <th>CAGR</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Global Crypto Exchange Platform</td>
+                            <td>$33.4B</td>
+                            <td>$88.8B</td>
+                            <td><strong>11.2%</strong></td>
+                        </tr>
+                        <tr>
+                            <td>Global Crypto Exchange (Alt Est.)</td>
+                            <td>$24.75B</td>
+                            <td>$213.2B (2034)</td>
+                            <td><strong>24%</strong></td>
+                        </tr>
+                        <tr>
+                            <td>India Cryptocurrency Market</td>
+                            <td>$2.6B</td>
+                            <td>$13.9B</td>
+                            <td><strong>18.48%</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card highlight-card">
+                <div class="highlight-icon">🇮🇳</div>
+                <div class="highlight-content">
+                    <h3>India Focus</h3>
+                    <p><strong>100M+ monthly crypto users</strong> in India with strong digital adoption and a large young user base. Strategic focus market for InTuition Exchange.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Growth Projections Tab -->
+        <section id="growth" class="tab-content">
+            <div class="section-header">
+                <h1>Growth Projections</h1>
+                <p class="subtitle">Dual funnel: College ecosystem + Open market</p>
+            </div>
+
+            <div class="two-column">
+                <div class="card">
+                    <h3>College Onboarding</h3>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Year</th>
+                                <th>New Colleges</th>
+                                <th>Cumulative Colleges</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Year 1</td><td>100</td><td><strong>100</strong></td></tr>
+                            <tr><td>Year 2</td><td>500</td><td><strong>600</strong></td></tr>
+                            <tr><td>Year 3</td><td>750</td><td><strong>1,350</strong></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="card chart-card">
+                    <h3>Colleges & Users Growth</h3>
+                    <div id="collegesUsersChart"></div>
+                </div>
+            </div>
+
+            <div class="two-column">
+                <div class="card">
+                    <h3>User Breakdown (Aggressive Scenario)</h3>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Metric</th>
+                                <th>Year 1</th>
+                                <th>Year 2</th>
+                                <th>Year 3</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Active Traders per College (Avg)</td>
+                                <td>300</td>
+                                <td>400</td>
+                                <td>500</td>
+                            </tr>
+                            <tr>
+                                <td>College Ecosystem Users</td>
+                                <td>30,000</td>
+                                <td>240,000</td>
+                                <td>675,000</td>
+                            </tr>
+                            <tr>
+                                <td>Open-Market Users</td>
+                                <td>20,000</td>
+                                <td>160,000</td>
+                                <td>525,000</td>
+                            </tr>
+                            <tr class="total-row">
+                                <td><strong>Total Active Users</strong></td>
+                                <td><strong>50,000</strong></td>
+                                <td><strong>400,000</strong></td>
+                                <td><strong>1,200,000</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="card chart-card">
+                    <h3>User Growth by Segment</h3>
+                    <div id="userSegmentChart"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Revenue & Financials Tab -->
+        <section id="revenue" class="tab-content">
+            <div class="section-header">
+                <h1>Revenue & Financials</h1>
+                <p class="subtitle">Volume and fee revenue projections</p>
+            </div>
+            <!-- Bento Grid: Stats + AUM Table -->
+            <div class="bento-grid">
+                <div class="bento-stats-flat">
+                    <div class="stat-item">
+                        <span class="stat-label">Blended Fee Rate</span>
+                        <span class="stat-value">0.15%</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Year 3 Volume</span>
+                        <span class="stat-value">$30B</span>
+                    </div>
+                    <div class="stat-item highlight">
+                        <span class="stat-label">Year 3 Revenue</span>
+                        <span class="stat-value">$45M</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Industry Avg Volume</span>
+                        <span class="stat-value">$45B</span>
+                    </div>
+                </div>
+                <div class="card bento-table">
+                    <h3>College Token AUM (Exclusivity Effect)</h3>
+                    <p class="card-note">Each college token brings unique liquidity exclusively to InTuition Exchange</p>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Metric</th>
+                                <th>Year 1</th>
+                                <th>Year 2</th>
+                                <th>Year 3</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Cumulative Colleges</td>
+                                <td>100</td>
+                                <td>600</td>
+                                <td>1,350</td>
+                            </tr>
+                            <tr>
+                                <td>Avg Token AUM per College</td>
+                                <td>$100k</td>
+                                <td>$200k</td>
+                                <td>$400k</td>
+                            </tr>
+                            <tr class="total-row">
+                                <td><strong>Total College Token AUM</strong></td>
+                                <td><strong>$10M</strong></td>
+                                <td><strong>$120M</strong></td>
+                                <td><strong>$540M</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="two-column">
+                <div class="card chart-card">
+                    <h3>Annual Trading Volume</h3>
+                    <div id="volumeChart"></div>
+                </div>
+                <div class="card chart-card">
+                    <h3>Fee Revenue (at 0.15%)</h3>
+                    <div id="revenueChart"></div>
+                </div>
+            </div>
+
+            <div class="two-column">
+                <div class="card">
+                    <h3>Per-User Trading Intensity</h3>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Metric</th>
+                                <th>Year 1</th>
+                                <th>Year 2</th>
+                                <th>Year 3</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Avg Annual Volume per User</td>
+                                <td>$10,000</td>
+                                <td>$20,000</td>
+                                <td>$25,000</td>
+                            </tr>
+                            <tr>
+                                <td>Total Active Users</td>
+                                <td>50,000</td>
+                                <td>400,000</td>
+                                <td>1,200,000</td>
+                            </tr>
+                            <tr class="total-row">
+                                <td><strong>Total Annual Volume</strong></td>
+                                <td><strong>$0.50B</strong></td>
+                                <td><strong>$8.00B</strong></td>
+                                <td><strong>$30.00B</strong></td>
+                            </tr>
+                            <tr class="total-row">
+                                <td><strong>Fee Revenue (0.15%)</strong></td>
+                                <td><strong>$0.75M</strong></td>
+                                <td><strong>$12.00M</strong></td>
+                                <td><strong>$45.00M</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="card chart-card">
+                    <h3>College Token AUM Growth</h3>
+                    <div id="aumChart"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Exit Scenarios Tab -->
+        <section id="exit" class="tab-content">
+            <div class="section-header">
+                <h1>Exit Scenarios</h1>
+                <p class="subtitle">What investors can expect at 3-year and 5-year horizons</p>
+            </div>
+
+            <!-- Exit Model Assumptions -->
+            <div class="card" style="margin-bottom: 2rem;">
+                <table class="data-table">
+                    <tbody>
+                        <tr class="highlight-row">
+                            <td><strong>Our Exit Model Range</strong></td>
+                            <td><strong>4× / 8× / 12×</strong></td>
+                            <td>Conservative to optimistic</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Investment Stats -->
+            <div class="stats-row">
+                <div class="stat-item highlight">
+                    <span class="stat-label">Investment Amount</span>
+                    <span class="stat-value">$500,000</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Ownership Stake</span>
+                    <span class="stat-value">6.25%</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Potential Return (Range)</span>
+                    <span class="stat-value">$11M - $60M</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Return Multiple (Range)</span>
+                    <span class="stat-value">22× - 120×</span>
+                </div>
+            </div>
+
+            <div class="two-column">
+                <div class="card">
+                    <h3>Year-3 Exit Scenarios</h3>
+                    <p class="card-note">Based on Year-3 Revenue of $45M</p>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Case</th>
+                                <th>EV/Rev</th>
+                                <th>Enterprise Value</th>
+                                <th>Investor Return</th>
+                                <th>Multiple</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Low</td>
+                                <td>4×</td>
+                                <td>$180M</td>
+                                <td>$11.25M</td>
+                                <td class="highlight-cell"><strong>22.5×</strong></td>
+                            </tr>
+                            <tr>
+                                <td>Base</td>
+                                <td>8×</td>
+                                <td>$360M</td>
+                                <td>$22.50M</td>
+                                <td class="highlight-cell"><strong>45.0×</strong></td>
+                            </tr>
+                            <tr>
+                                <td>High</td>
+                                <td>12×</td>
+                                <td>$540M</td>
+                                <td>$33.75M</td>
+                                <td class="highlight-cell"><strong>67.5×</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="card chart-card">
+                    <h3>Year-3 Exit Comparison</h3>
+                    <div id="exit3Chart"></div>
+                </div>
+            </div>
+
+            <div class="two-column">
+                <div class="card">
+                    <h3>Year-5 Exit Scenarios</h3>
+                    <p class="card-note">35% annual growth → Year-5 Revenue: $80M</p>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Case</th>
+                                <th>EV/Rev</th>
+                                <th>Enterprise Value</th>
+                                <th>Investor Return</th>
+                                <th>Multiple</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Low</td>
+                                <td>4×</td>
+                                <td>$320M</td>
+                                <td>$20.0M</td>
+                                <td class="highlight-cell"><strong>40×</strong></td>
+                            </tr>
+                            <tr>
+                                <td>Base</td>
+                                <td>8×</td>
+                                <td>$640M</td>
+                                <td>$40.0M</td>
+                                <td class="highlight-cell"><strong>80×</strong></td>
+                            </tr>
+                            <tr>
+                                <td>High</td>
+                                <td>12×</td>
+                                <td>$960M</td>
+                                <td>$60.0M</td>
+                                <td class="highlight-cell"><strong>120×</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="card chart-card">
+                    <h3>Exit Multiple Comparison (3-Year vs 5-Year)</h3>
+                    <div id="exitCompareChart"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Benchmarks Tab -->
+        <section id="benchmarks" class="tab-content">
+            <div class="section-header">
+                <h1>Industry Benchmarks</h1>
+                <p class="subtitle">Comparable exchanges and valuation context</p>
+            </div>
+
+            <div class="card">
+                <h3>Comparable Exchanges Snapshot</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Exchange</th>
+                            <th>Key Metrics (2024/Latest)</th>
+                            <th>Relevance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Binance</strong></td>
+                            <td>Revenue $16.8B • Volume $7.3T • 150-250M users</td>
+                            <td>Global leader; shows potential scale</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Coinbase</strong></td>
+                            <td>Revenue $6.56B • Q1 volume $312B • 100M+ users</td>
+                            <td>Public comp; EV/Revenue reference</td>
+                        </tr>
+                        <tr>
+                            <td><strong>CoinDCX</strong> (India)</td>
+                            <td>Valuation $2.45B • Revenue ~$141M • AUC $1.2B</td>
+                            <td>India-focused exchange valuation</td>
+                        </tr>
+                        <tr>
+                            <td><strong>WazirX</strong> (India)</td>
+                            <td>24h volume ~$0.30M (~$110M annual)</td>
+                            <td>Local volume with regulatory overhang</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <h3>Fee Levels & Effective Take-Rate</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Exchange</th>
+                            <th>Headline Spot Fees</th>
+                            <th>Effective Revenue/Volume</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Typical Global CEX</td>
+                            <td>Maker/Taker ~0.1-0.2% per trade</td>
+                            <td>—</td>
+                        </tr>
+                        <tr>
+                            <td>WazirX (India)</td>
+                            <td>0.2% maker / 0.2% taker</td>
+                            <td>—</td>
+                        </tr>
+                        <tr>
+                            <td>Binance 2024</td>
+                            <td>—</td>
+                            <td><strong>~0.23%</strong> ($16.8B on $7.3T)</td>
+                        </tr>
+                        <tr>
+                            <td>Coinbase Q1 2024</td>
+                            <td>—</td>
+                            <td><strong>~0.38%</strong> ($1.2B on $312B)</td>
+                        </tr>
+                        <tr class="highlight-row">
+                            <td><strong>InTuition (Assumed)</strong></td>
+                            <td colspan="2"><strong>0.15%</strong> — Conservative, below major exchanges</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <h3>Valuation Multiples & Exit References</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Benchmark</th>
+                            <th>EV / Revenue Multiple</th>
+                            <th>Context</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Blockchain & Crypto Sector Median (Q4 2023)</td>
+                            <td><strong>5.3×</strong></td>
+                            <td>Up from 1.9× in 2022</td>
+                        </tr>
+                        <tr>
+                            <td>Coinbase Direct Listing (2021)</td>
+                            <td>~10-12×</td>
+                            <td>$100B valuation, ~$7.2B annualized revenue</td>
+                        </tr>
+                        <tr>
+                            <td>High-Growth DEX Examples</td>
+                            <td>Up to ~60×</td>
+                            <td>Peak narrative periods</td>
+                        </tr>
+                        <tr class="highlight-row">
+                            <td><strong>Our Exit Model Range</strong></td>
+                            <td><strong>4× / 8× / 12×</strong></td>
+                            <td>Conservative to optimistic</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <h3>Exchange Scale Benchmarks</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Exchange / Period</th>
+                            <th>Users</th>
+                            <th>Volume</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Binance (2019, ~2 years in)</td>
+                            <td>15M+ users</td>
+                            <td>~$1T annual</td>
+                        </tr>
+                        <tr>
+                            <td>Binance (2024)</td>
+                            <td>290-300M users</td>
+                            <td>~$65B daily</td>
+                        </tr>
+                        <tr>
+                            <td>Coinbase (2013, &lt;1 year)</td>
+                            <td>650k users</td>
+                            <td>—</td>
+                        </tr>
+                        <tr>
+                            <td>Coinbase (2024)</td>
+                            <td>100M+ users, 10.8M traders</td>
+                            <td>&gt;$1T annual</td>
+                        </tr>
+                        <tr>
+                            <td>Industry Average (2023)</td>
+                            <td>—</td>
+                            <td><strong>$45B annual per exchange</strong></td>
+                        </tr>
+                        <tr class="highlight-row">
+                            <td><strong>InTuition Year 3</strong></td>
+                            <td><strong>1.2M users</strong></td>
+                            <td><strong>$30B annual</strong> — below industry avg</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card highlight-card">
+                <div class="highlight-icon">🎯</div>
+                <div class="highlight-content">
+                    <h3>InTuition Exchange Leverage Points</h3>
+                    <ul class="leverage-list">
+                        <li>India crypto market: $2.6B → $13.9B by 2033 (18.48% CAGR)</li>
+                        <li>Global exchange platform market: $33.4B → $88.8B by 2033 (11.2% CAGR)</li>
+                        <li>College pipeline: <strong>1,350 colleges live by Year 3</strong>, driving structurally captive order flow</li>
+                        <li>Exclusive college tokens create unique liquidity only tradeable on InTuition</li>
+                        <li>First-month CFC app: ~500 early users mining future college coins with zero marketing</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>InTuition Exchange • Seed Round 2025 • Confidential</p>
+    </footer>
+
+    <script src="/intuition-financials/app.js"></script>
+</body>
+</html>
