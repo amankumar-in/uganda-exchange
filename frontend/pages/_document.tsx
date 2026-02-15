@@ -1,8 +1,8 @@
 import { Html, Head, Main, NextScript } from "next/document";
 
 export default function Document() {
-  const siteUrl = "https://sandbox.intuitionexchange.com";
-  const siteName = "InTuition Exchange - Sandbox";
+  const siteUrl = "https://intuitionexchange.com";
+  const siteName = "InTuition Exchange";
   const siteDescription = "Learn crypto trading with virtual funds. Practice buying and selling Bitcoin, Ethereum, and more in a risk-free sandbox environment.";
   const metaImage = `${siteUrl}/images/meta-image-sandbox.jpg`;
 
