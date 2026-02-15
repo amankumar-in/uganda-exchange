@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   Table,
   Space,
@@ -13,6 +13,7 @@ import {
   Tabs,
   Empty,
   Popconfirm,
+  AutoComplete,
 } from 'antd';
 import {
   ReloadOutlined,
@@ -25,6 +26,8 @@ import {
   UserBalances as UserBalancesType,
   BalanceItem,
 } from '../../../services/api/admin';
+import { TokensApi } from '../../../services/api/tokens';
+import { Token } from '../../../types/token';
 
 const { Text } = Typography;
 
@@ -38,6 +41,8 @@ export const UserBalances: React.FC<UserBalancesProps> = ({ userId }) => {
   const [adjustModalVisible, setAdjustModalVisible] = useState(false);
   const [adjustMode, setAdjustMode] = useState<'live' | 'learner'>('live');
   const [form] = Form.useForm();
+  const [tokens, setTokens] = useState<Token[]>([]);
+  const [assetSearch, setAssetSearch] = useState('');
 
   const fetchBalances = async () => {
     setLoading(true);
@@ -55,15 +60,109 @@ export const UserBalances: React.FC<UserBalancesProps> = ({ userId }) => {
     fetchBalances();
   }, [userId]);
 
-  const handleAdjust = async (values: { asset: string; amount: number; reason: string }) => {
+  useEffect(() => {
+    TokensApi.getAll().then(setTokens).catch(() => {});
+  }, []);
+
+  // Build autocomplete options sorted by relevance: exact match > starts-with > contains
+  const assetOptions = useMemo(() => {
+    // Always include USD as a base option
+    const allSymbols = ['USD', ...tokens.map(t => t.symbol)];
+    const unique = [...new Set(allSymbols)];
+    if (!assetSearch) {
+      return unique.map(s => {
+        const token = tokens.find(t => t.symbol === s);
+        return {
+          value: s,
+          label: (
+            <span>
+              <strong>{s}</strong>
+              {token ? <span style={{ color: '#888', marginLeft: 8 }}>{token.name}</span> : null}
+            </span>
+          ),
+        };
+      });
+    }
+    const q = assetSearch.toUpperCase();
+    const filtered = unique.filter(s =>
+      s.toUpperCase().includes(q) ||
+      tokens.find(t => t.symbol === s && t.name.toUpperCase().includes(q))
+    );
+    filtered.sort((a, b) => {
+      const aU = a.toUpperCase();
+      const bU = b.toUpperCase();
+      const aExact = aU === q;
+      const bExact = bU === q;
+      if (aExact !== bExact) return aExact ? -1 : 1;
+      const aStarts = aU.startsWith(q);
+      const bStarts = bU.startsWith(q);
+      if (aStarts !== bStarts) return aStarts ? -1 : 1;
+      if (aStarts && bStarts) {
+        if (aU.length !== bU.length) return aU.length - bU.length;
+      }
+      const aSymbolMatch = aU.includes(q);
+      const bSymbolMatch = bU.includes(q);
+      if (aSymbolMatch !== bSymbolMatch) return aSymbolMatch ? -1 : 1;
+      return aU.localeCompare(bU);
+    });
+    return filtered.map(s => {
+      const token = tokens.find(t => t.symbol === s);
+      return {
+        value: s,
+        label: (
+          <span>
+            <strong>{s}</strong>
+            {token ? <span style={{ color: '#888', marginLeft: 8 }}>{token.name}</span> : null}
+          </span>
+        ),
+      };
+    });
+  }, [tokens, assetSearch]);
+
+  const knownAssets = useMemo(() => {
+    const set = new Set(['USD', ...tokens.map(t => t.symbol.toUpperCase())]);
+    return set;
+  }, [tokens]);
+
+  const handleAdjust = async (values: { asset: string; amount: number; reason?: string }) => {
+    const assetUpper = values.asset.toUpperCase();
+
+    if (!knownAssets.has(assetUpper)) {
+      Modal.confirm({
+        title: 'Asset not found',
+        content: `"${values.asset}" does not exist as a registered asset. Do you want to create a balance for this asset anyway?`,
+        okText: 'Yes, proceed',
+        cancelText: 'Cancel',
+        onOk: async () => {
+          try {
+            await adjustUserBalance(userId, {
+              ...values,
+              asset: assetUpper,
+              mode: adjustMode,
+            });
+            message.success(`Balance adjusted: ${values.amount > 0 ? '+' : ''}${values.amount} ${assetUpper}`);
+            setAdjustModalVisible(false);
+            form.resetFields();
+            setAssetSearch('');
+            fetchBalances();
+          } catch (error: any) {
+            message.error(error.message);
+          }
+        },
+      });
+      return;
+    }
+
     try {
       await adjustUserBalance(userId, {
         ...values,
+        asset: assetUpper,
         mode: adjustMode,
       });
-      message.success(`Balance adjusted: ${values.amount > 0 ? '+' : ''}${values.amount} ${values.asset}`);
+      message.success(`Balance adjusted: ${values.amount > 0 ? '+' : ''}${values.amount} ${assetUpper}`);
       setAdjustModalVisible(false);
       form.resetFields();
+      setAssetSearch('');
       fetchBalances();
     } catch (error: any) {
       message.error(error.message);
@@ -220,6 +319,7 @@ export const UserBalances: React.FC<UserBalancesProps> = ({ userId }) => {
         onCancel={() => {
           setAdjustModalVisible(false);
           form.resetFields();
+          setAssetSearch('');
         }}
         footer={null}
       >
@@ -229,7 +329,12 @@ export const UserBalances: React.FC<UserBalancesProps> = ({ userId }) => {
             label="Asset"
             rules={[{ required: true, message: 'Required' }]}
           >
-            <Input placeholder="USD, BTC, ETH, etc." />
+            <AutoComplete
+              options={assetOptions}
+              onSearch={setAssetSearch}
+              placeholder="Type to search: USD, BTC, ETH..."
+              filterOption={false}
+            />
           </Form.Item>
           <Form.Item
             name="amount"
@@ -241,8 +346,7 @@ export const UserBalances: React.FC<UserBalancesProps> = ({ userId }) => {
           </Form.Item>
           <Form.Item
             name="reason"
-            label="Reason"
-            rules={[{ required: true, message: 'Required' }]}
+            label="Reason (optional)"
           >
             <Input.TextArea placeholder="Reason for adjustment" rows={2} />
           </Form.Item>

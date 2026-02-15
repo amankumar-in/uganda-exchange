@@ -121,12 +121,14 @@ export class AdminController {
     @Query('limit') limit?: string,
     @Query('search') search?: string,
     @Query('role') role?: string,
+    @Query('kycStatus') kycStatus?: string,
   ) {
     const result = await this.adminService.getUsers({
       page: page ? parseInt(page, 10) : 1,
       limit: limit ? parseInt(limit, 10) : 20,
       search,
       role: role as UserRole | undefined,
+      kycStatus: kycStatus as KycStatus | undefined,
     });
 
     return {
@@ -206,8 +208,8 @@ export class AdminController {
     @Body() body: BalanceAdjustmentDto,
     @Req() req: Request,
   ) {
-    if (!body.asset || body.amount === undefined || !body.reason || !body.mode) {
-      throw new BadRequestException('Missing required fields: asset, amount, reason, mode');
+    if (!body.asset || body.amount === undefined || !body.mode) {
+      throw new BadRequestException('Missing required fields: asset, amount, mode');
     }
 
     if (!['live', 'learner'].includes(body.mode)) {

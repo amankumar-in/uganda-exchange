@@ -21,6 +21,7 @@ export default function AssetManagerPage() {
   const [searchText, setSearchText] = useState('');
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [bulkLoading, setBulkLoading] = useState(false);
+  const [pageSize, setPageSize] = useState(50);
 
   // Global Settings Drawer
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -69,6 +70,24 @@ export default function AssetManagerPage() {
         t.symbol.toLowerCase().includes(q) ||
         (t.collegeName && t.collegeName.toLowerCase().includes(q))
       );
+      // Sort: exact symbol match first, then symbol starts-with (shorter first), then symbol contains, then name-only matches, alphabetical tiebreaker
+      list = [...list].sort((a, b) => {
+        const aSymbol = a.symbol.toLowerCase();
+        const bSymbol = b.symbol.toLowerCase();
+        const aExact = aSymbol === q;
+        const bExact = bSymbol === q;
+        if (aExact !== bExact) return aExact ? -1 : 1;
+        const aStartsWith = aSymbol.startsWith(q);
+        const bStartsWith = bSymbol.startsWith(q);
+        if (aStartsWith !== bStartsWith) return aStartsWith ? -1 : 1;
+        if (aStartsWith && bStartsWith) {
+          if (aSymbol.length !== bSymbol.length) return aSymbol.length - bSymbol.length;
+        }
+        const aSymbolMatch = aSymbol.includes(q);
+        const bSymbolMatch = bSymbol.includes(q);
+        if (aSymbolMatch !== bSymbolMatch) return aSymbolMatch ? -1 : 1;
+        return aSymbol.localeCompare(bSymbol);
+      });
     }
     return list;
   }, [tokens, filter, searchText]);
@@ -288,7 +307,13 @@ export default function AssetManagerPage() {
           dataSource={filteredTokens}
           rowKey="id"
           loading={loading}
-          pagination={{ pageSize: 50, showTotal: (total) => `${total} tokens` }}
+          pagination={{
+            pageSize,
+            showSizeChanger: true,
+            pageSizeOptions: ['25', '50', '100', '200'],
+            onShowSizeChange: (_current, size) => setPageSize(size),
+            showTotal: (total) => `${total} tokens`,
+          }}
           scroll={{ x: 900 }}
           rowSelection={{
             selectedRowKeys,

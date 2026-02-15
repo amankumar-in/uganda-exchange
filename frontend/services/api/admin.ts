@@ -333,7 +333,7 @@ export async function adjustUserBalance(
   data: {
     asset: string;
     amount: number;
-    reason: string;
+    reason?: string;
     mode: 'live' | 'learner';
   },
 ): Promise<{

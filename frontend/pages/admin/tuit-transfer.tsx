@@ -138,6 +138,7 @@ export default function TuitTransferAdminPage() {
       <Tabs
         activeKey={activeTab}
         onChange={setActiveTab}
+        destroyInactiveTabPane
         items={[
           {
             key: 'wallets',

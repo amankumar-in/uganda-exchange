@@ -142,7 +142,7 @@ export interface UpdateKycStatusDto {
 export interface BalanceAdjustmentDto {
   asset: string;
   amount: number;
-  reason: string;
+  reason?: string;
   mode: 'live' | 'learner';
 }
 
