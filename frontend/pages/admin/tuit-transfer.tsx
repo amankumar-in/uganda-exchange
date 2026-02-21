@@ -20,6 +20,9 @@ import {
   Tooltip,
   Descriptions,
   Spin,
+  Divider,
+  Alert,
+  InputNumber,
 } from 'antd';
 import {
   ReloadOutlined,
@@ -304,6 +307,9 @@ function AuthorizedWalletsTab({ onStatsChange }: WalletsTabProps) {
           <Tag color={record.isActive ? 'green' : 'red'}>
             {record.isActive ? 'Active' : 'Inactive'}
           </Tag>
+          {record.isTestPair && (
+            <Tag color="purple">Test Pair</Tag>
+          )}
           {record.hasTransferred && (
             <Tag color="blue">Transferred</Tag>
           )}
@@ -449,6 +455,15 @@ function AuthorizedWalletsTab({ onStatsChange }: WalletsTabProps) {
             <Spin />
           </div>
         ) : vestingData ? (
+          <>
+          {selectedWallet?.isTestPair && (
+            <Alert
+              type="warning"
+              showIcon
+              message="This is dummy test pair data, not from the smart contract."
+              style={{ marginBottom: 12 }}
+            />
+          )}
           <Descriptions column={1} bordered size="small">
             <Descriptions.Item label="Wallet Address">
               <Text copyable>{vestingData.walletAddress}</Text>
@@ -468,6 +483,7 @@ function AuthorizedWalletsTab({ onStatsChange }: WalletsTabProps) {
               </Text>
             </Descriptions.Item>
           </Descriptions>
+          </>
         ) : (
           <Text type="secondary">No data available</Text>
         )}
@@ -500,11 +516,24 @@ interface AddWalletModalProps {
 function AddWalletModal({ visible, onClose, onSuccess }: AddWalletModalProps) {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
+  const isTestPair = Form.useWatch('isTestPair', form);
 
   const handleSubmit = async (values: any) => {
     setLoading(true);
     try {
-      await TuitTransferAdminApi.addWallet(values.name, values.walletAddress, values.email);
+      await TuitTransferAdminApi.addWallet(
+        values.name,
+        values.walletAddress,
+        values.email,
+        values.isTestPair || false,
+        values.isTestPair
+          ? {
+              testTotalAllocated: values.testTotalAllocated?.toString(),
+              testUnlocked: values.testUnlocked?.toString(),
+              testWithdrawn: values.testWithdrawn?.toString(),
+            }
+          : undefined,
+      );
       message.success('Wallet added successfully');
       form.resetFields();
       onSuccess();
@@ -547,6 +576,45 @@ function AddWalletModal({ visible, onClose, onSuccess }: AddWalletModalProps) {
         >
           <Input placeholder="0x..." />
         </Form.Item>
+
+        <Divider />
+
+        <Form.Item name="isTestPair" label="Test Pair (Demo Mode)" valuePropName="checked">
+          <Switch />
+        </Form.Item>
+
+        {isTestPair && (
+          <>
+            <Alert
+              type="info"
+              showIcon
+              message="Test pair wallets bypass OTP email and smart contract calls. Any user can use them for unlimited demo transfers with the dummy vesting data configured below."
+              style={{ marginBottom: 16 }}
+            />
+            <Form.Item
+              name="testTotalAllocated"
+              label="Total Allocated (TUIT)"
+              rules={[{ required: true, message: 'Required for test pairs' }]}
+            >
+              <InputNumber placeholder="1000" style={{ width: '100%' }} min={0} />
+            </Form.Item>
+            <Form.Item
+              name="testUnlocked"
+              label="Unlocked (TUIT)"
+              rules={[{ required: true, message: 'Required for test pairs' }]}
+            >
+              <InputNumber placeholder="500" style={{ width: '100%' }} min={0} />
+            </Form.Item>
+            <Form.Item
+              name="testWithdrawn"
+              label="Withdrawn (TUIT)"
+              rules={[{ required: true, message: 'Required for test pairs' }]}
+            >
+              <InputNumber placeholder="0" style={{ width: '100%' }} min={0} />
+            </Form.Item>
+          </>
+        )}
+
         <Form.Item style={{ marginBottom: 0 }}>
           <Space>
             <Button onClick={onClose}>Cancel</Button>
@@ -574,12 +642,17 @@ interface EditWalletModalProps {
 function EditWalletModal({ visible, wallet, onClose, onSuccess }: EditWalletModalProps) {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
+  const isTestPair = Form.useWatch('isTestPair', form);
 
   useEffect(() => {
     if (wallet) {
       form.setFieldsValue({
         name: wallet.name,
         email: wallet.email || '',
+        isTestPair: wallet.isTestPair || false,
+        testTotalAllocated: wallet.testTotalAllocated ? parseFloat(wallet.testTotalAllocated) : undefined,
+        testUnlocked: wallet.testUnlocked ? parseFloat(wallet.testUnlocked) : undefined,
+        testWithdrawn: wallet.testWithdrawn ? parseFloat(wallet.testWithdrawn) : undefined,
       });
     }
   }, [wallet, form]);
@@ -591,6 +664,10 @@ function EditWalletModal({ visible, wallet, onClose, onSuccess }: EditWalletModa
       await TuitTransferAdminApi.updateWallet(wallet.id, {
         name: values.name,
         email: values.email || null,
+        isTestPair: values.isTestPair || false,
+        testTotalAllocated: values.isTestPair ? values.testTotalAllocated?.toString() : null,
+        testUnlocked: values.isTestPair ? values.testUnlocked?.toString() : null,
+        testWithdrawn: values.isTestPair ? values.testWithdrawn?.toString() : null,
       });
       message.success('Wallet updated successfully');
       onSuccess();
@@ -623,6 +700,33 @@ function EditWalletModal({ visible, wallet, onClose, onSuccess }: EditWalletModa
         >
           <Input placeholder="Leave empty to remove" />
         </Form.Item>
+
+        <Divider />
+
+        <Form.Item name="isTestPair" label="Test Pair (Demo Mode)" valuePropName="checked">
+          <Switch />
+        </Form.Item>
+
+        {isTestPair && (
+          <>
+            <Alert
+              type="info"
+              showIcon
+              message="Test pair wallets allow unlimited demo transfers with dummy data."
+              style={{ marginBottom: 16 }}
+            />
+            <Form.Item name="testTotalAllocated" label="Total Allocated (TUIT)">
+              <InputNumber placeholder="1000" style={{ width: '100%' }} min={0} />
+            </Form.Item>
+            <Form.Item name="testUnlocked" label="Unlocked (TUIT)">
+              <InputNumber placeholder="500" style={{ width: '100%' }} min={0} />
+            </Form.Item>
+            <Form.Item name="testWithdrawn" label="Withdrawn (TUIT)">
+              <InputNumber placeholder="0" style={{ width: '100%' }} min={0} />
+            </Form.Item>
+          </>
+        )}
+
         <Form.Item style={{ marginBottom: 0 }}>
           <Space>
             <Button onClick={onClose}>Cancel</Button>

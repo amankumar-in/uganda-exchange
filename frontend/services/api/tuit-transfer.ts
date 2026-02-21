@@ -45,6 +45,10 @@ export interface AuthorizedWallet {
   email: string | null;
   walletAddress: string;
   isActive: boolean;
+  isTestPair: boolean;
+  testTotalAllocated: string | null;
+  testUnlocked: string | null;
+  testWithdrawn: string | null;
   hasTransferred: boolean;
   transfer?: {
     id: string;
@@ -218,17 +222,37 @@ export const TuitTransferAdminApi = {
     name: string,
     walletAddress: string,
     email?: string,
+    isTestPair?: boolean,
+    testVestingData?: {
+      testTotalAllocated?: string;
+      testUnlocked?: string;
+      testWithdrawn?: string;
+    },
   ): Promise<{ id: string }> => {
     return apiCall('/tuit-transfer/admin/wallets', {
       method: 'POST',
-      body: JSON.stringify({ name, email, walletAddress }),
+      body: JSON.stringify({
+        name,
+        email,
+        walletAddress,
+        isTestPair,
+        ...(isTestPair && testVestingData),
+      }),
     });
   },
 
   // Update authorized wallet
   updateWallet: async (
     id: string,
-    data: { name?: string; email?: string; isActive?: boolean },
+    data: {
+      name?: string;
+      email?: string;
+      isActive?: boolean;
+      isTestPair?: boolean;
+      testTotalAllocated?: string | null;
+      testUnlocked?: string | null;
+      testWithdrawn?: string | null;
+    },
   ): Promise<{ success: boolean }> => {
     return apiCall(`/tuit-transfer/admin/wallets/${id}`, {
       method: 'PUT',

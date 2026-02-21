@@ -26,6 +26,10 @@ export interface AuthorizedWalletWithVesting {
   email: string | null;
   walletAddress: string;
   isActive: boolean;
+  isTestPair: boolean;
+  testTotalAllocated: string | null;
+  testUnlocked: string | null;
+  testWithdrawn: string | null;
   vestingData?: VestingData;
   hasTransferred: boolean;
   transfer?: {
@@ -46,6 +50,29 @@ export class TuitTransferService {
     private otpService: OtpService,
     private assetsService: AssetsService,
   ) {}
+
+  /**
+   * Build dummy VestingData from stored test pair fields
+   */
+  private buildTestPairVestingData(wallet: {
+    walletAddress: string;
+    testTotalAllocated: Prisma.Decimal | null;
+    testUnlocked: Prisma.Decimal | null;
+    testWithdrawn: Prisma.Decimal | null;
+  }): VestingData {
+    const totalAllocated = wallet.testTotalAllocated?.toString() || '0';
+    const unlocked = wallet.testUnlocked?.toString() || '0';
+    const withdrawn = wallet.testWithdrawn?.toString() || '0';
+    const available = (parseFloat(unlocked) - parseFloat(withdrawn)).toString();
+
+    return {
+      walletAddress: wallet.walletAddress,
+      totalAllocated,
+      unlocked,
+      withdrawn,
+      availableToWithdraw: available,
+    };
+  }
 
   // ============================================
   // FLOW 1: Transfer from Vesting Allocation
@@ -90,15 +117,17 @@ export class TuitTransferService {
       );
     }
 
-    // Check if already transferred
-    if (authorizedWallet.transfers.length > 0) {
+    // Check if already transferred (skip for test pairs - unlimited use)
+    if (authorizedWallet.transfers.length > 0 && !authorizedWallet.isTestPair) {
       throw new ConflictException(
         'This wallet has already been used to transfer TUIT balance. Each wallet can only transfer once.',
       );
     }
 
-    // Send verification code
-    await this.otpService.sendEmailOtp(normalizedEmail, 'TUIT_TRANSFER');
+    // Send verification code (skip for test pairs - any 6-digit code will work)
+    if (!authorizedWallet.isTestPair) {
+      await this.otpService.sendEmailOtp(normalizedEmail, 'TUIT_TRANSFER');
+    }
 
     return {
       success: true,
@@ -117,12 +146,6 @@ export class TuitTransferService {
     const normalizedEmail = email.toLowerCase().trim();
     const normalizedWallet = walletAddress.toLowerCase().trim();
 
-    // Verify OTP
-    const isValid = await this.otpService.verifyEmailOtp(normalizedEmail, code, 'TUIT_TRANSFER');
-    if (!isValid) {
-      throw new BadRequestException('Invalid or expired verification code');
-    }
-
     // Re-validate the wallet (in case something changed)
     const authorizedWallet = await this.prisma.client.tuitAuthorizedWallet.findUnique({
       where: { walletAddress: normalizedWallet },
@@ -133,12 +156,23 @@ export class TuitTransferService {
       throw new BadRequestException('Wallet is no longer valid for transfer');
     }
 
-    if (authorizedWallet.transfers.length > 0) {
+    // Verify OTP (skip for test pairs - any 6-digit code accepted)
+    if (!authorizedWallet.isTestPair) {
+      const isValid = await this.otpService.verifyEmailOtp(normalizedEmail, code, 'TUIT_TRANSFER');
+      if (!isValid) {
+        throw new BadRequestException('Invalid or expired verification code');
+      }
+    }
+
+    // Check if already transferred (skip for test pairs)
+    if (authorizedWallet.transfers.length > 0 && !authorizedWallet.isTestPair) {
       throw new ConflictException('This wallet has already transferred its balance');
     }
 
-    // Get vesting data from smart contract
-    const vestingData = await this.contractService.getVestingData(walletAddress);
+    // Get vesting data: dummy for test pairs, real contract for normal wallets
+    const vestingData = authorizedWallet.isTestPair
+      ? this.buildTestPairVestingData(authorizedWallet)
+      : await this.contractService.getVestingData(walletAddress);
 
     return {
       vestingData,
@@ -169,24 +203,28 @@ export class TuitTransferService {
       throw new BadRequestException('This wallet has been deactivated');
     }
 
-    if (authorizedWallet.transfers.length > 0) {
-      throw new ConflictException('This wallet has already transferred its balance');
+    // For non-test-pairs: enforce one-time transfer
+    if (!authorizedWallet.isTestPair) {
+      if (authorizedWallet.transfers.length > 0) {
+        throw new ConflictException('This wallet has already transferred its balance');
+      }
+
+      const existingUserTransfer = await this.prisma.client.tuitTransfer.findFirst({
+        where: {
+          userId,
+          authorizedWalletId,
+        },
+      });
+
+      if (existingUserTransfer) {
+        throw new ConflictException('You have already transferred from this wallet');
+      }
     }
 
-    // Check if this user has already transferred from this wallet
-    const existingUserTransfer = await this.prisma.client.tuitTransfer.findFirst({
-      where: {
-        userId,
-        authorizedWalletId,
-      },
-    });
-
-    if (existingUserTransfer) {
-      throw new ConflictException('You have already transferred from this wallet');
-    }
-
-    // Get fresh vesting data
-    const vestingData = await this.contractService.getVestingData(authorizedWallet.walletAddress);
+    // Get vesting data: dummy for test pairs, real contract for normal wallets
+    const vestingData = authorizedWallet.isTestPair
+      ? this.buildTestPairVestingData(authorizedWallet)
+      : await this.contractService.getVestingData(authorizedWallet.walletAddress);
     const availableAmount = parseFloat(vestingData.availableToWithdraw);
 
     if (availableAmount <= 0) {
@@ -196,9 +234,16 @@ export class TuitTransferService {
     }
 
     // Execute transfer in a transaction
-    const result = await this.prisma.client.$transaction(async (tx) => {
+    await this.prisma.client.$transaction(async (tx) => {
+      // For test pairs: delete existing transfer records to allow re-creation
+      if (authorizedWallet.isTestPair) {
+        await tx.tuitTransfer.deleteMany({
+          where: { authorizedWalletId },
+        });
+      }
+
       // Create transfer record
-      const transfer = await tx.tuitTransfer.create({
+      await tx.tuitTransfer.create({
         data: {
           userId,
           authorizedWalletId,
@@ -210,15 +255,13 @@ export class TuitTransferService {
           status: 'COMPLETED',
         },
       });
-
-      return transfer;
     });
 
-    // Credit the user's TUIT balance (outside transaction for safety)
+    // Credit the user's TUIT balance
     await this.assetsService.updateBalanceAfterTrade(userId, TUIT_ASSET, availableAmount);
 
     this.logger.log(
-      `TUIT Transfer completed: User ${userId} credited ${availableAmount} TUIT from wallet ${authorizedWallet.walletAddress}`,
+      `TUIT Transfer completed${authorizedWallet.isTestPair ? ' (TEST PAIR)' : ''}: User ${userId} credited ${availableAmount} TUIT from wallet ${authorizedWallet.walletAddress}`,
     );
 
     return {
@@ -271,6 +314,7 @@ export class TuitTransferService {
   ): Promise<{ success: boolean; requestId: string }> {
     // Normalize tx hash
     const normalizedTxHash = txHash.toLowerCase().trim();
+    const isTestHash = normalizedTxHash.startsWith('0xtest');
 
     // Check if this tx hash was already submitted
     const existingRequest = await this.prisma.client.tuitConversionRequest.findUnique({
@@ -283,33 +327,50 @@ export class TuitTransferService {
       );
     }
 
-    // Check if user already has a completed conversion
-    const completedConversion = await this.prisma.client.tuitConversionRequest.findFirst({
-      where: {
-        userId,
-        status: 'APPROVED',
-      },
-    });
+    // Check if user already has a completed conversion (skip for test hashes)
+    if (!isTestHash) {
+      const completedConversion = await this.prisma.client.tuitConversionRequest.findFirst({
+        where: {
+          userId,
+          status: 'APPROVED',
+        },
+      });
 
-    if (completedConversion) {
-      throw new ConflictException(
-        'You have already completed a token conversion. Only one conversion is allowed per user.',
-      );
+      if (completedConversion) {
+        throw new ConflictException(
+          'You have already completed a token conversion. Only one conversion is allowed per user.',
+        );
+      }
     }
 
-    // Verify the transaction
-    const transferInfo = await this.contractService.verifyTransferTransaction(normalizedTxHash);
+    let amount: string;
 
-    if (!transferInfo) {
-      throw new BadRequestException(
-        'Could not find a valid TUIT transfer in this transaction. Please ensure you submitted the correct transaction hash.',
+    if (isTestHash) {
+      // Test hash: bypass on-chain verification, use dummy amount
+      amount = '100';
+      this.logger.log(
+        `Test conversion request: User ${userId}, TxHash ${normalizedTxHash}, Amount ${amount} TUIT`,
       );
-    }
+    } else {
+      // Real hash: verify on-chain
+      const transferInfo = await this.contractService.verifyTransferTransaction(normalizedTxHash);
 
-    if (!transferInfo.isValidDeposit) {
-      const addresses = this.contractService.getContractAddresses();
-      throw new BadRequestException(
-        `This transaction does not transfer TUIT to our deposit wallet. Please transfer to: ${addresses.depositWallet}`,
+      if (!transferInfo) {
+        throw new BadRequestException(
+          'Could not find a valid TUIT transfer in this transaction. Please ensure you submitted the correct transaction hash.',
+        );
+      }
+
+      if (!transferInfo.isValidDeposit) {
+        const addresses = this.contractService.getContractAddresses();
+        throw new BadRequestException(
+          `This transaction does not transfer TUIT to our deposit wallet. Please transfer to: ${addresses.depositWallet}`,
+        );
+      }
+
+      amount = transferInfo.amount;
+      this.logger.log(
+        `Conversion request submitted: User ${userId}, TxHash ${normalizedTxHash}, Amount ${amount} TUIT`,
       );
     }
 
@@ -318,14 +379,10 @@ export class TuitTransferService {
       data: {
         userId,
         txHash: normalizedTxHash,
-        amount: new Prisma.Decimal(transferInfo.amount),
+        amount: new Prisma.Decimal(amount),
         status: 'PENDING',
       },
     });
-
-    this.logger.log(
-      `Conversion request submitted: User ${userId}, TxHash ${normalizedTxHash}, Amount ${transferInfo.amount} TUIT`,
-    );
 
     return {
       success: true,
@@ -472,6 +529,10 @@ export class TuitTransferService {
         email: w.email,
         walletAddress: w.walletAddress,
         isActive: w.isActive,
+        isTestPair: w.isTestPair,
+        testTotalAllocated: w.testTotalAllocated?.toString() || null,
+        testUnlocked: w.testUnlocked?.toString() || null,
+        testWithdrawn: w.testWithdrawn?.toString() || null,
         hasTransferred: w.transfers.length > 0,
         transfer: w.transfers[0]
           ? {
@@ -500,6 +561,10 @@ export class TuitTransferService {
       throw new NotFoundException('Wallet not found');
     }
 
+    if (wallet.isTestPair) {
+      return this.buildTestPairVestingData(wallet);
+    }
+
     return this.contractService.getVestingData(wallet.walletAddress);
   }
 
@@ -510,6 +575,12 @@ export class TuitTransferService {
     name: string,
     email: string | null,
     walletAddress: string,
+    isTestPair: boolean = false,
+    testVestingData?: {
+      totalAllocated?: string;
+      unlocked?: string;
+      withdrawn?: string;
+    },
   ): Promise<{ id: string }> {
     const normalizedWallet = walletAddress.toLowerCase().trim();
 
@@ -527,6 +598,18 @@ export class TuitTransferService {
         email: email?.toLowerCase().trim() || null,
         walletAddress: normalizedWallet,
         isActive: true,
+        isTestPair,
+        ...(isTestPair && testVestingData && {
+          testTotalAllocated: testVestingData.totalAllocated
+            ? new Prisma.Decimal(testVestingData.totalAllocated)
+            : undefined,
+          testUnlocked: testVestingData.unlocked
+            ? new Prisma.Decimal(testVestingData.unlocked)
+            : undefined,
+          testWithdrawn: testVestingData.withdrawn
+            ? new Prisma.Decimal(testVestingData.withdrawn)
+            : undefined,
+        }),
       },
     });
 
@@ -538,7 +621,15 @@ export class TuitTransferService {
    */
   async updateAuthorizedWallet(
     id: string,
-    data: { name?: string; email?: string | null; isActive?: boolean },
+    data: {
+      name?: string;
+      email?: string | null;
+      isActive?: boolean;
+      isTestPair?: boolean;
+      testTotalAllocated?: string | null;
+      testUnlocked?: string | null;
+      testWithdrawn?: string | null;
+    },
   ): Promise<void> {
     const wallet = await this.prisma.client.tuitAuthorizedWallet.findUnique({
       where: { id },
@@ -554,6 +645,22 @@ export class TuitTransferService {
         ...(data.name && { name: data.name.trim() }),
         ...(data.email !== undefined && { email: data.email?.toLowerCase().trim() || null }),
         ...(data.isActive !== undefined && { isActive: data.isActive }),
+        ...(data.isTestPair !== undefined && { isTestPair: data.isTestPair }),
+        ...(data.testTotalAllocated !== undefined && {
+          testTotalAllocated: data.testTotalAllocated
+            ? new Prisma.Decimal(data.testTotalAllocated)
+            : null,
+        }),
+        ...(data.testUnlocked !== undefined && {
+          testUnlocked: data.testUnlocked
+            ? new Prisma.Decimal(data.testUnlocked)
+            : null,
+        }),
+        ...(data.testWithdrawn !== undefined && {
+          testWithdrawn: data.testWithdrawn
+            ? new Prisma.Decimal(data.testWithdrawn)
+            : null,
+        }),
       },
     });
   }
@@ -571,10 +678,17 @@ export class TuitTransferService {
       throw new NotFoundException('Wallet not found');
     }
 
-    if (wallet.transfers.length > 0) {
+    if (wallet.transfers.length > 0 && !wallet.isTestPair) {
       throw new BadRequestException(
         'Cannot delete a wallet that has already completed a transfer. Deactivate it instead.',
       );
+    }
+
+    // For test pairs, clean up transfer records first
+    if (wallet.isTestPair && wallet.transfers.length > 0) {
+      await this.prisma.client.tuitTransfer.deleteMany({
+        where: { authorizedWalletId: id },
+      });
     }
 
     await this.prisma.client.tuitAuthorizedWallet.delete({

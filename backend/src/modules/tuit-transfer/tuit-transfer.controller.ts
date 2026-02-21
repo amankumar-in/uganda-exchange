@@ -65,6 +65,22 @@ class AddWalletDto {
 
   @IsString()
   walletAddress: string;
+
+  @IsBoolean()
+  @IsOptional()
+  isTestPair?: boolean;
+
+  @IsString()
+  @IsOptional()
+  testTotalAllocated?: string;
+
+  @IsString()
+  @IsOptional()
+  testUnlocked?: string;
+
+  @IsString()
+  @IsOptional()
+  testWithdrawn?: string;
 }
 
 class UpdateWalletDto {
@@ -79,6 +95,22 @@ class UpdateWalletDto {
   @IsBoolean()
   @IsOptional()
   isActive?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  isTestPair?: boolean;
+
+  @IsString()
+  @IsOptional()
+  testTotalAllocated?: string;
+
+  @IsString()
+  @IsOptional()
+  testUnlocked?: string;
+
+  @IsString()
+  @IsOptional()
+  testWithdrawn?: string;
 }
 
 class ReviewConversionDto {
@@ -263,6 +295,14 @@ export class TuitTransferController {
       dto.name,
       dto.email || null,
       dto.walletAddress,
+      dto.isTestPair || false,
+      dto.isTestPair
+        ? {
+            totalAllocated: dto.testTotalAllocated,
+            unlocked: dto.testUnlocked,
+            withdrawn: dto.testWithdrawn,
+          }
+        : undefined,
     );
   }
 
@@ -277,7 +317,15 @@ export class TuitTransferController {
     @Body() dto: UpdateWalletDto,
   ) {
     this.requireAdmin(req);
-    await this.transferService.updateAuthorizedWallet(id, dto);
+    await this.transferService.updateAuthorizedWallet(id, {
+      name: dto.name,
+      email: dto.email,
+      isActive: dto.isActive,
+      isTestPair: dto.isTestPair,
+      testTotalAllocated: dto.testTotalAllocated,
+      testUnlocked: dto.testUnlocked,
+      testWithdrawn: dto.testWithdrawn,
+    });
     return { success: true };
   }
 

@@ -763,7 +763,7 @@ function Flow2Form() {
           style={{ marginBottom: 8 }}
           rules={[
             { required: true, message: 'Transaction hash is required' },
-            { pattern: /^0x[a-fA-F0-9]{64}$/, message: 'Invalid transaction hash' },
+            { pattern: /^0x(test.+|[a-fA-F0-9]{64})$/i, message: 'Invalid transaction hash' },
           ]}
         >
           <Input
