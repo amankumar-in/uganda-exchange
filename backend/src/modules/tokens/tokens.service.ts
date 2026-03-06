@@ -46,6 +46,61 @@ export class TokensService {
     return token;
   }
 
+  /**
+   * Auto-sync Coinbase tokens into the Token table.
+   * Creates any missing tokens with GlobalAssetSettings defaults.
+   */
+  async syncCoinbaseTokens(products: { base_currency: string; base_name: string }[]) {
+    // Get unique base currencies
+    const uniqueTokens = new Map<string, string>();
+    products.forEach(p => {
+      if (!uniqueTokens.has(p.base_currency)) {
+        uniqueTokens.set(p.base_currency, p.base_name);
+      }
+    });
+
+    // Find which ones already exist
+    const existingTokens = await this.prisma.client.token.findMany({
+      select: { symbol: true },
+    });
+    const existingSymbols = new Set(existingTokens.map(t => t.symbol));
+
+    // Filter to only new tokens
+    const newTokens: { symbol: string; name: string }[] = [];
+    uniqueTokens.forEach((name, symbol) => {
+      if (!existingSymbols.has(symbol)) {
+        newTokens.push({ symbol, name });
+      }
+    });
+
+    if (newTokens.length === 0) return;
+
+    // Get global defaults
+    const defaults = await this.globalSettingsService.getSettings();
+
+    // Batch create
+    await this.prisma.client.token.createMany({
+      data: newTokens.map(t => ({
+        symbol: t.symbol,
+        name: t.name,
+        allowBuy: defaults.defaultAllowBuy,
+        allowSell: defaults.defaultAllowSell,
+        allowP2P: defaults.defaultAllowP2P,
+        allowDeposit: defaults.defaultAllowDeposit,
+        allowWithdraw: defaults.defaultAllowWithdraw,
+        allowTradeUsd: defaults.defaultAllowTradeUsd,
+        allowTradeUsdt: defaults.defaultAllowTradeUsdt,
+        allowTradeEth: defaults.defaultAllowTradeEth,
+        allowTradeTuit: defaults.defaultAllowTradeTuit,
+        minTransactionAmount: Number(defaults.defaultMinTransaction),
+        maxTransactionAmount: Number(defaults.defaultMaxTransaction),
+      })),
+      skipDuplicates: true,
+    });
+
+    this.logger.log(`Synced ${newTokens.length} new Coinbase tokens: ${newTokens.map(t => t.symbol).join(', ')}`);
+  }
+
   async findAll() {
     return this.prisma.client.token.findMany({
       orderBy: { createdAt: 'desc' },

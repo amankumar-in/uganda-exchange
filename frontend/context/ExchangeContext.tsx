@@ -349,10 +349,28 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         };
       });
 
-      // 4. Transform Custom Tokens
+      // 4. Apply permissions from Token table to existing Coinbase/synthetic pairs
+      const tokenPermissionsMap = new Map<string, typeof customTokens[0]>();
+      customTokens.forEach(token => {
+        if (token.isActive) tokenPermissionsMap.set(token.symbol, token);
+      });
+      [...coinbasePairs, ...syntheticPairs].forEach(p => {
+        const token = tokenPermissionsMap.get(p.baseCurrency);
+        if (token) {
+          p.permissions = {
+            allowBuy: token.allowBuy ?? true,
+            allowSell: token.allowSell ?? true,
+            allowP2P: token.allowP2P ?? true,
+            minTransactionAmount: Number(token.minTransactionAmount) || 0,
+            maxTransactionAmount: Number(token.maxTransactionAmount) || 0,
+          };
+        }
+      });
+
+      // 5. Build pairs only for native platform tokens
       const customPairs: TradingPair[] = [];
       customTokens.forEach(token => {
-        if (!token.isActive) return;
+        if (!token.isActive || !token.isNative) return;
         const price = token.currentPrice || token.manualPrice || 0;
         const icon = token.iconUrl || getIconUrl(token.symbol);
 
@@ -391,7 +409,7 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         }
       });
 
-      // 5. Merge and Deduplicate by symbol
+      // 6. Merge and Deduplicate by symbol
       // Order of precedence (last one wins): Custom > College > Synthetic > Coinbase
       const allPossible = [...coinbasePairs, ...syntheticPairs, ...collegePairs, ...customPairs];
       const mergedMap = new Map<string, TradingPair>();

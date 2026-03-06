@@ -107,6 +107,11 @@ export class CreateTokenDto {
   @IsOptional()
   discord?: string;
 
+  // Token Type
+  @IsBoolean()
+  @IsOptional()
+  isNative?: boolean;
+
   // Mining & College Coin
   @IsBoolean()
   @IsOptional()

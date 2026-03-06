@@ -30,6 +30,9 @@ export interface Token {
   minTransactionAmount: number;
   maxTransactionAmount: number;
 
+  // Token Type
+  isNative: boolean;
+
   // Mining & College Coin
   // Real college token flag (NOT demo/practice coins – see TradingPair.isDemoCollegeCoin for those)
   isCollegeCoin: boolean;

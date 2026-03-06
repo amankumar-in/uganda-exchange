@@ -424,6 +424,7 @@ export class BridgeService {
         symbol,
         name: college.name,
         iconUrl: college.preferredIcon || null,
+        isNative: true,
         isCollegeCoin: true,
         miningAllowed: true,
         collegeCfcId: cfcId,

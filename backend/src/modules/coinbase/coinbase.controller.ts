@@ -11,10 +11,14 @@ import {
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CoinbaseService } from './coinbase.service';
+import { TokensService } from '../tokens/tokens.service';
 
 @Controller('coinbase')
 export class CoinbaseController {
-  constructor(private readonly coinbaseService: CoinbaseService) {}
+  constructor(
+    private readonly coinbaseService: CoinbaseService,
+    private readonly tokensService: TokensService,
+  ) {}
 
   /**
    * GET /coinbase/products
@@ -24,6 +28,8 @@ export class CoinbaseController {
   async getProducts(@Query('quote') quoteCurrency?: string) {
     try {
       const products = await this.coinbaseService.getProducts(quoteCurrency);
+      // Auto-sync any new Coinbase tokens into the Token table
+      await this.tokensService.syncCoinbaseTokens(products);
       return { success: true, products };
     } catch (error: any) {
       throw new HttpException(

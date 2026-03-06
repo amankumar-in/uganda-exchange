@@ -165,14 +165,20 @@ export default function AssetManagerPage() {
       width: 100,
       filters: [
         { text: 'College', value: 'college' },
-        { text: 'Crypto', value: 'crypto' },
+        { text: 'Native', value: 'native' },
+        { text: 'Standard', value: 'standard' },
       ],
-      onFilter: (value: any, record: Token) =>
-        value === 'college' ? record.isCollegeCoin : !record.isCollegeCoin,
+      onFilter: (value: any, record: Token) => {
+        if (value === 'college') return record.isCollegeCoin;
+        if (value === 'native') return record.isNative;
+        return !record.isNative;
+      },
       render: (_: any, record: Token) =>
         record.isCollegeCoin
           ? <Tag icon={<BankOutlined />} color="purple">College</Tag>
-          : <Tag>Crypto</Tag>,
+          : record.isNative
+            ? <Tag color="blue">Native</Tag>
+            : <Tag>Standard</Tag>,
     },
     {
       title: 'Price',

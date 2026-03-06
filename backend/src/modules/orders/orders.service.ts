@@ -105,7 +105,7 @@ export class OrdersService {
         // BUY with non-USD quote - convert to USD
         const quoteCustom = await this.tokensService.findBySymbol(quote);
         let quoteUsdPrice = 1;
-        if (quoteCustom) {
+        if (quoteCustom?.isNative) {
           quoteUsdPrice = quoteCustom.currentPrice || Number(quoteCustom.manualPrice) || 1;
         } else if (quote !== 'USD') {
           try {
@@ -148,7 +148,7 @@ export class OrdersService {
           let quotePrice = 0;
           
           const customQuote = await this.tokensService.findBySymbol(quote);
-          if (customQuote) {
+          if (customQuote?.isNative) {
             quotePrice = customQuote.currentPrice || 0;
           } else {
             const quoteProduct = await this.coinbaseService.getProduct(quoteUsdPair);
@@ -230,15 +230,15 @@ export class OrdersService {
       let userPerceivedValue = 0;
       let currentPrice = 0; // Price of base asset in terms of quote currency
       
-      // Check if it's an internal trade (either side is a custom token)
+      // Check if it's an internal trade (either side is a native platform token)
       const baseCustom = await this.tokensService.findBySymbol(asset);
       const quoteCustom = await this.tokensService.findBySymbol(quote);
-      const isInternalTrade = !!baseCustom || !!quoteCustom;
+      const isInternalTrade = !!baseCustom?.isNative || !!quoteCustom?.isNative;
 
       if (isInternalTrade) {
         // Get USD prices for both
         let baseUsdPrice = 0;
-        if (baseCustom) {
+        if (baseCustom?.isNative) {
           baseUsdPrice = baseCustom.currentPrice || 0;
         } else {
           try {
@@ -252,7 +252,7 @@ export class OrdersService {
         let quoteUsdPrice = 0;
         if (quote === 'USD') {
           quoteUsdPrice = 1;
-        } else if (quoteCustom) {
+        } else if (quoteCustom?.isNative) {
           quoteUsdPrice = quoteCustom.currentPrice || 0;
         } else {
           try {
@@ -595,15 +595,15 @@ export class OrdersService {
     const [asset, quote] = productId.split('-');
     const isSynthetic = quote === 'ETH' || quote === 'USDT';
 
-    // Check if it's an internal trade (either side is a custom token)
+    // Check if it's an internal trade (either side is a native platform token)
     const baseCustom = await this.tokensService.findBySymbol(asset);
     const quoteCustom = await this.tokensService.findBySymbol(quote);
-    const isInternalTrade = !!baseCustom || !!quoteCustom;
+    const isInternalTrade = !!baseCustom?.isNative || !!quoteCustom?.isNative;
 
     if (isInternalTrade) {
       // Get USD prices for both
       let baseUsdPrice = 0;
-      if (baseCustom) {
+      if (baseCustom?.isNative) {
         baseUsdPrice = baseCustom.currentPrice || 0;
       } else {
         baseUsdPrice = await this.coinbaseService.getProductPrice(`${asset}-USD`) || 0;
@@ -612,7 +612,7 @@ export class OrdersService {
       let quoteUsdPrice = 0;
       if (quote === 'USD') {
         quoteUsdPrice = 1;
-      } else if (quoteCustom) {
+      } else if (quoteCustom?.isNative) {
         quoteUsdPrice = quoteCustom.currentPrice || 0;
       } else {
         quoteUsdPrice = await this.coinbaseService.getProductPrice(`${quote}-USD`) || 0;

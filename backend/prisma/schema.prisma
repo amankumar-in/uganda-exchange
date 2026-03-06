@@ -922,6 +922,11 @@ model Token {
   miningBaseRate     Float    @default(0.25)  // tokens per hour
   miningSessionHours Int      @default(24)    // session duration in hours
 
+  // Token Type
+  /// True for platform-native tokens (TUIT, college coins) that trade internally.
+  /// False for standard crypto (BTC, ETH) that are here only for permission settings.
+  isNative          Boolean  @default(false)
+
   // Status & Metadata
   isActive          Boolean  @default(true)
   description       String?  @db.Text

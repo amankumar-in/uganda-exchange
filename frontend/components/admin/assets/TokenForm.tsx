@@ -202,6 +202,19 @@ export const TokenForm: React.FC<TokenFormProps> = ({
            <Form.Item name="isActive" valuePropName="checked" label="Active Status">
             <Switch checkedChildren="Active" unCheckedChildren="Inactive" />
           </Form.Item>
+
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+            <Form.Item name="isNative" valuePropName="checked" style={{ marginBottom: 0 }}>
+              <Switch />
+            </Form.Item>
+            <div>
+              <div style={{ fontWeight: 600, marginBottom: 4 }}>Native Platform Token</div>
+              <div style={{ fontSize: 12, color: '#666' }}>
+                Enable for tokens that trade internally on this platform (e.g. TUIT, college coins).
+                Leave off for standard crypto (e.g. BTC, ETH) that only need permission settings.
+              </div>
+            </div>
+          </div>
         </Card>
 
         {/* Price Discovery */}

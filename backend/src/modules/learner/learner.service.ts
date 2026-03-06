@@ -447,9 +447,9 @@ export class LearnerService {
       
       this.logger.log(`[placeLearnerTrade] Demo college coin ${asset}: price=${executionPrice}, formattedAmount=${formattedAmount}`);
     } else {
-      // Check if it's a custom token
+      // Check if it's a native platform token (not standard crypto like BTC)
       const customToken = await this.tokensService.findBySymbol(asset);
-      if (customToken) {
+      if (customToken?.isNative) {
         executionPrice = customToken.currentPrice || 0;
         if (executionPrice <= 0) {
           throw new BadRequestException(`Price not available for custom token ${asset}`);
