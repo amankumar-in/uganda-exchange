@@ -351,36 +351,45 @@ export default function AssetManagerPage() {
         <Form form={settingsForm} layout="vertical">
           <Divider titlePlacement="left">Permissions</Divider>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 24px' }}>
-            <Form.Item name="defaultAllowBuy" valuePropName="checked" style={{ marginBottom: 8 }}>
-              <Switch /> <span style={{ marginLeft: 8 }}>Allow Buy</span>
+            <Form.Item style={{ marginBottom: 8 }}>
+              <Form.Item name="defaultAllowBuy" valuePropName="checked" noStyle><Switch /></Form.Item>
+              <span style={{ marginLeft: 8 }}>Allow Buy</span>
             </Form.Item>
-            <Form.Item name="defaultAllowSell" valuePropName="checked" style={{ marginBottom: 8 }}>
-              <Switch /> <span style={{ marginLeft: 8 }}>Allow Sell</span>
+            <Form.Item style={{ marginBottom: 8 }}>
+              <Form.Item name="defaultAllowSell" valuePropName="checked" noStyle><Switch /></Form.Item>
+              <span style={{ marginLeft: 8 }}>Allow Sell</span>
             </Form.Item>
-            <Form.Item name="defaultAllowP2P" valuePropName="checked" style={{ marginBottom: 8 }}>
-              <Switch /> <span style={{ marginLeft: 8 }}>Allow P2P</span>
+            <Form.Item style={{ marginBottom: 8 }}>
+              <Form.Item name="defaultAllowP2P" valuePropName="checked" noStyle><Switch /></Form.Item>
+              <span style={{ marginLeft: 8 }}>Allow P2P</span>
             </Form.Item>
-            <Form.Item name="defaultAllowDeposit" valuePropName="checked" style={{ marginBottom: 8 }}>
-              <Switch /> <span style={{ marginLeft: 8 }}>Allow Deposit</span>
+            <Form.Item style={{ marginBottom: 8 }}>
+              <Form.Item name="defaultAllowDeposit" valuePropName="checked" noStyle><Switch /></Form.Item>
+              <span style={{ marginLeft: 8 }}>Allow Deposit</span>
             </Form.Item>
-            <Form.Item name="defaultAllowWithdraw" valuePropName="checked" style={{ marginBottom: 8 }}>
-              <Switch /> <span style={{ marginLeft: 8 }}>Allow Withdraw</span>
+            <Form.Item style={{ marginBottom: 8 }}>
+              <Form.Item name="defaultAllowWithdraw" valuePropName="checked" noStyle><Switch /></Form.Item>
+              <span style={{ marginLeft: 8 }}>Allow Withdraw</span>
             </Form.Item>
           </div>
 
           <Divider titlePlacement="left">Trading Pairs</Divider>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 24px' }}>
-            <Form.Item name="defaultAllowTradeUsd" valuePropName="checked" style={{ marginBottom: 8 }}>
-              <Switch /> <span style={{ marginLeft: 8 }}>USD Pair</span>
+            <Form.Item style={{ marginBottom: 8 }}>
+              <Form.Item name="defaultAllowTradeUsd" valuePropName="checked" noStyle><Switch /></Form.Item>
+              <span style={{ marginLeft: 8 }}>USD Pair</span>
             </Form.Item>
-            <Form.Item name="defaultAllowTradeUsdt" valuePropName="checked" style={{ marginBottom: 8 }}>
-              <Switch /> <span style={{ marginLeft: 8 }}>USDT Pair</span>
+            <Form.Item style={{ marginBottom: 8 }}>
+              <Form.Item name="defaultAllowTradeUsdt" valuePropName="checked" noStyle><Switch /></Form.Item>
+              <span style={{ marginLeft: 8 }}>USDT Pair</span>
             </Form.Item>
-            <Form.Item name="defaultAllowTradeEth" valuePropName="checked" style={{ marginBottom: 8 }}>
-              <Switch /> <span style={{ marginLeft: 8 }}>ETH Pair</span>
+            <Form.Item style={{ marginBottom: 8 }}>
+              <Form.Item name="defaultAllowTradeEth" valuePropName="checked" noStyle><Switch /></Form.Item>
+              <span style={{ marginLeft: 8 }}>ETH Pair</span>
             </Form.Item>
-            <Form.Item name="defaultAllowTradeTuit" valuePropName="checked" style={{ marginBottom: 8 }}>
-              <Switch /> <span style={{ marginLeft: 8 }}>TUIT Pair</span>
+            <Form.Item style={{ marginBottom: 8 }}>
+              <Form.Item name="defaultAllowTradeTuit" valuePropName="checked" noStyle><Switch /></Form.Item>
+              <span style={{ marginLeft: 8 }}>TUIT Pair</span>
             </Form.Item>
           </div>
 
