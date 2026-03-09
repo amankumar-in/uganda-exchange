@@ -264,6 +264,7 @@ const WalletPage: NextPageWithLayout = () => {
   useEffect(() => {
     if (viewMode === appMode) {
       setViewBalances(balances);
+      setIsLoadingViewBalances(false);
       return;
     }
     // Fetch the other mode's balances
