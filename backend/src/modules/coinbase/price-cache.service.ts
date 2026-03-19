@@ -44,12 +44,12 @@ export class PriceCacheService implements OnModuleInit, OnModuleDestroy {
    * Start polling Coinbase for price updates
    */
   private startPolling() {
-    // Poll every 3 seconds
+    // Poll every 15 seconds (reduces memory pressure and API calls)
     this.pollingInterval = setInterval(() => {
       this.refreshPrices();
-    }, 3000);
-    
-    this.logger.log('Price polling started (every 3 seconds)');
+    }, 15000);
+
+    this.logger.log('Price polling started (every 15 seconds)');
   }
 
   /**

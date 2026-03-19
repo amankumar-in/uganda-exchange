@@ -8,7 +8,7 @@ import {
   MessageBody,
   ConnectedSocket,
 } from '@nestjs/websockets';
-import { Logger } from '@nestjs/common';
+import { Logger, OnModuleDestroy } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { PriceCacheService, PriceCache } from './price-cache.service';
 import { getWebSocketCorsOrigins } from '../../cors.utils';
@@ -21,7 +21,7 @@ import { getWebSocketCorsOrigins } from '../../cors.utils';
   namespace: '/prices',
 })
 export class CoinbaseGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect, OnModuleDestroy
 {
   private readonly logger = new Logger(CoinbaseGateway.name);
 
@@ -29,6 +29,7 @@ export class CoinbaseGateway
   server: Server;
 
   private connectedClients = 0;
+  private priceListener: ((prices: PriceCache) => void) | null = null;
 
   constructor(private readonly priceCacheService: PriceCacheService) {}
 
@@ -36,9 +37,17 @@ export class CoinbaseGateway
     this.logger.log('WebSocket Gateway initialized');
 
     // Subscribe to price updates from cache service
-    this.priceCacheService.addListener((prices: PriceCache) => {
+    this.priceListener = (prices: PriceCache) => {
       this.broadcastPrices(prices);
-    });
+    };
+    this.priceCacheService.addListener(this.priceListener);
+  }
+
+  onModuleDestroy() {
+    if (this.priceListener) {
+      this.priceCacheService.removeListener(this.priceListener);
+      this.priceListener = null;
+    }
   }
 
   handleConnection(client: Socket) {

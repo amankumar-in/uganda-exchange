@@ -64,6 +64,9 @@ export class CoinbaseService implements OnModuleInit {
   private readonly logger = new Logger(CoinbaseService.name);
   private client: any;
   private isInitialized = false;
+  private productsCache: CoinbaseProduct[] | null = null;
+  private productsCacheTimestamp = 0;
+  private readonly PRODUCTS_CACHE_TTL = 10000; // 10 seconds
 
   constructor(private configService: ConfigService) {}
 
@@ -98,20 +101,22 @@ export class CoinbaseService implements OnModuleInit {
     this.ensureInitialized();
 
     try {
-      const response = await this.client.getProducts({ limit: 500 });
-      let products = response.products || [];
-
-      // Filter by quote currency if specified
-      if (quoteCurrency) {
-        products = products.filter(
-          (p: any) => p.quote_currency_id === quoteCurrency,
-        );
+      // Use cached products if still fresh (avoids fetching 500 products every poll)
+      const now = Date.now();
+      let products: any[];
+      if (this.productsCache && (now - this.productsCacheTimestamp) < this.PRODUCTS_CACHE_TTL) {
+        return quoteCurrency
+          ? this.productsCache.filter(p => p.quote_currency === quoteCurrency)
+          : [...this.productsCache];
       }
 
-      // Filter to only tradeable products
+      const response = await this.client.getProducts({ limit: 500 });
+      products = response.products || [];
+
+      // Filter to only tradeable products (cache all, filter by quoteCurrency on return)
       products = products.filter((p: any) => p.status === 'online');
 
-      return products.map((p: any) => ({
+      const mapped = products.map((p: any) => ({
         product_id: p.product_id,
         base_currency: p.base_currency_id,
         quote_currency: p.quote_currency_id,
@@ -122,6 +127,14 @@ export class CoinbaseService implements OnModuleInit {
         quote_name: p.quote_name || p.quote_currency_id,
         status: p.status,
       }));
+
+      // Cache the result
+      this.productsCache = mapped;
+      this.productsCacheTimestamp = now;
+
+      return quoteCurrency
+        ? mapped.filter(p => p.quote_currency === quoteCurrency)
+        : mapped;
     } catch (error) {
       this.logger.error('Failed to get products', error);
       throw error;
