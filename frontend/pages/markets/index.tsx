@@ -431,9 +431,7 @@ export default function MarketsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [watchlistAssets, setWatchlistAssets] = useState<string[]>([]);
   const [loadingWatchlist, setLoadingWatchlist] = useState(true);
-  // In learner mode, default to 'colleges' filter
-  const isLearnerMode = user?.appMode === 'LEARNER';
-  const [activeTab, setActiveTab] = useState<FilterTab>(isLearnerMode ? 'colleges' : 'all');
+  const [activeTab, setActiveTab] = useState<FilterTab>('all');
   const [sortField, setSortField] = useState<SortField>('volume');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
 
@@ -668,16 +666,18 @@ export default function MarketsPage() {
               >
                 Losers
               </FilterPill>
-              {/* Colleges filter - show for everyone, highlighted in learner mode */}
-              <FilterPill
-                active={activeTab === 'colleges'}
-                onClick={() => setActiveTab('colleges')}
-                gradient="linear-gradient(135deg, #8E2DE2 0%, #4A00E0 100%)"
-                icon={<BankOutlined />}
-                compact={useCompactFilters}
-              >
-                Colleges
-              </FilterPill>
+              {/* Colleges filter - only show when college coins exist */}
+              {collegePairs.length > 0 && (
+                <FilterPill
+                  active={activeTab === 'colleges'}
+                  onClick={() => setActiveTab('colleges')}
+                  gradient="linear-gradient(135deg, #8E2DE2 0%, #4A00E0 100%)"
+                  icon={<BankOutlined />}
+                  compact={useCompactFilters}
+                >
+                  Colleges
+                </FilterPill>
+              )}
             </div>
           </motion.div>
 

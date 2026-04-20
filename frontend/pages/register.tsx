@@ -76,7 +76,7 @@ export default function RegisterPage() {
   const [mounted, setMounted] = useState(false);
   const [countryDrawerOpen, setCountryDrawerOpen] = useState(false);
   const [phoneCodeDrawerOpen, setPhoneCodeDrawerOpen] = useState(false);
-  const [selectedPhoneCode, setSelectedPhoneCode] = useState<string>('US');
+  const [selectedPhoneCode, setSelectedPhoneCode] = useState<string>('IN');
 
   const isDark = mode === 'dark';
   const isMobile = mounted ? !screens.md : false;
@@ -565,7 +565,7 @@ export default function RegisterPage() {
                     onFinish={handleFormSubmit}
                     requiredMark={false}
                     size="large"
-                    initialValues={{ phoneCountryCode: 'US', country: 'US' }}
+                    initialValues={{ phoneCountryCode: 'IN', country: 'IN' }}
                   >
                     {/* Country */}
                     <Form.Item

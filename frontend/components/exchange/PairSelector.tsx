@@ -83,10 +83,26 @@ const PairSelector: React.FC<PairSelectorProps> = ({
   const hasInitializedTabRef = useRef(false);
   const lastUrlPairRef = useRef<string | null>(null);
 
-  // Get available currencies based on app mode
+  // Check if any demo college coins exist
+  const hasCollegeCoins = useMemo(
+    () => pairs.some((p) => p.isDemoCollegeCoin === true),
+    [pairs]
+  );
+
+  // Get available currencies based on app mode; hide 'Colleges' when none exist
   const availableCurrencies = useMemo(() => {
-    return isLearnerMode ? LEARNER_CURRENCIES : INVESTOR_CURRENCIES;
-  }, [isLearnerMode]);
+    if (isLearnerMode) {
+      return hasCollegeCoins ? LEARNER_CURRENCIES : LEARNER_CURRENCIES.filter((c) => c !== 'Colleges');
+    }
+    return INVESTOR_CURRENCIES;
+  }, [isLearnerMode, hasCollegeCoins]);
+
+  // If current tab isn't available (e.g. was 'Colleges' but none exist), fall back to first
+  useEffect(() => {
+    if (!availableCurrencies.includes(activeQuote) && availableCurrencies.length > 0) {
+      setActiveQuote(availableCurrencies[0]);
+    }
+  }, [availableCurrencies, activeQuote]);
 
   // Auto-switch to the correct tab ONLY when:
   // 1. Initially mounting with a URL pair parameter
