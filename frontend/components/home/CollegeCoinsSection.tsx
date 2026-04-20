@@ -43,9 +43,9 @@ const features = [
 ];
 
 const stats = [
-  { value: "$273B", label: "Global annual scholarship market", color: "#f59e0b" },
+  { value: "₹22 Lakh Cr", label: "Global annual scholarship market", color: "#f59e0b" },
   { value: "28%", label: "Average unclaimed scholarship funds", color: "#ef4444" },
-  { value: "$1.7T", label: "Outstanding student loan debt", color: "#8b5cf6" },
+  { value: "₹141 Lakh Cr", label: "Outstanding student loan debt", color: "#8b5cf6" },
   { value: "20K+", label: "Universities worldwide", color: "#10b981" },
 ];
 

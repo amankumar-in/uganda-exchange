@@ -95,7 +95,7 @@ export default function LoginPage() {
   const stats = [
     { value: '100K+', label: 'Students', icon: <TeamOutlined /> },
     { value: '50+', label: 'Colleges', icon: <TrophyOutlined /> },
-    { value: '$2B+', label: 'Volume', icon: <ThunderboltOutlined /> },
+    { value: '₹165B+', label: 'Volume', icon: <ThunderboltOutlined /> },
   ];
 
   // Don't render while checking auth

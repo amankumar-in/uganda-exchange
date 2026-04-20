@@ -122,14 +122,14 @@ const BuySellForm: React.FC<BuySellFormProps> = ({
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Get only USD pairs for simplicity
+  // Get only INR pairs for simplicity
   // In learner mode, include college coins as well
   const usdPairs = useMemo(() => {
     return pairs
       .filter(p => {
-        // Always include USD pairs
-        if (p.quote === 'USD') {
-          // In learner mode, include all USD pairs (both regular and college coins)
+        // Always include INR pairs
+        if (p.quote === 'INR') {
+          // In learner mode, include all INR pairs (both regular and college coins)
           // In investor mode, exclude college coins
           if (isLearnerMode) return true;
           return !(p as TradingPair).isDemoCollegeCoin;
@@ -155,7 +155,7 @@ const BuySellForm: React.FC<BuySellFormProps> = ({
   const [side, setSide] = useState<OrderSide>('BUY');
   const [selectedAsset, setSelectedAsset] = useState<string>(initialAsset || 'BTC');
   const [amount, setAmount] = useState<string>(''); // Token amount
-  const [cashAmount, setCashAmount] = useState<string>(''); // USD amount
+  const [cashAmount, setCashAmount] = useState<string>(''); // INR amount
   const [showConfirm, setShowConfirm] = useState(false);
   const [showTokenPicker, setShowTokenPicker] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -170,7 +170,7 @@ const BuySellForm: React.FC<BuySellFormProps> = ({
       setSelectedAsset(initialAsset);
     } else if (!initialAsset && isLearnerMode && pairs.length > 0) {
       // Default to first college coin in learner mode
-      const firstCollegeCoin = pairs.find(p => (p as TradingPair).isDemoCollegeCoin && p.quote === 'USD');
+      const firstCollegeCoin = pairs.find(p => (p as TradingPair).isDemoCollegeCoin && p.quote === 'INR');
       if (firstCollegeCoin && selectedAsset === 'BTC') {
         setSelectedAsset(firstCollegeCoin.baseCurrency);
       }
@@ -193,7 +193,7 @@ const BuySellForm: React.FC<BuySellFormProps> = ({
   const isSellRestricted = permissions && !permissions.allowSell;
 
   // Balances
-  const cashBalance = getBalance('USD');
+  const cashBalance = getBalance('INR');
   const tokenBalance = getBalance(selectedAsset);
 
   // Parsed amounts
@@ -223,7 +223,7 @@ const BuySellForm: React.FC<BuySellFormProps> = ({
     setShowConfirm(false);
   }, [selectedAsset]);
   
-  // Helper to restrict USD input to 2 decimal places
+  // Helper to restrict INR input to 2 decimal places
   const restrictCashDecimals = (value: string): string => {
     // Allow empty string
     if (!value) return value;
@@ -265,7 +265,7 @@ const BuySellForm: React.FC<BuySellFormProps> = ({
     if (price <= 0) return;
     
     if (isBuy) {
-      // For BUY: percentage of USD balance
+      // For BUY: percentage of INR balance
       const maxCash = percent === 100 
         ? Math.floor(cashBalance * 100) / 100 
         : cashBalance * (percent / 100);
@@ -289,13 +289,13 @@ const BuySellForm: React.FC<BuySellFormProps> = ({
     
     // Validate balance
     if (isBuy && cashAmountNum > cashBalance + 0.01) {
-      message.error(`Insufficient USD balance. You need $${cashAmountNum.toFixed(2)} but only have $${cashBalance.toFixed(2)}`);
+      message.error(`Insufficient INR balance. You need ₹${cashAmountNum.toFixed(2)} but only have ₹${cashBalance.toFixed(2)}`);
       setShowConfirm(false);
       return;
     }
     
     if (!isBuy && amountNum > tokenBalance) {
-      message.error(`Insufficient ${selectedAsset} balance. You want to sell ${amountNum.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 8 })} but only have ${tokenBalance.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 8 })}`);
+      message.error(`Insufficient ${selectedAsset} balance. You want to sell ${amountNum.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 8 })} but only have ${tokenBalance.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 8 })}`);
       setShowConfirm(false);
       return;
     }
@@ -304,13 +304,13 @@ const BuySellForm: React.FC<BuySellFormProps> = ({
     setIsSubmitting(true);
     
     // Create pending order for immediate feedback
-    const productId = `${selectedAsset}-USD`;
+    const productId = `${selectedAsset}-INR`;
     const pendingOrder: InternalOrder = {
       id: `pending-${Date.now()}`,
       transactionId: '',
       productId,
       asset: selectedAsset,
-      quote: 'USD',
+      quote: 'INR',
       side,
       requestedAmount: isBuy ? cashAmountNum : amountNum,
       filledAmount: 0,
@@ -397,7 +397,6 @@ const BuySellForm: React.FC<BuySellFormProps> = ({
     !selectedPair ||
     !cashAmountNum ||
     cashAmountNum <= 0 ||
-    cashAmountNum < 1 || // Minimum $1 USD order value
     isBelowTokenMin ||
     isAboveTokenMax ||
     !amountNum ||
@@ -543,7 +542,7 @@ const BuySellForm: React.FC<BuySellFormProps> = ({
                   color: isDark ? token.colorText : '#ffffff', 
                   fontWeight: fontWeights.bold,
                 }}>
-                  ${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: price < 0.001 ? 8 : (price < 1 ? 6 : 2) })}
+                  ₹{price.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: price < 0.001 ? 8 : (price < 1 ? 6 : 2) })}
                 </span>
               </div>
               <span style={{ 
@@ -653,7 +652,7 @@ const BuySellForm: React.FC<BuySellFormProps> = ({
             >
               <WalletOutlined style={{ fontSize: token.fontSizeSM }} />
               {isBuy 
-                ? `$${cashBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                ? `₹${cashBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
                 : `${tokenBalance.toFixed(tokenBalance < 1 ? 4 : 2)} ${selectedAsset}`
               }
             </span>
@@ -692,7 +691,7 @@ const BuySellForm: React.FC<BuySellFormProps> = ({
               fontSize: token.fontSize, 
               fontWeight: fontWeights.semibold 
             }}>
-              {isBuy ? 'USD' : selectedAsset}
+              {isBuy ? 'INR' : selectedAsset}
             </span>
           </div>
           
@@ -787,7 +786,7 @@ const BuySellForm: React.FC<BuySellFormProps> = ({
               fontSize: token.fontSize, 
               fontWeight: fontWeights.semibold 
             }}>
-              {isBuy ? selectedAsset : 'USD'}
+              {isBuy ? selectedAsset : 'INR'}
             </span>
           </div>
         </div>
@@ -831,26 +830,6 @@ const BuySellForm: React.FC<BuySellFormProps> = ({
         )}
       </AnimatePresence>
 
-      {/* Minimum Order Value Warning (system-wide $1 minimum) */}
-      <AnimatePresence>
-        {cashAmountNum > 0 && cashAmountNum < 1 && !isBelowTokenMin && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            style={{
-              marginBottom: token.marginSM,
-              fontSize: token.fontSize,
-              color: token.colorWarning,
-              fontWeight: fontWeights.medium,
-            }}
-          >
-            <InfoCircleOutlined style={{ marginRight: 4 }} />
-            Minimum order value is $1.00
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* Token-specific Minimum Transaction Warning */}
       <AnimatePresence>
         {isBelowTokenMin && (
@@ -866,7 +845,7 @@ const BuySellForm: React.FC<BuySellFormProps> = ({
             }}
           >
             <InfoCircleOutlined style={{ marginRight: 4 }} />
-            Minimum transaction for {selectedAsset} is ${tokenMinAmount.toFixed(2)} (current: ${cashAmountNum.toFixed(2)})
+            Minimum transaction for {selectedAsset} is ₹{tokenMinAmount.toFixed(2)} (current: ₹{cashAmountNum.toFixed(2)})
           </motion.div>
         )}
       </AnimatePresence>
@@ -886,7 +865,7 @@ const BuySellForm: React.FC<BuySellFormProps> = ({
             }}
           >
             <InfoCircleOutlined style={{ marginRight: 4 }} />
-            Maximum transaction for {selectedAsset} is ${tokenMaxAmount.toFixed(2)} (current: ${cashAmountNum.toFixed(2)})
+            Maximum transaction for {selectedAsset} is ₹{tokenMaxAmount.toFixed(2)} (current: ₹{cashAmountNum.toFixed(2)})
           </motion.div>
         )}
       </AnimatePresence>
@@ -908,7 +887,7 @@ const BuySellForm: React.FC<BuySellFormProps> = ({
             >
               <InfoCircleOutlined style={{ marginRight: 4 }} />
               {isBuy 
-                ? `Insufficient funds (need $${cashAmountNum.toFixed(2)})`
+                ? `Insufficient funds (need ₹${cashAmountNum.toFixed(2)})`
                 : `Insufficient ${selectedAsset}`
               }
             </motion.div>
@@ -940,7 +919,7 @@ const BuySellForm: React.FC<BuySellFormProps> = ({
               }}
             >
               <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                Fee ${fee.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: fee < 0.001 ? 8 : (fee < 1 ? 6 : 2) })}
+                Fee ₹{fee.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: fee < 0.001 ? 8 : (fee < 1 ? 6 : 2) })}
                 <DownOutlined style={{ 
                   fontSize: 10, 
                   transform: showFeeDetails ? 'rotate(180deg)' : 'rotate(0)',
@@ -953,7 +932,7 @@ const BuySellForm: React.FC<BuySellFormProps> = ({
               }}>
                 → {isBuy 
                   ? `${receiveAmount.toFixed(6)} ${selectedAsset}`
-                  : `$${receiveAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: receiveAmount < 0.001 ? 8 : (receiveAmount < 1 ? 6 : 2) })}`
+                  : `₹${receiveAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: receiveAmount < 0.001 ? 8 : (receiveAmount < 1 ? 6 : 2) })}`
                 }
               </span>
             </div>
@@ -975,7 +954,7 @@ const BuySellForm: React.FC<BuySellFormProps> = ({
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
                     <span>Price</span>
-                    <span>${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: price < 1 ? 4 : 2 })}</span>
+                    <span>${price.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: price < 1 ? 4 : 2 })}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span>Fee (0.5%)</span>
@@ -1427,8 +1406,8 @@ const BuySellForm: React.FC<BuySellFormProps> = ({
               <span style={{ color: token.colorTextSecondary }}>You {isBuy ? 'pay' : 'receive'}</span>
               <span style={{ color: token.colorText, fontWeight: fontWeights.bold }}>
                 {isBuy 
-                  ? `$${cashAmountNum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: cashAmountNum < 1 ? 6 : 2 })}` 
-                  : `$${receiveAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: receiveAmount < 1 ? 6 : 2 })}`}
+                  ? `$${cashAmountNum.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: cashAmountNum < 1 ? 6 : 2 })}` 
+                  : `$${receiveAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: receiveAmount < 1 ? 6 : 2 })}`}
               </span>
             </div>
           </div>
@@ -1547,8 +1526,8 @@ const BuySellForm: React.FC<BuySellFormProps> = ({
               <span style={{ color: token.colorTextSecondary, fontSize: token.fontSizeSM }}>You {isBuy ? 'pay' : 'receive'}</span>
               <span style={{ color: token.colorText, fontWeight: fontWeights.bold, fontSize: token.fontSizeSM }}>
                 {isBuy 
-                  ? `$${cashAmountNum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: cashAmountNum < 1 ? 6 : 2 })}` 
-                  : `$${receiveAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: receiveAmount < 1 ? 6 : 2 })}`}
+                  ? `$${cashAmountNum.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: cashAmountNum < 1 ? 6 : 2 })}` 
+                  : `$${receiveAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: receiveAmount < 1 ? 6 : 2 })}`}
               </span>
             </div>
           </div>

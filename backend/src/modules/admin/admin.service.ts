@@ -371,7 +371,7 @@ export class AdminService {
 
     if (liveFiatBalance) {
       liveBalances.push({
-        asset: 'USD',
+        asset: 'INR',
         balance: parseFloat(liveFiatBalance.balance.toString()),
         availableBalance: parseFloat(liveFiatBalance.availableBalance.toString()),
         lockedBalance: parseFloat(liveFiatBalance.lockedBalance.toString()),
@@ -380,7 +380,7 @@ export class AdminService {
 
     liveBalances.push(
       ...liveCryptoBalances
-        .filter((b) => b.asset !== 'USD')
+        .filter((b) => b.asset !== 'INR')
         .map((b) => ({
           asset: b.asset,
           balance: parseFloat(b.balance.toString()),
@@ -439,12 +439,12 @@ export class AdminService {
 
     if (dto.mode === 'live') {
       // Adjust live balance
-      if (dto.asset === 'USD') {
+      if (dto.asset === 'INR') {
         const balance = await this.prisma.client.fiatBalance.upsert({
           where: { userId },
           create: {
             userId,
-            currency: 'USD',
+            currency: 'INR',
             balance: dto.amount,
             availableBalance: dto.amount,
             lockedBalance: 0,
@@ -462,7 +462,7 @@ export class AdminService {
         return {
           success: true,
           newBalance: {
-            asset: 'USD',
+            asset: 'INR',
             balance: parseFloat(balance.balance.toString()),
             availableBalance: parseFloat(balance.availableBalance.toString()),
             lockedBalance: parseFloat(balance.lockedBalance.toString()),
@@ -509,12 +509,12 @@ export class AdminService {
       };
     } else {
       // Adjust learner balance
-      if (dto.asset === 'USD') {
+      if (dto.asset === 'INR') {
         const balance = await this.prisma.client.learnerFiatBalance.upsert({
           where: { userId },
           create: {
             userId,
-            currency: 'USD',
+            currency: 'INR',
             balance: dto.amount,
             availableBalance: dto.amount,
             lockedBalance: 0,

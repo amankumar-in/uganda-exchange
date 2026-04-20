@@ -484,7 +484,7 @@ export default function MarketsPage() {
   }, [pageLoading, isAuthenticated]);
 
   // Filter to USD pairs, separating college coins
-  const usdPairs = useMemo(() => pairs.filter((p) => p.quote === 'USD' && !(p as TradingPairExtended).isDemoCollegeCoin), [pairs]);
+  const usdPairs = useMemo(() => pairs.filter((p) => p.quote === 'INR' && !(p as TradingPairExtended).isDemoCollegeCoin), [pairs]);
   const collegePairs = useMemo(() => pairs.filter((p) => (p as TradingPairExtended).isDemoCollegeCoin === true), [pairs]);
 
   const filteredPairs = useMemo(() => {
@@ -548,10 +548,10 @@ export default function MarketsPage() {
   }, [router]);
 
   const formatVolume = (vol: number) => {
-    if (vol >= 1e9) return `$${(vol / 1e9).toFixed(1)}B`;
-    if (vol >= 1e6) return `$${(vol / 1e6).toFixed(1)}M`;
-    if (vol >= 1e3) return `$${(vol / 1e3).toFixed(0)}K`;
-    return `$${vol.toFixed(0)}`;
+    if (vol >= 1e9) return `₹${(vol / 1e9).toFixed(1)}B`;
+    if (vol >= 1e6) return `₹${(vol / 1e6).toFixed(1)}M`;
+    if (vol >= 1e3) return `₹${(vol / 1e3).toFixed(0)}K`;
+    return `₹${vol.toFixed(0)}`;
   };
 
   // Show nothing while auth is loading to prevent layout flash

@@ -55,7 +55,6 @@ import {
   type UserSettings,
   type AppMode,
 } from '@/services/api/settings';
-import { getBankAccounts, deleteBankAccount, type BankAccount } from '@/services/api/fiat';
 import { resetLearnerAccount } from '@/services/api/learner';
 import { checkVeriffDecision } from '@/services/api/onboarding';
 import OTPInput from '@/components/auth/OTPInput';
@@ -101,7 +100,7 @@ const SettingsPage: NextPageWithLayout = () => {
   const [mounted, setMounted] = useState(false);
 
   const [settings, setSettings] = useState<UserSettings | null>(null);
-  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
+  const [bankAccounts, setBankAccounts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [bankAccountsLoading, setBankAccountsLoading] = useState(true);
 
@@ -146,13 +145,10 @@ const SettingsPage: NextPageWithLayout = () => {
 
   const loadData = async () => {
     setLoading(true);
-    setBankAccountsLoading(true);
+    setBankAccountsLoading(false);
     try {
-      const [settingsData, accountsData] = await Promise.all([
-        getUserSettings(),
-        getBankAccounts(),
-      ]);
-      
+      const settingsData = await getUserSettings();
+
       if (settingsData.kycStatus === 'PENDING' || settingsData.kycStatus === 'SUBMITTED') {
         try {
           const decision = await checkVeriffDecision();
@@ -163,10 +159,10 @@ const SettingsPage: NextPageWithLayout = () => {
           // Ignore
         }
       }
-      
+
       setSettings(settingsData);
-      setBankAccounts(accountsData);
-      
+      setBankAccounts([]);
+
       if (settingsData.appMode) {
         const mode = settingsData.appMode.toLowerCase() as 'learner' | 'investor';
         setAppMode(mode);
@@ -176,7 +172,6 @@ const SettingsPage: NextPageWithLayout = () => {
       message.error('Failed to load settings');
     } finally {
       setLoading(false);
-      setBankAccountsLoading(false);
     }
   };
 
@@ -240,7 +235,8 @@ const SettingsPage: NextPageWithLayout = () => {
 
   const handleDeleteBankAccount = async (accountId: string) => {
     try {
-      await deleteBankAccount(accountId);
+      // bank accounts flow removed
+      void accountId;
       message.success('Bank account deleted');
       setBankAccounts(bankAccounts.filter((a) => a.id !== accountId));
     } catch {
@@ -524,7 +520,7 @@ const SettingsPage: NextPageWithLayout = () => {
               <div>
                 <Text style={{ fontSize: 13 }}>Reset Learner Account</Text>
                 <Text type="secondary" style={{ display: 'block', fontSize: 11 }}>
-                  Clear all trades and start fresh with $100,000
+                  Clear all trades and start fresh with ₹1,00,000
                 </Text>
               </div>
               <Popconfirm
@@ -1037,7 +1033,7 @@ const SettingsPage: NextPageWithLayout = () => {
                 marginBottom: token.marginSM,
               }}
             >
-              $100,000
+              ₹1,00,000
             </div>
 
             <Text type="secondary" style={{ display: 'block', marginBottom: token.marginLG }}>
@@ -1056,7 +1052,7 @@ const SettingsPage: NextPageWithLayout = () => {
               <Text style={{ fontSize: 15 }}>
                 Think you can turn it into{' '}
                 <span style={{ fontWeight: fontWeights.bold, color: token.colorPrimary }}>
-                  $1,000,000
+                  ₹1 crore
                 </span>
                 ?
               </Text>
@@ -1118,7 +1114,7 @@ const SettingsPage: NextPageWithLayout = () => {
                 marginBottom: token.marginSM,
               }}
             >
-              $100,000
+              ₹1,00,000
             </div>
 
             <Text type="secondary" style={{ display: 'block', marginBottom: token.marginLG, fontSize: 15 }}>
@@ -1137,7 +1133,7 @@ const SettingsPage: NextPageWithLayout = () => {
               <Text style={{ fontSize: 16 }}>
                 Think you can turn it into{' '}
                 <span style={{ fontWeight: fontWeights.bold, color: token.colorPrimary }}>
-                  $1,000,000
+                  ₹1 crore
                 </span>
                 ?
               </Text>

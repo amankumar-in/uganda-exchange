@@ -620,7 +620,7 @@ const CollegeCoinDetailPage: NextPageWithLayout = () => {
                         color: token.colorText,
                         fontVariantNumeric: 'tabular-nums',
                       }}>
-                        {balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
+                        {balance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
                       </div>
                     </div>
                   </div>

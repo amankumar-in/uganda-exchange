@@ -49,7 +49,7 @@ export class CreateTokenDto {
 
   @IsBoolean()
   @IsOptional()
-  allowTradeUsd?: boolean;
+  allowTradeInr?: boolean;
 
   @IsBoolean()
   @IsOptional()

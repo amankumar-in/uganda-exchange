@@ -1,7 +1,6 @@
 import { Injectable, Logger, BadRequestException, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
 import { Prisma, TradeStatus, OrderType } from '@prisma/client';
-import { CoinbaseService, OrderValidationResult } from '../coinbase/coinbase.service';
 import { DemoCollegeCoinsService } from '../demo-college-coins/demo-college-coins.service';
 import { TokensService } from '../tokens/tokens.service';
 
@@ -56,13 +55,12 @@ export class LearnerService {
   private readonly PLATFORM_FEE_PERCENT = 0.5; // 0.5% platform fee (same as live)
   
   // Initial balance configuration
-  private readonly CASH_BALANCE = 40000; // $40,000 starting cash
-  private readonly COLLEGE_COIN_VALUE_EACH = 15000; // $15,000 worth of each college coin
+  private readonly CASH_BALANCE = 100000; // ₹1,00,000 starting cash
+  private readonly COLLEGE_COIN_VALUE_EACH = 25000; // ₹25,000 worth of each college coin
   private readonly MAX_COLLEGE_COINS = 4; // Maximum 4 college coins to give
 
   constructor(
     private prisma: PrismaService,
-    private coinbaseService: CoinbaseService,
     @Inject(forwardRef(() => DemoCollegeCoinsService))
     private collegeCoinsService: DemoCollegeCoinsService,
     private tokensService: TokensService,
@@ -93,12 +91,12 @@ export class LearnerService {
 
     console.log(`[INIT DEBUG] No existing account for ${userId}, creating new one`);
 
-    // Create initial fiat balance with $40,000
+    // Create initial fiat balance with ₹1,00,000
     console.log(`[INIT DEBUG] Creating fiat balance for ${userId}`);
     await this.prisma.client.learnerFiatBalance.create({
       data: {
         userId,
-        currency: 'USD',
+        currency: 'INR',
         balance: this.CASH_BALANCE,
         availableBalance: this.CASH_BALANCE,
         lockedBalance: 0,
@@ -150,9 +148,9 @@ export class LearnerService {
           });
 
           totalCryptoValue += this.COLLEGE_COIN_VALUE_EACH;
-          coinsGiven.push(`${coin.ticker} (${quantity.toFixed(8)} @ $${priceData.collegeCoinPrice.toFixed(2)})`);
+          coinsGiven.push(`${coin.ticker} (${quantity.toFixed(8)} @ ₹${priceData.collegeCoinPrice.toFixed(2)})`);
 
-          this.logger.log(`Gave user ${userId} $${this.COLLEGE_COIN_VALUE_EACH} worth of ${coin.ticker}: ${quantity.toFixed(8)} coins`);
+          this.logger.log(`Gave user ${userId} ₹${this.COLLEGE_COIN_VALUE_EACH} worth of ${coin.ticker}: ${quantity.toFixed(8)} coins`);
         } catch (error) {
           this.logger.error(`Failed to give college coin ${coin.ticker} to user ${userId}:`, error);
           // Continue with other coins
@@ -180,16 +178,16 @@ export class LearnerService {
     console.log(`[INIT DEBUG] Portfolio snapshot created for ${userId}`);
 
     if (coinsGiven.length > 0) {
-      this.logger.log(`Initialized learner account for user ${userId} with $${this.CASH_BALANCE} cash + ${coinsGiven.length} college coins: ${coinsGiven.join(', ')}`);
+      this.logger.log(`Initialized learner account for user ${userId} with ₹${this.CASH_BALANCE} cash + ${coinsGiven.length} college coins: ${coinsGiven.join(', ')}`);
     } else {
-      this.logger.log(`Initialized learner account for user ${userId} with $${this.CASH_BALANCE} cash (no college coins available)`);
+      this.logger.log(`Initialized learner account for user ${userId} with ₹${this.CASH_BALANCE} cash (no college coins available)`);
     }
     console.log(`[INIT DEBUG] Completed initializeLearnerAccount for ${userId} in ${Date.now() - startTime}ms`);
   }
 
   /**
    * Reset learner account back to initial state
-   * Deletes all trades and balances, reinitializes with $40,000 + college coins
+   * Deletes all trades and balances, reinitializes with ₹1,00,000 + college coins
    */
   async resetLearnerAccount(userId: string): Promise<{ message: string }> {
     // Delete all learner trades
@@ -217,11 +215,11 @@ export class LearnerService {
 
     // Get the balances to build a dynamic message
     const balances = await this.getLearnerBalances(userId);
-    const cryptoCount = balances.filter(b => b.asset !== 'USD').length;
+    const cryptoCount = balances.filter(b => b.asset !== 'INR').length;
     
-    let message = `Learner account reset successfully. You now have $${this.CASH_BALANCE.toLocaleString()} in cash`;
+    let message = `Learner account reset successfully. You now have ₹${this.CASH_BALANCE.toLocaleString()} in cash`;
     if (cryptoCount > 0) {
-      message += ` plus $${(this.COLLEGE_COIN_VALUE_EACH * cryptoCount).toLocaleString()} worth of ${cryptoCount} college coin${cryptoCount > 1 ? 's' : ''} to practice with.`;
+      message += ` plus ₹${(this.COLLEGE_COIN_VALUE_EACH * cryptoCount).toLocaleString()} worth of ${cryptoCount} college coin${cryptoCount > 1 ? 's' : ''} to practice with.`;
     } else {
       message += ' to practice with.';
     }
@@ -258,7 +256,7 @@ export class LearnerService {
     // Add USD balance
     if (fiatBalance) {
       balances.push({
-        asset: 'USD',
+        asset: 'INR',
         balance: parseFloat(fiatBalance.balance.toString()),
         availableBalance: parseFloat(fiatBalance.availableBalance.toString()),
         lockedBalance: parseFloat(fiatBalance.lockedBalance.toString()),
@@ -320,7 +318,7 @@ export class LearnerService {
     asset: string,
     amount: number,
   ): Promise<boolean> {
-    if (asset === 'USD') {
+    if (asset === 'INR') {
       const fiatBalance = await this.prisma.client.learnerFiatBalance.findUnique({
         where: { userId },
       });
@@ -339,7 +337,7 @@ export class LearnerService {
     asset: string,
     amount: number, // Positive to add, negative to subtract
   ): Promise<void> {
-    if (asset === 'USD') {
+    if (asset === 'INR') {
       await this.prisma.client.learnerFiatBalance.update({
         where: { userId },
         data: {
@@ -384,7 +382,7 @@ export class LearnerService {
 
   /**
    * Simulate a trade in learner mode
-   * Uses the SAME validation as live trading (via coinbaseService) for regular tokens
+   * Uses token-table prices (populated by CoinGecko) for all assets
    * For demo college coins, uses calculated price from reference token
    * Randomly fails ~10% of the time to simulate real trading conditions
    */
@@ -409,90 +407,26 @@ export class LearnerService {
     let executionPrice: number;
 
     if (isDemoCollegeCoin) {
-      // ========================================
-      // DEMO COLLEGE COIN VALIDATION
-      // Apply same rules but use calculated price
-      // ========================================
       const priceData = await this.collegeCoinsService.calculatePrice(asset);
-      
       if (!priceData) {
         throw new BadRequestException(`Unable to get price for demo college coin ${asset}`);
       }
-
       executionPrice = priceData.collegeCoinPrice;
-      
-      // Apply same validation rules as regular tokens
-      // Min order size: $1 USD
-      const minMarketFunds = 1;
-      
-      if (side === 'BUY') {
-        // amount is in USD (quote currency)
-        // Round to 2 decimal places for USD
-        formattedAmount = Math.round(amount * 100) / 100;
-        
-        if (formattedAmount < minMarketFunds) {
-          throw new BadRequestException(`Order size is too small. Minimum order size is $${minMarketFunds} USD.`);
-        }
-      } else {
-        // SELL: amount is in base currency (college coin)
-        // Round to 8 decimal places
-        formattedAmount = Math.round(amount * 1e8) / 1e8;
-        
-        // Check estimated USD value
-        const estimatedValue = formattedAmount * executionPrice;
-        if (estimatedValue < minMarketFunds) {
-          throw new BadRequestException(`Order value is too small. Minimum order value is $${minMarketFunds} USD.`);
-        }
-      }
-      
+      formattedAmount = side === 'BUY'
+        ? Math.round(amount * 100) / 100   // INR: 2 decimal places
+        : Math.round(amount * 1e8) / 1e8;  // base asset: 8 decimal places
       this.logger.log(`[placeLearnerTrade] Demo college coin ${asset}: price=${executionPrice}, formattedAmount=${formattedAmount}`);
     } else {
-      // Check if it's a native platform token (not standard crypto like BTC)
-      const customToken = await this.tokensService.findBySymbol(asset);
-      if (customToken?.isNative) {
-        executionPrice = customToken.currentPrice || 0;
-        if (executionPrice <= 0) {
-          throw new BadRequestException(`Price not available for custom token ${asset}`);
-        }
-
-        const minMarketFunds = 1;
-
-        if (side === 'BUY') {
-          formattedAmount = Math.round(amount * 100) / 100;
-          if (formattedAmount < minMarketFunds) {
-            throw new BadRequestException(`Order size is too small. Minimum order size is $${minMarketFunds} USD.`);
-          }
-        } else {
-          formattedAmount = Math.round(amount * 1e8) / 1e8;
-          const estimatedValue = formattedAmount * executionPrice;
-          if (estimatedValue < minMarketFunds) {
-            throw new BadRequestException(`Order value is too small. Minimum order value is $${minMarketFunds} USD.`);
-          }
-        }
-        
-        this.logger.log(`[placeLearnerTrade] Custom token ${asset}: price=${executionPrice}, formattedAmount=${formattedAmount}`);
-      } else {
-        // ========================================
-        // REGULAR TOKEN VALIDATION
-        // Use Coinbase validation
-        // ========================================
-        const validation = await this.coinbaseService.validateAndFormatOrder(
-          productId,
-          side,
-          side === 'BUY' ? amount : undefined, // quoteSize for BUY
-          side === 'SELL' ? amount : undefined, // baseSize for SELL
-        );
-
-        this.logger.log(`[placeLearnerTrade] Validation passed for ${productId} ${side}: ${JSON.stringify(validation)}`);
-
-        // Use validated/formatted amounts
-        formattedAmount = side === 'BUY'
-          ? parseFloat(validation.formattedQuoteSize!)
-          : parseFloat(validation.formattedBaseSize!);
-
-        // Use price from Coinbase product data if available, otherwise use frontend price
-        executionPrice = validation.productPrice || currentPrice;
+      // Resolve price from tokens table (populated by CoinGecko via price-cache)
+      const token = await this.tokensService.findBySymbol(asset);
+      executionPrice = token?.currentPrice || Number(token?.manualPrice) || currentPrice || 0;
+      if (executionPrice <= 0) {
+        throw new BadRequestException(`Price not available for ${asset}`);
       }
+      formattedAmount = side === 'BUY'
+        ? Math.round(amount * 100) / 100
+        : Math.round(amount * 1e8) / 1e8;
+      this.logger.log(`[placeLearnerTrade] Token ${asset}: price=${executionPrice}, formattedAmount=${formattedAmount}`);
     }
 
     // ========================================
@@ -503,18 +437,18 @@ export class LearnerService {
 
     const hasBalance = await this.hasSufficientBalance(userId, requiredAsset, requiredAmount);
     if (!hasBalance) {
-      const balance = requiredAsset === 'USD'
+      const balance = requiredAsset === 'INR'
         ? await this.prisma.client.learnerFiatBalance.findUnique({ where: { userId } })
         : await this.getOrCreateCryptoBalance(userId, requiredAsset);
       
       const available = balance
-        ? (requiredAsset === 'USD' 
+        ? (requiredAsset === 'INR' 
             ? parseFloat((balance as any).availableBalance.toString())
             : (balance as LearnerBalanceResponse).availableBalance)
         : 0;
       
       throw new BadRequestException(
-        `Insufficient ${requiredAsset} balance. Available: ${available.toFixed(requiredAsset === 'USD' ? 2 : 8)}, Required: ${requiredAmount.toFixed(requiredAsset === 'USD' ? 2 : 8)}`
+        `Insufficient ${requiredAsset} balance. Available: ${available.toFixed(requiredAsset === 'INR' ? 2 : 8)}, Required: ${requiredAmount.toFixed(requiredAsset === 'INR' ? 2 : 8)}`
       );
     }
 
@@ -666,11 +600,11 @@ export class LearnerService {
     // Get current balances
     const balances = await this.getLearnerBalances(userId);
     
-    const cashBalance = balances.find(b => b.asset === 'USD')?.balance || 0;
+    const cashBalance = balances.find(b => b.asset === 'INR')?.balance || 0;
     
     let cryptoValue = 0;
     for (const balance of balances) {
-      if (balance.asset !== 'USD' && cryptoPrices[balance.asset]) {
+      if (balance.asset !== 'INR' && cryptoPrices[balance.asset]) {
         cryptoValue += balance.balance * cryptoPrices[balance.asset];
       }
     }
@@ -688,7 +622,7 @@ export class LearnerService {
     // Use the original invested value, or calculate based on current balances if no prior snapshot
     const investedValue = firstSnapshot 
       ? parseFloat(firstSnapshot.investedValue.toString())
-      : this.CASH_BALANCE + (balances.filter(b => b.asset !== 'USD').length * this.COLLEGE_COIN_VALUE_EACH);
+      : this.CASH_BALANCE + (balances.filter(b => b.asset !== 'INR').length * this.COLLEGE_COIN_VALUE_EACH);
 
     // Upsert snapshot (update if exists for today, create otherwise)
     await this.prisma.client.learnerPortfolioSnapshot.upsert({

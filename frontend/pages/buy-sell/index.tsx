@@ -73,7 +73,7 @@ const BuySellPage: NextPageWithLayout = () => {
     <>
       <Head>
         <title>Buy & Sell - InTuition Exchange</title>
-        <meta name="description" content="Buy and sell cryptocurrency instantly with USD" />
+        <meta name="description" content="Buy and sell cryptocurrency instantly with INR" />
       </Head>
 
       {/* Background Pattern */}
@@ -155,7 +155,7 @@ const BuySellPage: NextPageWithLayout = () => {
                 lineHeight: 1.6,
                 margin: 0,
               }}>
-                Trade instantly using your USD balance. Market orders execute at the best available price with a 0.5% fee.
+                Trade instantly using your INR balance. Market orders execute at the best available price with a 0.5% fee.
               </p>
             </motion.div>
           )}

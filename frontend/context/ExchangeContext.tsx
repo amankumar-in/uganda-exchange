@@ -4,12 +4,8 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { io, Socket } from 'socket.io-client';
 import { message } from 'antd';
 import {
-  getProducts,
-  getCandles,
   getOrders,
   placeOrder,
-  getOrderBook,
-  getPublicTrades,
   CoinbaseCandle,
   InternalOrder,
   OrderBook,
@@ -216,7 +212,7 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [pairs, setPairs] = useState<TradingPair[]>([]);
   const [collegeCoins, setCollegeCoins] = useState<DemoCollegeCoin[]>([]);
   const [isLoadingPairs, setIsLoadingPairs] = useState(true);
-  const [selectedPair, setSelectedPair] = useState('BTC-USD');
+  const [selectedPair, setSelectedPair] = useState('BTC-INR');
   const [isConnected, setIsConnected] = useState(false);
   
   const [candles, setCandles] = useState<CoinbaseCandle[]>([]);
@@ -271,110 +267,29 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const refreshProducts = useCallback(async () => {
     try {
       setIsLoadingPairs(true);
-      
-      // Fetch data sources in parallel for better performance and to avoid sequential await chains
-      const [products, collegeData, customTokens] = await Promise.all([
-        getProducts().catch(err => { console.error('Coinbase fetch failed:', err); return []; }),
+
+      // Catalog is the tokens table. Demo college coins come from their own table.
+      const [collegeData, customTokens] = await Promise.all([
         getDemoCollegeCoins().catch(() => ({ coins: [] as DemoCollegeCoin[] })),
         TokensApi.getAll(true).catch(() => [] as any[])
       ]);
-      
-      // 1. Filter and Transform Coinbase products
-      const quoteCurrencies = ['USD', 'USDT', 'ETH'];
-      const filteredProducts = products.filter(p => quoteCurrencies.includes(p.quote_currency));
-      
+
+      const activeTokens = customTokens.filter((t: any) => t.isActive);
+
+      // Index tokens by symbol for non-INR pair price conversion
+      const tokenInrPrice = new Map<string, number>();
+      activeTokens.forEach((t: any) => {
+        const p = t.currentPrice || Number(t.manualPrice) || 0;
+        tokenInrPrice.set(t.symbol, p);
+      });
+      const getInrPrice = (sym: string) => tokenInrPrice.get(sym) || 0;
+
       const baseProducts = new Map<string, Omit<TradingPair, 'price' | 'change' | 'volume'>>();
-      const coinbasePairs: TradingPair[] = filteredProducts.map(p => {
-        const baseInfo = {
-          symbol: p.product_id,
-          name: p.base_name,
-          quote: p.quote_currency,
-          baseCurrency: p.base_currency,
-          quoteCurrency: p.quote_currency,
-          iconUrl: getIconUrl(p.base_currency),
-        };
-        baseProducts.set(p.product_id, baseInfo);
-        const price = parseFloat(p.price) || 0;
-        const volume24h = parseFloat(p.volume_24h) || 0;
-        return {
-          ...baseInfo,
-          price,
-          change: parseFloat(p.price_percentage_change_24h) || 0,
-          volume: formatVolume(p.volume_24h),
-          _rawVolume24h: volume24h,
-          _usdVolume: volume24h * price,
-        };
-      });
+      const tokenPairs: TradingPair[] = [];
 
-      // 2. Generate Synthetic Pairs (Cross-rates)
-      const usdPairsMap = new Map<string, TradingPair>();
-      coinbasePairs.forEach(p => { if (p.quote === 'USD') usdPairsMap.set(p.baseCurrency, p); });
-      const ethUsd = usdPairsMap.get('ETH');
-      const usdtUsd = usdPairsMap.get('USDT');
-
-      const syntheticPairs: TradingPair[] = [];
-      if (ethUsd && ethUsd.price > 0) {
-        usdPairsMap.forEach((usdPair, base) => {
-          if (base !== 'ETH' && !coinbasePairs.find(p => p.symbol === `${base}-ETH`)) {
-            syntheticPairs.push({
-              symbol: `${base}-ETH`, name: usdPair.name, quote: 'ETH', baseCurrency: base, quoteCurrency: 'ETH',
-              iconUrl: getIconUrl(base), price: usdPair.price / ethUsd.price, change: usdPair.change,
-              volume: formatVolume((usdPair._rawVolume24h || 0).toString()),
-              _rawVolume24h: usdPair._rawVolume24h || 0, _usdVolume: (usdPair._rawVolume24h || 0) * usdPair.price,
-            });
-          }
-        });
-      }
-      if (usdtUsd && usdtUsd.price > 0) {
-        usdPairsMap.forEach((usdPair, base) => {
-          if (base !== 'USDT' && !coinbasePairs.find(p => p.symbol === `${base}-USDT`)) {
-            syntheticPairs.push({
-              symbol: `${base}-USDT`, name: usdPair.name, quote: 'USDT', baseCurrency: base, quoteCurrency: 'USDT',
-              iconUrl: getIconUrl(base), price: usdPair.price / usdtUsd.price, change: usdPair.change,
-              volume: formatVolume((usdPair._rawVolume24h || 0).toString()),
-              _rawVolume24h: usdPair._rawVolume24h || 0, _usdVolume: (usdPair._rawVolume24h || 0) * usdPair.price,
-            });
-          }
-        });
-      }
-
-      // 3. Transform College Coins
-      const collegePairs: TradingPair[] = collegeData.coins.map((coin: DemoCollegeCoin) => {
-        const refPair = coinbasePairs.find(p => p.symbol === `${coin.peggedToAsset}-USD`);
-        return {
-          symbol: `${coin.ticker}-USD`, name: coin.name, price: coin.currentPrice || 0,
-          change: refPair?.change || 0, volume: '0', quote: 'USD', baseCurrency: coin.ticker, quoteCurrency: 'USD',
-          iconUrl: resolveUploadUrl(coin.iconUrl) || `https://ui-avatars.com/api/?name=${coin.ticker}&size=64&background=667eea&color=ffffff&bold=true`,
-          isDemoCollegeCoin: true, peggedToAsset: coin.peggedToAsset, peggedPercentage: coin.peggedPercentage,
-        };
-      });
-
-      // 4. Apply permissions from Token table to existing Coinbase/synthetic pairs
-      const tokenPermissionsMap = new Map<string, typeof customTokens[0]>();
-      customTokens.forEach(token => {
-        if (token.isActive) tokenPermissionsMap.set(token.symbol, token);
-      });
-      [...coinbasePairs, ...syntheticPairs].forEach(p => {
-        const token = tokenPermissionsMap.get(p.baseCurrency);
-        if (token) {
-          p.permissions = {
-            allowBuy: token.allowBuy ?? true,
-            allowSell: token.allowSell ?? true,
-            allowP2P: token.allowP2P ?? true,
-            minTransactionAmount: Number(token.minTransactionAmount) || 0,
-            maxTransactionAmount: Number(token.maxTransactionAmount) || 0,
-          };
-        }
-      });
-
-      // 5. Build pairs only for native platform tokens
-      const customPairs: TradingPair[] = [];
-      customTokens.forEach(token => {
-        if (!token.isActive || !token.isNative) return;
-        const price = token.currentPrice || token.manualPrice || 0;
+      activeTokens.forEach((token: any) => {
+        const inrPrice = token.currentPrice || Number(token.manualPrice) || 0;
         const icon = token.iconUrl || getIconUrl(token.symbol);
-
-        // Build permissions object for this token
         const permissions = {
           allowBuy: token.allowBuy ?? true,
           allowSell: token.allowSell ?? true,
@@ -383,49 +298,73 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           maxTransactionAmount: Number(token.maxTransactionAmount) || 0,
         };
 
-        if (token.allowTradeUsd) {
-          customPairs.push({
-            symbol: `${token.symbol}-USD`, name: token.name, price, change: token.change24h || 0,
-            volume: '0', quote: 'USD', baseCurrency: token.symbol, quoteCurrency: 'USD', iconUrl: icon, isCustomToken: true, coingeckoId: token.coingeckoId,
+        const inrVolume = Number(token.volume24h) || 0;
+        const pushPair = (quote: string, price: number, volume: number) => {
+          const symbol = `${token.symbol}-${quote}`;
+          const baseInfo = {
+            symbol, name: token.name, quote, baseCurrency: token.symbol, quoteCurrency: quote, iconUrl: icon,
+          };
+          baseProducts.set(symbol, baseInfo);
+          tokenPairs.push({
+            ...baseInfo,
+            price,
+            change: token.change24h || 0,
+            volume: formatVolume(volume.toString()),
+            _rawVolume24h: price > 0 ? volume / price : 0,
+            _usdVolume: inrVolume, // always the INR-denominated volume for sorting
+            isCustomToken: token.isNative || false,
+            coingeckoId: token.coingeckoId,
             permissions,
           });
+        };
+
+        if (token.allowTradeInr) {
+          pushPair('INR', inrPrice, inrVolume);
         }
-        if (token.allowTradeUsdt) {
-          const usdtPrice = usdtUsd && usdtUsd.price > 0 ? price / usdtUsd.price : price;
-          customPairs.push({
-            symbol: `${token.symbol}-USDT`, name: token.name, price: usdtPrice, change: token.change24h || 0,
-            volume: '0', quote: 'USDT', baseCurrency: token.symbol, quoteCurrency: 'USDT', iconUrl: icon, isCustomToken: true,
-            permissions,
-          });
+        if (token.allowTradeUsdt && token.symbol !== 'USDT') {
+          const usdtInr = getInrPrice('USDT');
+          pushPair('USDT', usdtInr > 0 ? inrPrice / usdtInr : 0, usdtInr > 0 ? inrVolume / usdtInr : 0);
         }
-        if (token.allowTradeEth) {
-          const ethPrice = ethUsd && ethUsd.price > 0 ? price / ethUsd.price : price;
-          customPairs.push({
-            symbol: `${token.symbol}-ETH`, name: token.name, price: ethPrice, change: token.change24h || 0,
-            volume: '0', quote: 'ETH', baseCurrency: token.symbol, quoteCurrency: 'ETH', iconUrl: icon, isCustomToken: true,
-            peggedToAsset: token.peggedToAsset, peggedPercentage: token.peggedPercentage,
-            permissions,
-          });
+        if (token.allowTradeEth && token.symbol !== 'ETH') {
+          const ethInr = getInrPrice('ETH');
+          pushPair('ETH', ethInr > 0 ? inrPrice / ethInr : 0, ethInr > 0 ? inrVolume / ethInr : 0);
+        }
+        if (token.allowTradeTuit && token.symbol !== 'TUIT') {
+          const tuitInr = getInrPrice('TUIT');
+          pushPair('TUIT', tuitInr > 0 ? inrPrice / tuitInr : 0, tuitInr > 0 ? inrVolume / tuitInr : 0);
         }
       });
 
-      // 6. Merge and Deduplicate by symbol
-      // Order of precedence (last one wins): Custom > College > Synthetic > Coinbase
-      const allPossible = [...coinbasePairs, ...syntheticPairs, ...collegePairs, ...customPairs];
+      // Demo college coins — learner mode virtual pairs, INR-quoted
+      const collegePairs: TradingPair[] = collegeData.coins.map((coin: DemoCollegeCoin) => {
+        const refInrPrice = getInrPrice(coin.peggedToAsset);
+        return {
+          symbol: `${coin.ticker}-INR`, name: coin.name, price: coin.currentPrice || 0,
+          change: 0, volume: '0',
+          quote: 'INR', baseCurrency: coin.ticker, quoteCurrency: 'INR',
+          iconUrl: resolveUploadUrl(coin.iconUrl) || `https://ui-avatars.com/api/?name=${coin.ticker}&size=64&background=667eea&color=ffffff&bold=true`,
+          isDemoCollegeCoin: true, peggedToAsset: coin.peggedToAsset, peggedPercentage: coin.peggedPercentage,
+          _rawVolume24h: 0, _usdVolume: 0,
+        };
+      });
+
+      // Merge and dedupe by symbol (college pairs win if they collide)
       const mergedMap = new Map<string, TradingPair>();
-      allPossible.forEach(p => mergedMap.set(p.symbol, p));
-      
+      [...tokenPairs, ...collegePairs].forEach(p => mergedMap.set(p.symbol, p));
+
+      // Sort by INR volume desc so popular pairs lead; fall back to symbol
       const finalPairs = Array.from(mergedMap.values()).sort((a, b) => {
         const volA = (a as any)._usdVolume || 0;
         const volB = (b as any)._usdVolume || 0;
-        return volB - volA; // Sort by volume
+        if (volB !== volA) return volB - volA;
+        return a.baseCurrency.localeCompare(b.baseCurrency);
       });
 
       setPairs(finalPairs);
       pairsRef.current = finalPairs;
       baseProductsRef.current = baseProducts;
       if (collegeData.coins.length > 0) setCollegeCoins(collegeData.coins);
-      
+
     } catch (error) {
       console.error('Failed to refresh products:', error);
     } finally {
@@ -440,18 +379,20 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         // Regular pair update
         const update = pricesData[pair.symbol];
         if (update) {
+          const newVol = parseFloat(update.volume_24h) || 0;
           return {
             ...pair,
             price: parseFloat(update.price) || pair.price,
             change: parseFloat(update.price_percentage_change_24h) || pair.change,
             volume: formatVolume(update.volume_24h),
+            _usdVolume: newVol,
+            _rawVolume24h: pair.price > 0 ? newVol / pair.price : pair._rawVolume24h,
           };
         }
         
-        // College coin update - use reference token's price
+        // College coin update — pegged to reference token's INR price
         if (pair.isDemoCollegeCoin && pair.peggedToAsset && pair.peggedPercentage) {
-          const refSymbol = `${pair.peggedToAsset}-USD`;
-          const refUpdate = pricesData[refSymbol];
+          const refUpdate = pricesData[`${pair.peggedToAsset}-INR`];
           if (refUpdate) {
             const refPrice = parseFloat(refUpdate.price);
             const newPrice = refPrice * (pair.peggedPercentage / 100);
@@ -590,166 +531,110 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         default: start = now - 60 * 60 * 100;
       }
       
-      // For synthetic pairs (ETH/USDT quotes), fetch USD pair candles and convert
+      // Every chart is driven by CoinGecko OHLC (INR-denominated) plus optional
+      // cross-rate conversion for USDT/ETH-quoted pairs and peg for demo college coins.
       const [baseAsset, quoteAsset] = selectedPair.split('-');
-      let coinbasePair = selectedPair;
       let conversionRate = 1;
-      
-      // Use ref to get latest pairs without causing callback recreation
+
       const currentPairs = pairsRef.current;
       const currentPair = currentPairs.find(p => p.symbol === selectedPair);
 
-      // Skip custom tokens: fetch real OHLC or fallback to mock
-      // Skip custom tokens: fetch real OHLC or fallback to mock
-      if (currentPair?.isCustomToken) {
-        let loaded = false;
-        if (currentPair.coingeckoId) {
-          try {
-             // Map granularity to appropriate lookback days to get best resolution from CoinGecko
-             // CoinGecko resolution: 1-2 days = 30m; 3-30 days = 4h; 31+ days = 4d.
-             let days = 1;
-             if (candleGranularity === '1H') days = 7;
-             if (candleGranularity === '4H') days = 30;
-             if (candleGranularity === '1D') days = 90;
-             
-             // For very sparse tokens, we might need more days. 
-             // The backend getCoinOHLC will handle the fallback logic.
-             const ohlcData = await getCoinOHLC(currentPair.coingeckoId, days);
-             
-             let candles: CoinbaseCandle[] = [];
-             
-             if (ohlcData && ohlcData.length > 0) {
-                candles = ohlcData.map(c => ({
-                  start: Math.floor(c[0] / 1000).toString(),
-                  open: c[1].toString(),
-                  high: c[2].toString(),
-                  low: c[3].toString(),
-                  close: c[4].toString(),
-                  volume: '0'
-                }));
-             }
-
-             // RESAMPLING STRATEGY
-             // We generate ~200 candles ending at "Now", sampling the last known price for each.
-             let intervalSeconds = 3600; 
-             if (candleGranularity === '1M') intervalSeconds = 60;
-             if (candleGranularity === '5M') intervalSeconds = 300;
-             if (candleGranularity === '15M') intervalSeconds = 900;
-             if (candleGranularity === '1H') intervalSeconds = 3600;
-             if (candleGranularity === '4H') intervalSeconds = 14400;
-             if (candleGranularity === '1D') intervalSeconds = 86400;
-             
-             const numCandles = 200;
-             const nowSeconds = Math.floor(Date.now() / 1000);
-             const resampledCandles: CoinbaseCandle[] = [];
-             
-             // Sort source data by time ascending
-             candles.sort((a, b) => parseInt(a.start) - parseInt(b.start));
-             
-             // Get the live price from context to ensure the chart connects to the header
-             const livePrice = currentPair.price;
-
-             for (let i = numCandles - 1; i >= 0; i--) {
-                const targetTime = nowSeconds - (i * intervalSeconds);
-                
-                // Find the price effective at targetTime (LAST trade before or at targetTime)
-                let currentPrice = '0';
-                let found = false;
-                
-                // Iterate backwards from end of source data
-                for (let j = candles.length - 1; j >= 0; j--) {
-                   const candleTime = parseInt(candles[j].start);
-                   if (candleTime <= targetTime) {
-                      currentPrice = candles[j].close;
-                      found = true;
-                      break;
-                   }
-                }
-                
-                // If checking a time BEFORE all history, use the oldest known price
-                if (!found && candles.length > 0) {
-                   currentPrice = candles[0].close;
-                }
-                
-                // For the VERY LATEST candles (last 2 intervals), if we have a live price,
-                // prefer it to ensure a smooth line to the current market value.
-                if (i <= 1 && livePrice > 0) {
-                   currentPrice = livePrice.toString();
-                }
-
-                resampledCandles.push({
-                   start: targetTime.toString(),
-                   open: currentPrice,
-                   high: currentPrice,
-                   low: currentPrice,
-                   close: currentPrice,
-                   volume: '0'
-                });
-             }
-             
-             setCandles(resampledCandles);
-             setIsLoadingCandles(false);
-             loaded = true;
-             return;
-          } catch(e) { console.error('Failed to fetch CoinGecko OHLC:', e); }
+      // Demo college coins: pull reference asset candles and scale by peg %
+      const isDemoCollegeCoin = currentPair?.isDemoCollegeCoin === true;
+      let coingeckoId = currentPair?.coingeckoId;
+      if (isDemoCollegeCoin && currentPair?.peggedToAsset) {
+        const refPair = currentPairs.find(p => p.baseCurrency === currentPair.peggedToAsset && p.quote === 'INR');
+        coingeckoId = refPair?.coingeckoId;
+        conversionRate = (currentPair.peggedPercentage || 0) / 100;
+      } else if (quoteAsset !== 'INR') {
+        // Non-INR quote — chart reference is always base-INR price, divide by quote-INR price
+        const baseInrPair = currentPairs.find(p => p.baseCurrency === baseAsset && p.quote === 'INR');
+        const quoteInrPair = currentPairs.find(p => p.baseCurrency === quoteAsset && p.quote === 'INR');
+        coingeckoId = baseInrPair?.coingeckoId;
+        if (quoteInrPair && quoteInrPair.price > 0) {
+          conversionRate = 1 / quoteInrPair.price;
         }
+      }
 
-        if (!loaded) {
-          // Fallback: Mock flat candles
-          let secondsPerCandle = 3600;
-          if (candleGranularity === '1M') secondsPerCandle = 60;
-          if (candleGranularity === '5M') secondsPerCandle = 300;
-          if (candleGranularity === '15M') secondsPerCandle = 900;
-          if (candleGranularity === '1D') secondsPerCandle = 86400;
+      if (coingeckoId) {
+        try {
+          // Map granularity to CoinGecko lookback (CG returns 5m/1h/4h/4d resolutions by range)
+          let days = 1;
+          if (candleGranularity === '1H') days = 7;
+          if (candleGranularity === '4H') days = 30;
+          if (candleGranularity === '1D') days = 90;
 
-          const mockPrice = currentPair.price || 0;
-          const mockCandles = Array.from({ length: 50 }).map((_, i) => ({
-            start: (now - ((49 - i) * secondsPerCandle)).toString(),
-            open: mockPrice.toString(),
-            high: mockPrice.toString(),
-            low: mockPrice.toString(),
-            close: mockPrice.toString(),
-            volume: '0'
+          const ohlcData = await getCoinOHLC(coingeckoId, days);
+
+          let sourceCandles: CoinbaseCandle[] = (ohlcData || []).map(c => ({
+            start: Math.floor(c[0] / 1000).toString(),
+            open: (c[1] * conversionRate).toString(),
+            high: (c[2] * conversionRate).toString(),
+            low: (c[3] * conversionRate).toString(),
+            close: (c[4] * conversionRate).toString(),
+            volume: '0',
           }));
-          
-          setCandles(mockCandles);
+
+          let intervalSeconds = 3600;
+          if (candleGranularity === '1M') intervalSeconds = 60;
+          if (candleGranularity === '5M') intervalSeconds = 300;
+          if (candleGranularity === '15M') intervalSeconds = 900;
+          if (candleGranularity === '1H') intervalSeconds = 3600;
+          if (candleGranularity === '4H') intervalSeconds = 14400;
+          if (candleGranularity === '1D') intervalSeconds = 86400;
+
+          const numCandles = 200;
+          const nowSeconds = Math.floor(Date.now() / 1000);
+          const resampledCandles: CoinbaseCandle[] = [];
+
+          sourceCandles.sort((a, b) => parseInt(a.start) - parseInt(b.start));
+          const livePrice = currentPair?.price || 0;
+
+          for (let i = numCandles - 1; i >= 0; i--) {
+            const targetTime = nowSeconds - (i * intervalSeconds);
+            let price = '0';
+            let found = false;
+            for (let j = sourceCandles.length - 1; j >= 0; j--) {
+              if (parseInt(sourceCandles[j].start) <= targetTime) {
+                price = sourceCandles[j].close;
+                found = true;
+                break;
+              }
+            }
+            if (!found && sourceCandles.length > 0) price = sourceCandles[0].close;
+            if (i <= 1 && livePrice > 0) price = livePrice.toString();
+
+            resampledCandles.push({
+              start: targetTime.toString(),
+              open: price, high: price, low: price, close: price, volume: '0',
+            });
+          }
+
+          setCandles(resampledCandles);
           setIsLoadingCandles(false);
           return;
+        } catch (e) {
+          console.error('Failed to fetch CoinGecko OHLC:', e);
         }
       }
-      
-      // Check if this is a college coin
-      const isDemoCollegeCoin = currentPair?.isDemoCollegeCoin === true;
-      const isSynthetic = (quoteAsset === 'ETH' || quoteAsset === 'USDT') && currentPair && !isDemoCollegeCoin;
-      
-      if (isDemoCollegeCoin && currentPair.peggedToAsset && currentPair.peggedPercentage) {
-        // For college coins, fetch reference token candles and scale by percentage
-        coinbasePair = `${currentPair.peggedToAsset}-USD`;
-        conversionRate = currentPair.peggedPercentage / 100;
-      } else if (isSynthetic) {
-        // Use base-USD pair for candles (Coinbase doesn't have ETH/USDT quote pairs)
-        coinbasePair = `${baseAsset}-USD`;
-        
-        // Get conversion rate: 1 USD = ? ETH or ? USDT
-        const quoteUsdPair = currentPairs.find(p => p.symbol === `${quoteAsset}-USD`);
-        if (quoteUsdPair && quoteUsdPair.price > 0) {
-          conversionRate = 1 / quoteUsdPair.price; // Convert USD price to quote currency
-        }
-      }
-      
-      const candleData = await getCandles(coinbasePair, gran, start, now);
-      
-      // Convert candle prices if synthetic pair or college coin
-      const needsConversion = isSynthetic || isDemoCollegeCoin;
-      const convertedCandles = needsConversion ? candleData.map(candle => ({
-        ...candle,
-        open: (parseFloat(candle.open) * conversionRate).toString(),
-        high: (parseFloat(candle.high) * conversionRate).toString(),
-        low: (parseFloat(candle.low) * conversionRate).toString(),
-        close: (parseFloat(candle.close) * conversionRate).toString(),
-      })) : candleData;
-      
-      setCandles(convertedCandles);
+
+      // Fallback: flat candles at current live price (no OHLC data available)
+      let secondsPerCandle = 3600;
+      if (candleGranularity === '1M') secondsPerCandle = 60;
+      if (candleGranularity === '5M') secondsPerCandle = 300;
+      if (candleGranularity === '15M') secondsPerCandle = 900;
+      if (candleGranularity === '1D') secondsPerCandle = 86400;
+
+      const mockPrice = currentPair?.price || 0;
+      const mockCandles = Array.from({ length: 50 }).map((_, i) => ({
+        start: (now - ((49 - i) * secondsPerCandle)).toString(),
+        open: mockPrice.toString(),
+        high: mockPrice.toString(),
+        low: mockPrice.toString(),
+        close: mockPrice.toString(),
+        volume: '0',
+      }));
+      setCandles(mockCandles);
     } catch (error) {
       console.error('Failed to fetch candles:', error);
       setCandles([]);
@@ -823,129 +708,24 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [isLoggedIn, appMode]);
 
-  // Fetch public trades
+  // Public trades — we don't run a real exchange, so this is just our internal
+  // completed trades for the selected pair. Kept empty for now; fillable later
+  // from an /orders/public-trades endpoint when product requires it.
   const refreshTrades = useCallback(async () => {
-    if (!selectedPair) return;
-    try {
-      setIsLoadingTrades(true);
-      
-      // For synthetic pairs (ETH/USDT quotes), fetch USD pair trades and convert
-      const [baseAsset, quoteAsset] = selectedPair.split('-');
-      const currentPairs = pairsRef.current;
-      const currentPair = currentPairs.find(p => p.symbol === selectedPair);
-      
-      // Check if this is a college coin
-      const isDemoCollegeCoin = currentPair?.isDemoCollegeCoin === true;
-      const isSynthetic = (quoteAsset === 'ETH' || quoteAsset === 'USDT') && currentPair && !isDemoCollegeCoin;
-      
-      let coinbasePair = selectedPair;
-      let conversionRate = 1;
-      
-      if (isDemoCollegeCoin && currentPair.peggedToAsset && currentPair.peggedPercentage) {
-        // For college coins, fetch reference token trades and scale by percentage
-        coinbasePair = `${currentPair.peggedToAsset}-USD`;
-        conversionRate = currentPair.peggedPercentage / 100;
-      } else if (isSynthetic) {
-        // Use base-USD pair for trades (Coinbase doesn't have ETH/USDT quote pairs)
-        coinbasePair = `${baseAsset}-USD`;
-        
-        // Get conversion rate: 1 USD = ? ETH or ? USDT
-        const quoteUsdPair = currentPairs.find(p => p.symbol === `${quoteAsset}-USD`);
-        if (quoteUsdPair && quoteUsdPair.price > 0) {
-          conversionRate = 1 / quoteUsdPair.price; // Convert USD price to quote currency
-        }
-      }
-      
-      // Skip custom tokens as they don't have public trades on Coinbase
-      if (currentPair?.isCustomToken) {
-        setPublicTrades([]);
-        setIsLoadingTrades(false);
-        return;
-      }
+    setPublicTrades([]);
+    setIsLoadingTrades(false);
+  }, []);
 
-      const tradesData = await getPublicTrades(coinbasePair, 50);
-      
-      // Convert trade prices if synthetic pair or college coin
-      const needsConversion = isSynthetic || isDemoCollegeCoin;
-      const convertedTrades = needsConversion ? tradesData.map(trade => ({
-        ...trade,
-        price: (parseFloat(trade.price) * conversionRate).toString(),
-      })) : tradesData;
-      
-      setPublicTrades(convertedTrades);
-    } catch (error) {
-      console.error('Failed to fetch trades:', error);
-    } finally {
-      setIsLoadingTrades(false);
-    }
-  }, [selectedPair]);
-
-  // Fetch order book
+  // Order book is always our internal DB-based book (pending orders aggregated by price)
   const refreshOrderBook = useCallback(async () => {
     if (!selectedPair) return;
     try {
       setIsLoadingOrderBook(true);
-      
-      // For synthetic pairs (ETH/USDT quotes), fetch USD pair order book and convert
-      const [baseAsset, quoteAsset] = selectedPair.split('-');
-      // Use ref to get latest pairs without causing callback recreation
-      const currentPairs = pairsRef.current;
-      const currentPair = currentPairs.find(p => p.symbol === selectedPair);
-      
-      // Skip custom tokens: fetch real INTERNAL order book
-      if (currentPair?.isCustomToken) {
-         try {
-           const internalBook = await getInternalOrderBook(currentPair.symbol);
-           setOrderBook(internalBook);
-         } catch (e) {
-           console.error('Failed to load internal book', e);
-           setOrderBook({ bids: [], asks: [] });
-         }
-         setIsLoadingOrderBook(false);
-         return;
-      }
-
-      // Check if this is a college coin
-      const isDemoCollegeCoin = currentPair?.isDemoCollegeCoin === true;
-      const isSynthetic = (quoteAsset === 'ETH' || quoteAsset === 'USDT') && currentPair && !isDemoCollegeCoin;
-      
-      let coinbasePair = selectedPair;
-      let conversionRate = 1;
-      
-      if (isDemoCollegeCoin && currentPair.peggedToAsset && currentPair.peggedPercentage) {
-        // For college coins, fetch reference token order book and scale by percentage
-        coinbasePair = `${currentPair.peggedToAsset}-USD`;
-        conversionRate = currentPair.peggedPercentage / 100;
-      } else if (isSynthetic) {
-        // Use base-USD pair for order book (Coinbase doesn't have ETH/USDT quote pairs)
-        coinbasePair = `${baseAsset}-USD`;
-        
-        // Get conversion rate: 1 USD = ? ETH or ? USDT
-        const quoteUsdPair = currentPairs.find(p => p.symbol === `${quoteAsset}-USD`);
-        if (quoteUsdPair && quoteUsdPair.price > 0) {
-          conversionRate = 1 / quoteUsdPair.price; // Convert USD price to quote currency
-        }
-      }
-      
-      const bookData = await getOrderBook(coinbasePair, 15);
-      
-      // Convert order book prices if synthetic pair or college coin
-      const needsConversion = isSynthetic || isDemoCollegeCoin;
-      const convertedBook = needsConversion ? {
-        ...bookData,
-        bids: bookData.bids.map(bid => ({
-          ...bid,
-          price: (parseFloat(bid.price) * conversionRate).toString(),
-        })),
-        asks: bookData.asks.map(ask => ({
-          ...ask,
-          price: (parseFloat(ask.price) * conversionRate).toString(),
-        })),
-      } : bookData;
-      
-      setOrderBook(convertedBook);
+      const internalBook = await getInternalOrderBook(selectedPair);
+      setOrderBook(internalBook);
     } catch (error) {
       console.error('Failed to fetch order book:', error);
+      setOrderBook({ bids: [], asks: [] });
     } finally {
       setIsLoadingOrderBook(false);
     }
@@ -1007,8 +787,8 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             // Build crypto prices from current pairs
             const cryptoPrices: Record<string, number> = {};
             pairsRef.current.forEach(pair => {
-              if (pair.symbol.endsWith('-USD')) {
-                const asset = pair.symbol.replace('-USD', '');
+              if (pair.symbol.endsWith('-INR')) {
+                const asset = pair.symbol.replace('-INR', '');
                 cryptoPrices[asset] = pair.price;
               }
             });
@@ -1066,158 +846,14 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }
       
       // ============ INVESTOR MODE (Real Trading) ============
-      
-      // Check if this is a synthetic pair (ETH or USDT quote, not directly on Coinbase)
-      // All pairs with ETH or USDT as quote are synthetic (converted from USD pairs)
-      const isSynthetic = (quoteAsset === 'ETH' || quoteAsset === 'USDT') && !tradingPairData.isCustomToken;
-      
-      if (isSynthetic) {
-        // Validate minimum order size: Synthetic pairs must be at least $1 USD
-        const quoteUsdPair = currentPairs.find(p => p.symbol === `${quoteAsset}-USD`);
-        if (!quoteUsdPair) {
-          console.error(`${quoteAsset}-USD pair not found`);
-          return { success: false };
-        }
-        
-        let usdValue: number;
-        if (side === 'BUY') {
-          // total is in quote currency (ETH/USDT), convert to USD
-          usdValue = total * quoteUsdPair.price;
-        } else {
-          // SELL: amount is in base currency, total is expected quote currency value
-          // Convert total (in quote currency) to USD
-          usdValue = total * quoteUsdPair.price;
-        }
-        
-        if (usdValue < 1) {
-          const errorMsg = `Order size is too small. Minimum order size is $1.00 USD. Your order value is $${usdValue.toFixed(2)} USD.`;
-          message.error(errorMsg);
-          return { success: false };
-        }
-        
-        // For synthetic pairs, do 2-step conversion via USD
-        // Example: SOL-ETH -> SOL-USD then ETH-USD
-        
-        let lastOrder: InternalOrder | undefined;
-        
-        // Step 1: Convert to/from USD
-        if (side === 'BUY') {
-          // BUY XRP-ETH means: Buy XRP, paying with ETH
-          // total is the amount in quote currency (ETH), not USD
-          
-          // total is already in the quote currency (ETH), so we sell that amount directly
-          const quoteAmountToSell = total; // This is the ETH amount the user wants to spend
-          
-          // Sell quote asset to get USD
-          const sellResult = await placeOrder(
-            `${quoteAsset}-USD`,
-            'SELL',
-            quoteAmountToSell, // base size in quote currency (ETH)
-          );
-          
-          if (!sellResult.success) {
-            return { success: false };
-          }
-          
-          // Step 2: Buy base asset with USD
-          const baseUsdPair = currentPairs.find(p => p.symbol === `${baseAsset}-USD`);
-          if (!baseUsdPair) {
-            console.error(`${baseAsset}-USD pair not found`);
-            return { success: false };
-          }
-          
-          // Calculate USD value: convert ETH to USD, then apply fee estimate
-          // total (ETH) * ETH-USD price = USD value, then subtract estimated fee
-          const estimatedUsdValue = total * quoteUsdPair.price;
-          const estimatedUsdAfterFees = estimatedUsdValue * 0.995; // 0.5% fee estimate
-          
-          // Buy base asset with the USD we got
-          const buyResult = await placeOrder(
-            `${baseAsset}-USD`,
-            'BUY',
-            estimatedUsdAfterFees, // quote size in USD
-          );
-          
-          if (!buyResult.success) {
-            return { success: false };
-          }
-          
-          // Return the last order (buy order) for tracking
-          lastOrder = buyResult.order;
-        } else {
-          // SELL XRP-ETH means: Sell XRP, receiving ETH
-          // amount is in base currency (XRP), total is expected ETH received
-          
-          // Step 1: Sell base asset to get USD
-          const baseUsdPair = currentPairs.find(p => p.symbol === `${baseAsset}-USD`);
-          if (!baseUsdPair) {
-            console.error(`${baseAsset}-USD pair not found`);
-            return { success: false };
-          }
-          
-          // Sell base asset (amount is in base currency)
-          const sellResult = await placeOrder(
-            `${baseAsset}-USD`,
-            'SELL',
-            amount, // base size (XRP)
-          );
-          
-          if (!sellResult.success) {
-            return { success: false };
-          }
-          
-          // Step 2: Buy quote asset (ETH) with USD
-          const quoteUsdPair = currentPairs.find(p => p.symbol === `${quoteAsset}-USD`);
-          if (!quoteUsdPair) {
-            console.error(`${quoteAsset}-USD pair not found`);
-            return { success: false };
-          }
-          
-          // Calculate USD value: convert base asset to USD, then apply fee estimate
-          // amount (XRP) * XRP-USD price = USD value, then subtract estimated fee
-          const estimatedUsdValue = amount * baseUsdPair.price;
-          const estimatedUsdAfterFees = estimatedUsdValue * 0.995; // 0.5% fee estimate
-          
-          // Buy quote asset with the USD we got
-          const buyResult = await placeOrder(
-            `${quoteAsset}-USD`,
-            'BUY',
-            estimatedUsdAfterFees, // quote size in USD
-          );
-          
-          if (!buyResult.success) {
-            return { success: false };
-          }
-          
-          // Return the last order (buy order) for tracking
-          lastOrder = buyResult.order;
-        }
-        
-        // Refresh balances and orders after successful trade
-        await Promise.all([refreshBalances(), refreshOrders()]);
-        
-        // Return the last order so modal can track it
-        return { success: true, order: lastOrder };
-      } else {
-        // Direct pair (e.g., BTC-USD) - single order
-        // For BUY: amount is in quote currency (USD), for SELL: amount is in base currency (BTC)
-        const orderAmount = side === 'BUY' ? total : amount;
-        
-        const result = await placeOrder(
-          tradingPair,
-          side,
-          orderAmount,
-        );
-        
-        if (!result.success) {
-          // Return false with error - don't throw to prevent Next.js overlay
-          // The error message will be shown by the caller
-          return { success: false };
-        }
-        
-        // Return the order so the caller can show the modal immediately
-        return { success: true, order: result.order };
-      }
+      // All pairs route straight to the backend — no synthetic USD routing.
+      // orders.service.ts handles INR/USDT/ETH/TUIT quotes internally using
+      // token-table INR prices for cross-rate calculation.
+      const orderAmount = side === 'BUY' ? total : amount;
+      const result = await placeOrder(tradingPair, side, orderAmount);
+      if (!result.success) return { success: false };
+      await Promise.all([refreshBalances(), refreshOrders()]);
+      return { success: true, order: result.order };
     } catch (error: any) {
       // Log error for debugging (only in development)
       if (process.env.NODE_ENV === 'development') {
@@ -1239,26 +875,19 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   // Track if we've done the initial auto-select (to avoid overriding URL navigation)
   const hasAutoSelectedRef = useRef(false);
   
-  // Auto-select first college coin in learner mode when pairs load
-  // Only runs ONCE on initial load, and only if there's no URL pair parameter
+  // Default pair selection — prefer BTC-INR, fall back to first available pair.
+  // No automatic college-coin routing; users pick via the Colleges tab in learner mode.
   useEffect(() => {
-    if (!isLoadingPairs && pairs.length > 0 && appMode === 'learner' && !hasAutoSelectedRef.current) {
-      // Check if there's a URL pair parameter - don't override if user navigated with a specific pair
+    if (!isLoadingPairs && pairs.length > 0 && !hasAutoSelectedRef.current) {
       const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
       const urlPair = urlParams?.get('pair');
-      
-      // Only auto-select if:
-      // 1. Current pair is the default BTC-USD AND
-      // 2. There's no URL pair parameter
-      if (selectedPair === 'BTC-USD' && !urlPair) {
-        const firstCollegeCoin = pairs.find(p => p.isDemoCollegeCoin);
-        if (firstCollegeCoin) {
-          setSelectedPair(firstCollegeCoin.symbol);
-        }
+      if (!urlPair && !pairs.some(p => p.symbol === selectedPair)) {
+        const preferred = pairs.find(p => p.symbol === 'BTC-INR') || pairs[0];
+        if (preferred) setSelectedPair(preferred.symbol);
       }
       hasAutoSelectedRef.current = true;
     }
-  }, [isLoadingPairs, pairs, appMode, selectedPair]);
+  }, [isLoadingPairs, pairs, selectedPair]);
 
   // Fetch balances and orders when logged in or when app mode changes
   // Clear on logout
@@ -1280,8 +909,7 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (appMode === 'investor' && pairs.length > 0) {
       const currentPair = pairs.find(p => p.symbol === selectedPair);
       if (currentPair?.isDemoCollegeCoin) {
-        // Reset to BTC-USD when switching to investor mode with a college coin selected
-        setSelectedPair('BTC-USD');
+        setSelectedPair('BTC-INR');
       }
     }
   }, [appMode, pairs, selectedPair]);
@@ -1292,6 +920,29 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       refreshCandles();
     }
   }, [selectedPair, candleGranularity, isLoadingPairs, refreshCandles]);
+
+  // Live-update the most recent candle whenever the current pair price ticks.
+  // Historical candles stay fixed; only the last candle's close + high/low adjust
+  // so the chart follows the header price instead of going stale between refetches.
+  useEffect(() => {
+    if (!currentPrice || currentPrice <= 0) return;
+    setCandles(prev => {
+      if (prev.length === 0) return prev;
+      const last = prev[prev.length - 1];
+      const priceStr = currentPrice.toString();
+      if (last.close === priceStr) return prev;
+      const lastHigh = Math.max(parseFloat(last.high) || 0, currentPrice);
+      const lastLow = Math.min(parseFloat(last.low) || currentPrice, currentPrice);
+      const updated = [...prev];
+      updated[updated.length - 1] = {
+        ...last,
+        close: priceStr,
+        high: lastHigh.toString(),
+        low: lastLow.toString(),
+      };
+      return updated;
+    });
+  }, [currentPrice]);
 
   // Fetch trades and order book when pair changes
   useEffect(() => {

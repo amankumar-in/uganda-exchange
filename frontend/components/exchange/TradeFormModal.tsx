@@ -11,9 +11,6 @@ import { useExchange } from '@/context/ExchangeContext';
 
 const { useToken } = theme;
 
-// Minimum order value in USD
-const MIN_ORDER_VALUE_USD = 1;
-
 type OrderSide = 'BUY' | 'SELL';
 
 interface TradeFormModalProps {
@@ -56,26 +53,17 @@ const TradeFormModal: React.FC<TradeFormModalProps> = ({
   const amountNum = parseFloat(amount) || 0;
   const totalNum = parseFloat(total) || 0;
   
-  // Calculate USD value for minimum order validation
-  // For USD pairs: totalNum is already in USD
-  // For non-USD pairs (ETH, USDT): convert using quote-USD price
-  const getUsdValue = (): number => {
-    if (quoteAsset === 'USD') {
-      return totalNum;
+  // INR value for limit checks — convert non-INR quote via {quote}-INR pair
+  const getInrValue = (): number => {
+    if (quoteAsset === 'INR') return totalNum;
+    const quoteInrPair = pairs.find(p => p.symbol === `${quoteAsset}-INR`);
+    if (quoteInrPair && quoteInrPair.price > 0) {
+      return totalNum * quoteInrPair.price;
     }
-    
-    // Non-USD quote (ETH, USDT) - find quote-USD price
-    const quoteUsdPair = pairs.find(p => p.symbol === `${quoteAsset}-USD`);
-    if (quoteUsdPair && quoteUsdPair.price > 0) {
-      return totalNum * quoteUsdPair.price;
-    }
-    
-    // Fallback: can't determine USD value, allow the trade (backend will validate)
-    return MIN_ORDER_VALUE_USD;
+    return 0;
   };
-  
-  const usdValue = getUsdValue();
-  const isBelowMinimum = totalNum > 0 && usdValue < MIN_ORDER_VALUE_USD;
+
+  const inrValue = getInrValue();
 
   // Get current pair data for icon and permissions
   const currentPair = pairs.find(p => p.symbol === symbol || p.baseCurrency === baseAsset);
@@ -88,8 +76,8 @@ const TradeFormModal: React.FC<TradeFormModalProps> = ({
   // Token-specific transaction limits (from admin settings)
   const tokenMinAmount = permissions?.minTransactionAmount || 0;
   const tokenMaxAmount = permissions?.maxTransactionAmount || 0;
-  const isBelowTokenMin = tokenMinAmount > 0 && totalNum > 0 && usdValue < tokenMinAmount;
-  const isAboveTokenMax = tokenMaxAmount > 0 && totalNum > 0 && usdValue > tokenMaxAmount;
+  const isBelowTokenMin = tokenMinAmount > 0 && totalNum > 0 && inrValue < tokenMinAmount;
+  const isAboveTokenMax = tokenMaxAmount > 0 && totalNum > 0 && inrValue > tokenMaxAmount;
 
   // Reset form when modal opens/closes or pair changes
   useEffect(() => {
@@ -108,7 +96,7 @@ const TradeFormModal: React.FC<TradeFormModalProps> = ({
       const totalValue = num * price;
       // High precision for sub-penny totals
       let decimals = 2;
-      if (quoteAsset === 'USD') {
+      if (quoteAsset === 'INR') {
         decimals = totalValue < 0.001 ? 8 : (totalValue < 1 ? 6 : 2);
       } else {
         decimals = 8;
@@ -134,15 +122,15 @@ const TradeFormModal: React.FC<TradeFormModalProps> = ({
   const handlePercentage = (percent: number) => {
     if (price <= 0) return;
     
-    const totalDecimals = quoteAsset === 'USD' ? 2 : 8;
-    const precisionMultiplier = quoteAsset === 'USD' ? 100 : 100000000;
+    const totalDecimals = quoteAsset === 'INR' ? 2 : 8;
+    const precisionMultiplier = quoteAsset === 'INR' ? 100 : 100000000;
     
     if (isBuy) {
       const maxTotal = percent === 100 
         ? Math.floor(quoteBalance * precisionMultiplier) / precisionMultiplier
         : quoteBalance * (percent / 100);
       
-      const decimals = quoteAsset === 'USD' ? (maxTotal < 1 ? 6 : 2) : 8;
+      const decimals = quoteAsset === 'INR' ? (maxTotal < 1 ? 6 : 2) : 8;
       setTotal(maxTotal.toFixed(decimals));
       if (price > 0) {
         setAmount((maxTotal / price).toFixed(8));
@@ -204,7 +192,6 @@ const TradeFormModal: React.FC<TradeFormModalProps> = ({
     !totalNum ||
     totalNum <= 0 ||
     price <= 0 ||
-    isBelowMinimum ||
     isBelowTokenMin ||
     isAboveTokenMax ||
     insufficientBalance ||
@@ -370,8 +357,8 @@ const TradeFormModal: React.FC<TradeFormModalProps> = ({
               addon={quoteAsset}
               placeholder="0.00"
               label="You Pay"
-              balance={quoteAsset === 'USD' 
-                ? `$${quoteBalance.toFixed(2)}`
+              balance={quoteAsset === 'INR' 
+                ? `₹${quoteBalance.toFixed(2)}`
                 : `${quoteBalance.toFixed(4)} ${quoteAsset}`
               }
             />
@@ -491,8 +478,8 @@ const TradeFormModal: React.FC<TradeFormModalProps> = ({
               addon={quoteAsset}
               placeholder="0.00"
               label="You Receive"
-              balance={quoteAsset === 'USD' 
-                ? `$${quoteBalance.toFixed(2)}`
+              balance={quoteAsset === 'INR' 
+                ? `₹${quoteBalance.toFixed(2)}`
                 : `${quoteBalance.toFixed(4)} ${quoteAsset}`
               }
             />
@@ -549,34 +536,6 @@ const TradeFormModal: React.FC<TradeFormModalProps> = ({
           )}
         </AnimatePresence>
 
-        {/* Minimum Order Value Warning (system-wide $1 minimum) */}
-        <AnimatePresence>
-          {isBelowMinimum && !isBelowTokenMin && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              style={{
-                marginBottom: token.marginMD,
-                padding: token.paddingMD,
-                backgroundColor: 'rgba(251, 191, 36, 0.1)',
-                borderRadius: 12,
-                border: '1px solid rgba(251, 191, 36, 0.2)',
-                fontSize: token.fontSizeSM,
-                color: '#F59E0B',
-                display: 'flex',
-                alignItems: 'center',
-                gap: token.marginXS,
-              }}
-            >
-              <InfoCircleOutlined />
-              Minimum order value is $1.00 USD
-              {quoteAsset !== 'USD' && usdValue > 0 && (
-                <span> (current: ${usdValue.toFixed(2)})</span>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
 
         {/* Token-specific Minimum Transaction Warning */}
         <AnimatePresence>
@@ -599,7 +558,7 @@ const TradeFormModal: React.FC<TradeFormModalProps> = ({
               }}
             >
               <InfoCircleOutlined />
-              Minimum transaction for {baseAsset} is ${tokenMinAmount.toFixed(2)} (current: ${usdValue.toFixed(2)})
+              Minimum transaction for {baseAsset} is ₹{tokenMinAmount.toFixed(2)} (current: ₹{inrValue.toFixed(2)})
             </motion.div>
           )}
         </AnimatePresence>
@@ -625,14 +584,14 @@ const TradeFormModal: React.FC<TradeFormModalProps> = ({
               }}
             >
               <InfoCircleOutlined />
-              Maximum transaction for {baseAsset} is ${tokenMaxAmount.toFixed(2)} (current: ${usdValue.toFixed(2)})
+              Maximum transaction for {baseAsset} is ₹{tokenMaxAmount.toFixed(2)} (current: ₹{inrValue.toFixed(2)})
             </motion.div>
           )}
         </AnimatePresence>
 
         {/* Insufficient Balance Warning */}
         <AnimatePresence>
-          {amountNum > 0 && !isBelowMinimum && insufficientBalance && (
+          {amountNum > 0 && insufficientBalance && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
@@ -658,7 +617,7 @@ const TradeFormModal: React.FC<TradeFormModalProps> = ({
 
         {/* Fee Info */}
         <AnimatePresence>
-          {amountNum > 0 && !insufficientBalance && !isBelowMinimum && (
+          {amountNum > 0 && !insufficientBalance && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
@@ -674,8 +633,8 @@ const TradeFormModal: React.FC<TradeFormModalProps> = ({
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: token.marginXS, color: token.colorTextSecondary }}>
                 <span>Fee (0.5%)</span>
                 <span>
-                  {quoteAsset === 'USD' 
-                    ? `$${fee.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: fee < 0.001 ? 8 : (fee < 1 ? 6 : 2) })}`
+                  {quoteAsset === 'INR'
+                    ? `₹${fee.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: fee < 0.001 ? 8 : (fee < 1 ? 6 : 2) })}`
                     : `${fee.toFixed(8)} ${quoteAsset}`
                   }
                 </span>
@@ -685,8 +644,8 @@ const TradeFormModal: React.FC<TradeFormModalProps> = ({
                 <span style={{ color: token.colorText, fontWeight: fontWeights.bold }}>
                   {isBuy 
                     ? `${receiveAmount.toFixed(6)} ${baseAsset}`
-                    : quoteAsset === 'USD' 
-                      ? `$${receiveAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: receiveAmount < 0.001 ? 8 : (receiveAmount < 1 ? 6 : 2) })}` 
+                    : quoteAsset === 'INR' 
+                      ? `₹${receiveAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: receiveAmount < 0.001 ? 8 : (receiveAmount < 1 ? 6 : 2) })}`
                       : `${receiveAmount.toFixed(8)} ${quoteAsset}`
                   }
                 </span>
@@ -834,8 +793,8 @@ const TradeFormModal: React.FC<TradeFormModalProps> = ({
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: token.marginSM }}>
           <span style={{ color: token.colorTextSecondary, fontSize: token.fontSizeSM }}>Price</span>
           <span style={{ color: token.colorText, fontSize: token.fontSizeSM }}>
-            {quoteAsset === 'USD' 
-              ? `$${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: price < 0.001 ? 8 : (price < 1 ? 6 : 2) })}`
+            {quoteAsset === 'INR' 
+              ? `₹${price.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: price < 0.001 ? 8 : (price < 1 ? 6 : 2) })}`
               : `${price.toFixed(8)} ${quoteAsset}`
             }
           </span>
@@ -843,7 +802,7 @@ const TradeFormModal: React.FC<TradeFormModalProps> = ({
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: token.marginSM }}>
           <span style={{ color: token.colorTextSecondary, fontSize: token.fontSizeSM }}>Fee (0.5%)</span>
           <span style={{ color: token.colorText, fontSize: token.fontSizeSM }}>
-            {quoteAsset === 'USD' ? `$${fee.toFixed(2)}` : `${fee.toFixed(8)} ${quoteAsset}`}
+            {quoteAsset === 'INR' ? `₹${fee.toFixed(2)}` : `${fee.toFixed(8)} ${quoteAsset}`}
           </span>
         </div>
         <div style={{
@@ -855,8 +814,8 @@ const TradeFormModal: React.FC<TradeFormModalProps> = ({
           <span style={{ color: token.colorTextSecondary }}>You {isBuy ? 'pay' : 'receive'}</span>
           <span style={{ color: token.colorText, fontWeight: fontWeights.bold }}>
             {isBuy 
-              ? (quoteAsset === 'USD' ? `$${totalNum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: totalNum < 1 ? 6 : 2 })}` : `${totalNum.toFixed(8)} ${quoteAsset}`)
-              : (quoteAsset === 'USD' ? `$${receiveAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: receiveAmount < 1 ? 6 : 2 })}` : `${receiveAmount.toFixed(8)} ${quoteAsset}`)
+              ? (quoteAsset === 'INR' ? `₹${totalNum.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: totalNum < 1 ? 6 : 2 })}` : `${totalNum.toFixed(8)} ${quoteAsset}`)
+              : (quoteAsset === 'INR' ? `₹${receiveAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: receiveAmount < 1 ? 6 : 2 })}` : `${receiveAmount.toFixed(8)} ${quoteAsset}`)
             }
           </span>
         </div>

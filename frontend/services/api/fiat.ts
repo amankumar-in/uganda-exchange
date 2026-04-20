@@ -1,160 +1,66 @@
 /**
- * Fiat API Service
- * Handles all fiat deposit/withdrawal API calls
+ * Fiat (INR) deposits via Razorpay.
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001/api';
 
-export interface DepositIntentResponse {
-  clientSecret: string;
-  transactionId: string;
+export interface CreateDepositResponse {
+  orderId: string;           // our internal FiatTransaction id
+  razorpayOrderId: string;   // Razorpay order id (passed to Checkout)
+  amount: number;            // paise
+  currency: string;          // "INR"
+  keyId: string;             // public key id for Checkout
 }
 
-export interface FiatTransaction {
+export interface VerifyDepositResponse {
+  success: boolean;
+  balance: number;
+}
+
+export interface DepositRecord {
   id: string;
-  transactionId: string;
-  type: 'DEPOSIT' | 'WITHDRAWAL';
-  method: string;
+  transactionId: string | null;
   amount: number;
-  status: string;
+  status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
   reference: string | null;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
 }
 
-async function apiCall<T>(
-  endpoint: string,
-  options: RequestInit = {},
-): Promise<T> {
+async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
-
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
-    ...(token && { Authorization: `Bearer ${token}` }),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...options.headers,
   };
-
-  try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      ...options,
-      headers,
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      console.error(`API Error [${response.status}] ${endpoint}:`, data);
-      throw new Error(data.message || `API request failed: ${response.status}`);
-    }
-
-    return data;
-  } catch (error: any) {
-    // Network error or JSON parse error
-    if (error.name === 'TypeError' && error.message.includes('fetch')) {
-      throw new Error('Backend server is not running. Please start the backend.');
-    }
-    throw error;
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, { ...options, headers });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.message || 'Request failed');
   }
+  return data;
 }
 
-/**
- * Create a deposit payment intent
- */
-export async function createDepositIntent(amount: number): Promise<DepositIntentResponse> {
-  return apiCall<DepositIntentResponse>('/fiat/deposit', {
+export function createDepositOrder(amount: number): Promise<CreateDepositResponse> {
+  return apiCall<CreateDepositResponse>('/fiat/deposit', {
     method: 'POST',
     body: JSON.stringify({ amount }),
   });
 }
 
-/**
- * Get user's fiat transactions
- */
-export async function getFiatTransactions(options?: {
-  type?: 'DEPOSIT' | 'WITHDRAWAL';
-  limit?: number;
-  offset?: number;
-}): Promise<{ transactions: FiatTransaction[]; total: number }> {
-  const params = new URLSearchParams();
-  if (options?.type) params.append('type', options.type);
-  if (options?.limit) params.append('limit', options.limit.toString());
-  if (options?.offset) params.append('offset', options.offset.toString());
-
-  return apiCall<{ transactions: FiatTransaction[]; total: number }>(
-    `/fiat/transactions?${params.toString()}`,
-    {
-      method: 'GET',
-    },
-  );
-}
-
-/**
- * Sync payment status from Stripe (fallback if webhook didn't process)
- */
-export async function syncPaymentStatus(transactionId: string): Promise<{ success: boolean }> {
-  return apiCall<{ success: boolean }>('/fiat/sync-payment', {
+export function verifyDepositPayment(input: {
+  orderId: string;
+  razorpayOrderId: string;
+  razorpayPaymentId: string;
+  razorpaySignature: string;
+}): Promise<VerifyDepositResponse> {
+  return apiCall<VerifyDepositResponse>('/fiat/deposit/verify', {
     method: 'POST',
-    body: JSON.stringify({ transactionId }),
+    body: JSON.stringify(input),
   });
 }
 
-/**
- * Bank Account Types
- */
-export interface BankAccount {
-  id: string;
-  accountName: string;
-  accountType: string;
-  last4: string;
-  routingNumber: string; // Masked
-  isVerified: boolean;
-  createdAt: Date;
+export async function getDeposits(): Promise<DepositRecord[]> {
+  const res = await apiCall<{ deposits: DepositRecord[] }>('/fiat/deposits');
+  return res.deposits;
 }
-
-/**
- * Get user's bank accounts
- */
-export async function getBankAccounts(): Promise<BankAccount[]> {
-  return apiCall<BankAccount[]>('/fiat/bank-accounts', {
-    method: 'GET',
-  });
-}
-
-/**
- * Add a new bank account
- */
-export async function addBankAccount(
-  paymentMethodId: string,
-  accountName: string,
-): Promise<{ id: string; last4: string; stripeBankAccountId: string }> {
-  return apiCall<{ id: string; last4: string; stripeBankAccountId: string }>(
-    '/fiat/bank-accounts',
-    {
-      method: 'POST',
-      body: JSON.stringify({ paymentMethodId, accountName }),
-    },
-  );
-}
-
-/**
- * Delete a bank account
- */
-export async function deleteBankAccount(bankAccountId: string): Promise<{ success: boolean }> {
-  return apiCall<{ success: boolean }>(`/fiat/bank-accounts/${bankAccountId}`, {
-    method: 'DELETE',
-  });
-}
-
-/**
- * Create a withdrawal
- */
-export async function createWithdrawal(
-  bankAccountId: string,
-  amount: number,
-): Promise<{ transactionId: string; payoutId: string }> {
-  return apiCall<{ transactionId: string; payoutId: string }>('/fiat/withdraw', {
-    method: 'POST',
-    body: JSON.stringify({ bankAccountId, amount }),
-  });
-}
-

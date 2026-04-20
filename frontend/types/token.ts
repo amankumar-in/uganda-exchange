@@ -19,7 +19,7 @@ export interface Token {
   allowBuy: boolean;
   allowSell: boolean;
   allowTradeUsdt: boolean;
-  allowTradeUsd: boolean;
+  allowTradeInr: boolean;
   allowTradeEth: boolean;
   allowTradeTuit: boolean;
   allowDeposit: boolean;
@@ -63,7 +63,7 @@ export interface GlobalAssetSettings {
   defaultAllowP2P: boolean;
   defaultAllowDeposit: boolean;
   defaultAllowWithdraw: boolean;
-  defaultAllowTradeUsd: boolean;
+  defaultAllowTradeInr: boolean;
   defaultAllowTradeUsdt: boolean;
   defaultAllowTradeEth: boolean;
   defaultAllowTradeTuit: boolean;

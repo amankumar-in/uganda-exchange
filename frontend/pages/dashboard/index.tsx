@@ -131,7 +131,7 @@ const WatchlistRow = memo(({
       </div>
       <div style={{ textAlign: 'right', marginRight: token.marginSM }}>
         <div style={{ fontSize: token.fontSize, fontWeight: fontWeights.semibold, color: token.colorText }}>
-          ${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: price < 1 ? 4 : 2 })}
+          ₹{price.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: price < 1 ? 4 : 2 })}
         </div>
         <div
           style={{
@@ -254,7 +254,7 @@ const TokenRow = memo(({
       </div>
       <div style={{ textAlign: 'right' }}>
         <div style={{ fontSize: token.fontSize, fontWeight: fontWeights.semibold, color: token.colorText }}>
-          ${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: price < 1 ? 4 : 2 })}
+          ₹{price.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: price < 1 ? 4 : 2 })}
         </div>
         <div
           style={{
@@ -336,13 +336,13 @@ export default function DashboardPage() {
 
   // Calculate total portfolio value - memoized
   const portfolioData = useMemo(() => {
-    const usdBalance = balances.find((b) => b.asset === 'USD')?.balance || 0;
+    const usdBalance = balances.find((b) => b.asset === 'INR')?.balance || 0;
     
     let cryptoValue = 0;
     balances
-      .filter((b) => b.asset !== 'USD')
+      .filter((b) => b.asset !== 'INR')
       .forEach((balance) => {
-        const pair = pairs.find((p) => p.baseCurrency === balance.asset && p.quote === 'USD');
+        const pair = pairs.find((p) => p.baseCurrency === balance.asset && p.quote === 'INR');
         if (pair) {
           cryptoValue += balance.balance * pair.price;
         }
@@ -361,7 +361,7 @@ export default function DashboardPage() {
 
   // Get USD pairs for market data - memoized
   const usdPairs = useMemo(() => {
-    return pairs.filter((p) => p.quote === 'USD');
+    return pairs.filter((p) => p.quote === 'INR');
   }, [pairs]);
 
   // Watchlist tokens with price data - memoized
@@ -404,7 +404,7 @@ export default function DashboardPage() {
   }, []);
 
   const handleBuyAsset = useCallback((asset: string) => {
-    router.push(`/exchange?pair=${asset}-USD`);
+    router.push(`/exchange?pair=${asset}-INR`);
   }, [router]);
 
   // Quick actions - memoized
@@ -502,7 +502,7 @@ export default function DashboardPage() {
                       marginBottom: token.marginMD,
                     }}
                   >
-                    ${portfolioData.totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    ₹{portfolioData.totalValue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </div>
 
                   {/* Allocation bar */}
@@ -535,11 +535,11 @@ export default function DashboardPage() {
                   <div style={{ display: 'flex', gap: token.marginLG, fontSize: token.fontSizeSM }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: token.marginXS }}>
                       <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'rgba(255, 255, 255, 0.9)' }} />
-                      <span>Crypto ${portfolioData.cryptoValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                      <span>Crypto ₹{portfolioData.cryptoValue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: token.marginXS }}>
                       <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'rgba(255, 255, 255, 0.4)' }} />
-                      <span>Cash ${portfolioData.cashValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                      <span>Cash ₹{portfolioData.cashValue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                     </div>
                   </div>
                 </div>
@@ -938,7 +938,7 @@ export default function DashboardPage() {
                         </div>
                         <div style={{ textAlign: 'right' }}>
                           <div style={{ fontSize: token.fontSize, fontWeight: fontWeights.semibold, color: token.colorText }}>
-                            ${order.totalValue.toFixed(2)}
+                            ₹{order.totalValue.toFixed(2)}
                           </div>
                           <div
                             style={{
@@ -1022,7 +1022,7 @@ export default function DashboardPage() {
                     </div>
                     <div style={{ textAlign: 'right' }}>
                       <div style={{ fontSize: token.fontSize, fontWeight: fontWeights.semibold, color: token.colorText }}>
-                        ${order.totalValue.toFixed(2)}
+                        ₹{order.totalValue.toFixed(2)}
                       </div>
                     </div>
                   </div>

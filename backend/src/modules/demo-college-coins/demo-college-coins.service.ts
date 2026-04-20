@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
-import { CoinbaseService } from '../coinbase/coinbase.service';
+import { TokensService } from '../tokens/tokens.service';
 import { Prisma } from '@prisma/client';
 
 // Static list of top tokens that can be used as reference for pegging
@@ -87,7 +87,7 @@ export class DemoCollegeCoinsService {
 
   constructor(
     private prisma: PrismaService,
-    private coinbaseService: CoinbaseService,
+    private tokensService: TokensService,
   ) {}
 
   /**
@@ -269,10 +269,9 @@ export class DemoCollegeCoinsService {
     const coin = await this.findByTicker(ticker);
     if (!coin) return null;
 
-    // Get reference token price from Coinbase
-    const referencePrice = await this.coinbaseService.getProductPrice(
-      `${coin.peggedToAsset}-USD`,
-    );
+    // Reference price comes from the tokens table (populated by CoinGecko in INR)
+    const refToken = await this.tokensService.findBySymbol(coin.peggedToAsset);
+    const referencePrice = refToken?.currentPrice || Number(refToken?.manualPrice) || 0;
 
     if (!referencePrice) {
       this.logger.warn(
@@ -300,9 +299,10 @@ export class DemoCollegeCoinsService {
     // Get unique reference tokens
     const referenceTokens = [...new Set(coins.map((c) => c.peggedToAsset))];
 
-    // Fetch all reference prices in parallel
+    // Fetch all reference prices in parallel from tokens table
     const pricePromises = referenceTokens.map(async (token) => {
-      const price = await this.coinbaseService.getProductPrice(`${token}-USD`);
+      const t = await this.tokensService.findBySymbol(token);
+      const price = t?.currentPrice || Number(t?.manualPrice) || 0;
       return { token, price };
     });
 

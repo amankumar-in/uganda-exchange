@@ -49,7 +49,7 @@ import { GlobalSettingsModule } from './modules/global-settings/global-settings.
     OrdersModule,
     // Assets/Balances module
     AssetsModule,
-    // Fiat operations module
+    // Fiat deposits (Razorpay)
     FiatModule,
     // Watchlist module
     WatchlistModule,

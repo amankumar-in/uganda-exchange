@@ -1,7 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../../prisma.service';
-import { CoinbaseService } from '../coinbase/coinbase.service';
 import { DemoCollegeCoinsService } from '../demo-college-coins/demo-college-coins.service';
 import { Prisma } from '@prisma/client';
 
@@ -12,7 +11,6 @@ export class SnapshotCronService {
 
   constructor(
     private prisma: PrismaService,
-    private coinbaseService: CoinbaseService,
     private collegeCoinsService: DemoCollegeCoinsService,
   ) {}
 
@@ -49,14 +47,18 @@ export class SnapshotCronService {
 
     const prices = new Map<string, number>();
 
-    // 1. Fetch Real Crypto Prices (USD pairs)
+    // 1. Fetch Real Crypto Prices (INR) from tokens table — maintained by PriceCacheService
     try {
-      const products = await this.coinbaseService.getProducts('USD');
-      for (const p of products) {
-        prices.set(p.base_currency, parseFloat(p.price));
+      const tokens = await this.prisma.client.token.findMany({
+        where: { isActive: true },
+        select: { symbol: true, currentPrice: true, manualPrice: true },
+      });
+      for (const t of tokens) {
+        const price = Number(t.currentPrice) || Number(t.manualPrice) || 0;
+        if (price > 0) prices.set(t.symbol, price);
       }
     } catch (e) {
-      this.logger.error('Failed to fetch Coinbase prices', e);
+      this.logger.error('Failed to fetch token prices for snapshot', e);
     }
 
     // 2. Fetch College Coin Prices

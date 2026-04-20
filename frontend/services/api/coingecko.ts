@@ -34,13 +34,13 @@ export interface TokenMarketData {
   categories: string[];
   genesis_date: string | null;
   market_data: {
-    current_price: { usd: number };
-    market_cap: { usd: number };
+    current_price: { inr: number };
+    market_cap: { inr: number };
     market_cap_rank: number;
-    fully_diluted_valuation: { usd: number };
-    total_volume: { usd: number };
-    high_24h: { usd: number };
-    low_24h: { usd: number };
+    fully_diluted_valuation: { inr: number };
+    total_volume: { inr: number };
+    high_24h: { inr: number };
+    low_24h: { inr: number };
     price_change_24h: number;
     price_change_percentage_24h: number;
     price_change_percentage_7d: number;
@@ -50,12 +50,12 @@ export interface TokenMarketData {
     circulating_supply: number;
     total_supply: number;
     max_supply: number | null;
-    ath: { usd: number };
-    ath_change_percentage: { usd: number };
-    ath_date: { usd: string };
-    atl: { usd: number };
-    atl_change_percentage: { usd: number };
-    atl_date: { usd: string };
+    ath: { inr: number };
+    ath_change_percentage: { inr: number };
+    ath_date: { inr: string };
+    atl: { inr: number };
+    atl_change_percentage: { inr: number };
+    atl_date: { inr: string };
   };
   community_data: {
     twitter_followers: number;
@@ -249,11 +249,11 @@ export async function getSimplePrices(
  * Format large numbers for display
  */
 export function formatLargeNumber(num: number): string {
-  if (num >= 1e12) return `$${(num / 1e12).toFixed(2)}T`;
-  if (num >= 1e9) return `$${(num / 1e9).toFixed(2)}B`;
-  if (num >= 1e6) return `$${(num / 1e6).toFixed(2)}M`;
-  if (num >= 1e3) return `$${(num / 1e3).toFixed(2)}K`;
-  return `$${num.toFixed(2)}`;
+  if (num >= 1e12) return `₹${(num / 1e12).toFixed(2)}T`;
+  if (num >= 1e9) return `₹${(num / 1e9).toFixed(2)}B`;
+  if (num >= 1e6) return `₹${(num / 1e6).toFixed(2)}M`;
+  if (num >= 1e3) return `₹${(num / 1e3).toFixed(2)}K`;
+  return `₹${num.toFixed(2)}`;
 }
 
 /**
@@ -279,10 +279,10 @@ export function formatPercentage(num: number): string {
  * Format price with appropriate decimals
  */
 export function formatPrice(price: number): string {
-  if (price >= 1000) return `$${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  if (price >= 1) return `$${price.toFixed(2)}`;
-  if (price >= 0.01) return `$${price.toFixed(4)}`;
-  if (price >= 0.0001) return `$${price.toFixed(6)}`;
-  return `$${price.toFixed(8)}`;
+  if (price >= 1000) return `₹${price.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  if (price >= 1) return `₹${price.toFixed(2)}`;
+  if (price >= 0.01) return `₹${price.toFixed(4)}`;
+  if (price >= 0.0001) return `₹${price.toFixed(6)}`;
+  return `₹${price.toFixed(8)}`;
 }
 

@@ -223,6 +223,9 @@ export class CoinGeckoService {
   private marketsCache: CacheEntry<MarketListItem[]> | null = null;
   private marketsSparklineCache: CacheEntry<MarketListItem[]> | null = null;
   private coinListCache: CacheEntry<Array<{ id: string; symbol: string; name: string }>> | null = null;
+  // OHLC cached per (coingeckoId, days). 10 min TTL — chart history isn't fast-moving.
+  private ohlcCache = new Map<string, CacheEntry<[number, number, number, number, number][]>>();
+  private readonly OHLC_CACHE_DURATION = 10 * 60 * 1000;
 
   constructor(private configService: ConfigService) {
     this.apiKey = this.configService.get<string>('COINGECKO_API_KEY');
@@ -312,11 +315,17 @@ export class CoinGeckoService {
   }
 
   async getCoinOHLC(id: string, days: number): Promise<[number, number, number, number, number][]> {
+    const cacheKey = `${id}:${days}`;
+    const cached = this.ohlcCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < this.OHLC_CACHE_DURATION) {
+      return cached.data;
+    }
+
     const fetchWithFallback = async (d: number): Promise<[number, number, number, number, number][]> => {
       // 1. Try Market Chart first (High resolution: 5m for 1d, 1h for 1-90d)
       try {
         const chartRes = await fetch(
-          `${COINGECKO_API_URL}/coins/${id}/market_chart?vs_currency=usd&days=${d}`,
+          `${COINGECKO_API_URL}/coins/${id}/market_chart?vs_currency=inr&days=${d}`,
           { headers: this.getHeaders() }
         );
         if (chartRes.ok) {
@@ -333,7 +342,7 @@ export class CoinGeckoService {
       // 2. Fallback: Standard OHLC Endpoint (Fixed resolutions: 30m, 4h, 4d)
       try {
         const ohlcRes = await fetch(
-          `${COINGECKO_API_URL}/coins/${id}/ohlc?vs_currency=usd&days=${d}`,
+          `${COINGECKO_API_URL}/coins/${id}/ohlc?vs_currency=inr&days=${d}`,
           { headers: this.getHeaders() }
         );
         if (ohlcRes.ok) {
@@ -350,25 +359,17 @@ export class CoinGeckoService {
     };
 
     try {
-      // Try requested days
       let data = await fetchWithFallback(days);
-      
-      // If empty and we tried a short duration, expand to 30 days to find ANY trading history
-      if (data.length < 5 && days < 30) {
-        this.logger.log(`Expanding search for ${id} to 30 days...`);
-        data = await fetchWithFallback(30);
-      }
-      
-      // If still empty, expand to 90 days (last resort)
-      if (data.length < 5 && days < 90) {
-        this.logger.log(`Expanding search for ${id} to 90 days...`);
-        data = await fetchWithFallback(90);
-      }
+      if (data.length < 5 && days < 30) data = await fetchWithFallback(30);
+      if (data.length < 5 && days < 90) data = await fetchWithFallback(90);
 
+      // Cache even empty results briefly to avoid hammering CoinGecko for 404-ish coins.
+      this.ohlcCache.set(cacheKey, { data, timestamp: Date.now() });
       return data;
     } catch (error) {
       this.logger.error(`Fatal crash in getCoinOHLC for ${id}:`, error);
-      return [];
+      // Serve stale on error if we have any
+      return cached?.data || [];
     }
   }
 

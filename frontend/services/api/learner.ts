@@ -86,7 +86,7 @@ export async function getLearnerBalances(): Promise<{
 }
 
 /**
- * Reset learner account to initial state ($100,000)
+ * Reset learner account to initial state (₹1,00,000)
  */
 export async function resetLearnerAccount(): Promise<{
   success: boolean;

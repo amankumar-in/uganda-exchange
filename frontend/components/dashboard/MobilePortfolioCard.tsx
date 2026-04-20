@@ -90,7 +90,7 @@ const MobilePortfolioCard: React.FC<MobilePortfolioCardProps> = ({
     
     return data
       .map(d => ({
-        date: new Date(d.snapshotDate).toLocaleDateString('en-US', {
+        date: new Date(d.snapshotDate).toLocaleDateString('en-IN', {
           month: 'short',
           day: 'numeric',
         }),
@@ -141,7 +141,7 @@ const MobilePortfolioCard: React.FC<MobilePortfolioCardProps> = ({
                 fontSize: 11,
               }}
             >
-              {entry.name}: ${entry.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {entry.name}: ${entry.value.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
           ))}
         </div>
@@ -181,7 +181,7 @@ const MobilePortfolioCard: React.FC<MobilePortfolioCardProps> = ({
               letterSpacing: '-0.02em',
               lineHeight: 1.1,
             }}>
-              ${totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              ${totalBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
           </div>
           
@@ -245,7 +245,7 @@ const MobilePortfolioCard: React.FC<MobilePortfolioCardProps> = ({
             fontWeight: fontWeights.medium,
             color: isPositive ? token.colorSuccess : token.colorError,
           }}>
-            {isPositive ? '+' : ''}{performanceData.change.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {isPositive ? '+' : ''}{performanceData.change.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             {' '}
             ({isPositive ? '+' : ''}{performanceData.changePercent.toFixed(2)}%)
           </span>
@@ -266,12 +266,12 @@ const MobilePortfolioCard: React.FC<MobilePortfolioCardProps> = ({
         }}>
           <span>
             Crypto: <span style={{ fontWeight: fontWeights.semibold, color: token.colorText }}>
-              ${cryptoBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              ${cryptoBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
           </span>
           <span>
             Cash: <span style={{ fontWeight: fontWeights.semibold, color: token.colorText }}>
-              ${cashBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              ${cashBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
           </span>
         </div>

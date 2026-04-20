@@ -23,7 +23,6 @@ import { fontWeights } from '@/theme/themeConfig';
 import { useAuth } from '@/context/AuthContext';
 import { useExchange } from '@/context/ExchangeContext';
 import { useThemeMode } from '@/context/ThemeContext';
-import { getFiatTransactions, FiatTransaction } from '@/services/api/fiat';
 import { getOrders, InternalOrder } from '@/services/api/coinbase';
 import { getLearnerOrders, LearnerOrder } from '@/services/api/learner';
 import type { NextPageWithLayout } from '../_app';
@@ -174,13 +173,13 @@ const TransactionCard = memo(({
     const diffDays = Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
     
     if (diffDays === 0) {
-      return `Today, ${d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
+      return `Today, ${d.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' })}`;
     } else if (diffDays === 1) {
-      return `Yesterday, ${d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
+      return `Yesterday, ${d.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' })}`;
     } else if (diffDays < 7) {
-      return d.toLocaleDateString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' });
+      return d.toLocaleDateString('en-IN', { weekday: 'short', hour: 'numeric', minute: '2-digit' });
     }
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: d.getFullYear() !== now.getFullYear() ? 'numeric' : undefined });
+    return d.toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: d.getFullYear() !== now.getFullYear() ? 'numeric' : undefined });
   };
 
   return (
@@ -310,7 +309,7 @@ const TransactionCard = memo(({
             {transaction.type === 'trade' && transaction.side === 'BUY' ? '+' : ''}
             {transaction.type === 'deposit' ? '+' : transaction.type === 'withdrawal' ? '-' : ''}
             {transaction.type === 'trade' && transaction.side === 'SELL' ? '-' : ''}
-            {transaction.amount.toLocaleString('en-US', { 
+            {transaction.amount.toLocaleString('en-IN', { 
               minimumFractionDigits: 2, 
               maximumFractionDigits: transaction.amount < 1 ? 6 : 2,
             })} {transaction.asset}
@@ -322,7 +321,7 @@ const TransactionCard = memo(({
               marginTop: 2,
             }}
           >
-            ${transaction.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            ₹{transaction.value.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
         </div>
       </div>
@@ -458,7 +457,7 @@ const TransactionRow = memo(({
             {getTypeLabel()} {transaction.asset}
           </div>
           <div style={{ fontSize: token.fontSizeSM, color: token.colorTextSecondary }}>
-            {new Date(transaction.date).toLocaleDateString('en-US', { 
+            {new Date(transaction.date).toLocaleDateString('en-IN', { 
               month: 'short', 
               day: 'numeric',
               hour: 'numeric',
@@ -471,7 +470,7 @@ const TransactionRow = memo(({
       {/* Amount */}
       <div style={{ fontVariantNumeric: 'tabular-nums' }}>
         <div style={{ fontWeight: fontWeights.semibold, color: token.colorText }}>
-          {transaction.amount.toLocaleString('en-US', { 
+          {transaction.amount.toLocaleString('en-IN', { 
             minimumFractionDigits: 2, 
             maximumFractionDigits: transaction.amount < 1 ? 6 : 4,
           })}
@@ -483,7 +482,7 @@ const TransactionRow = memo(({
 
       {/* Value */}
       <div style={{ fontWeight: fontWeights.semibold, color: token.colorText, fontVariantNumeric: 'tabular-nums' }}>
-        ${transaction.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+        ₹{transaction.value.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
       </div>
 
       {/* Status */}
@@ -786,9 +785,7 @@ const TransactionsPage: NextPageWithLayout = () => {
   
   // Data state
   const [orders, setOrders] = useState<InternalOrder[]>([]);
-  const [fiatTransactions, setFiatTransactions] = useState<FiatTransaction[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
-  const [loadingFiat, setLoadingFiat] = useState(true);
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -820,8 +817,7 @@ const TransactionsPage: NextPageWithLayout = () => {
     if (!user) return;
     
     setLoadingOrders(true);
-    setLoadingFiat(true);
-    
+
     try {
       // Fetch orders based on mode
       if (isLearnerMode) {
@@ -856,22 +852,6 @@ const TransactionsPage: NextPageWithLayout = () => {
     } finally {
       setLoadingOrders(false);
     }
-    
-    try {
-      // Fiat transactions only exist in investor mode
-      if (isLearnerMode) {
-        // In learner mode, there are no real fiat transactions
-        setFiatTransactions([]);
-      } else {
-        const fiatResult = await getFiatTransactions({ limit: 500 });
-        setFiatTransactions(fiatResult.transactions);
-      }
-    } catch (error) {
-      console.error('Failed to fetch fiat transactions:', error);
-      setFiatTransactions([]);
-    } finally {
-      setLoadingFiat(false);
-    }
   }, [user, isLearnerMode]);
 
   // Fetch data when page loads
@@ -883,7 +863,7 @@ const TransactionsPage: NextPageWithLayout = () => {
 
   // Get icon URL for an asset
   const getIconUrl = useCallback((asset: string) => {
-    if (asset === 'USD') return undefined;
+    if (asset === 'INR') return undefined;
     const pair = pairs.find(p => p.baseCurrency === asset);
     return pair?.iconUrl || `https://assets.coincap.io/assets/icons/${asset.toLowerCase()}@2x.png`;
   }, [pairs]);
@@ -908,25 +888,10 @@ const TransactionsPage: NextPageWithLayout = () => {
       });
     });
 
-    // Add fiat transactions
-    fiatTransactions.forEach(tx => {
-      result.push({
-        id: `fiat-${tx.id}`,
-        transactionId: tx.transactionId,
-        type: tx.type === 'DEPOSIT' ? 'deposit' : 'withdrawal',
-        asset: 'USD',
-        amount: tx.amount,
-        value: tx.amount,
-        status: tx.status as 'COMPLETED' | 'PENDING' | 'FAILED' | 'CANCELLED',
-        date: new Date(tx.createdAt),
-        reference: tx.reference,
-      });
-    });
-
     // Sort by date descending
     result.sort((a, b) => b.date.getTime() - a.date.getTime());
     return result;
-  }, [orders, fiatTransactions, getIconUrl]);
+  }, [orders, getIconUrl]);
 
   // Filter transactions
   const filteredTransactions = useMemo(() => {
@@ -998,9 +963,9 @@ const TransactionsPage: NextPageWithLayout = () => {
       } else if (d.toDateString() === yesterday.toDateString()) {
         key = 'Yesterday';
       } else if (d.getFullYear() === today.getFullYear()) {
-        key = d.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+        key = d.toLocaleDateString('en-IN', { month: 'long', day: 'numeric' });
       } else {
-        key = d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+        key = d.toLocaleDateString('en-IN', { month: 'long', day: 'numeric', year: 'numeric' });
       }
       
       if (!groups[key]) groups[key] = [];
@@ -1010,7 +975,7 @@ const TransactionsPage: NextPageWithLayout = () => {
     return groups;
   }, [paginatedTransactions]);
 
-  const isLoadingAll = loadingOrders || loadingFiat;
+  const isLoadingAll = loadingOrders;
 
   // Don't render anything while checking auth or if not logged in
   if (isLoading || !user) {
@@ -1344,7 +1309,7 @@ const TransactionsPage: NextPageWithLayout = () => {
                   +${filteredTransactions
                     .filter(t => t.type === 'deposit' || (t.type === 'trade' && t.side === 'BUY'))
                     .reduce((sum, t) => sum + t.value, 0)
-                    .toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    .toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </div>
               </div>
               <div>
@@ -1353,7 +1318,7 @@ const TransactionsPage: NextPageWithLayout = () => {
                   -${filteredTransactions
                     .filter(t => t.type === 'withdrawal' || (t.type === 'trade' && t.side === 'SELL'))
                     .reduce((sum, t) => sum + t.value, 0)
-                    .toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    .toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </div>
               </div>
             </div>

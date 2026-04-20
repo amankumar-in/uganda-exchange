@@ -21,7 +21,7 @@ model User {
   phoneCountry  String
   phoneVerified Boolean   @default(false)
   passwordHash  String
-  country       String    @default("US")
+  country       String    @default("IN")
   kycStatus     KycStatus @default(PENDING)
   role          UserRole  @default(USER)
   appMode       AppMode   @default(LEARNER) // Current trading mode preference
@@ -198,7 +198,7 @@ model FiatBalance {
   userId String @unique
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  currency         String  @default("USD")
+  currency         String  @default("INR")
   balance          Decimal @default(0) @db.Decimal(20, 8)
   availableBalance Decimal @default(0) @db.Decimal(20, 8)
   lockedBalance    Decimal @default(0) @db.Decimal(20, 8)
@@ -763,9 +763,9 @@ model LearnerFiatBalance {
   userId String @unique
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  currency         String  @default("USD")
-  balance          Decimal @default(10000) @db.Decimal(20, 8) // Starts with $10,000
-  availableBalance Decimal @default(10000) @db.Decimal(20, 8)
+  currency         String  @default("INR")
+  balance          Decimal @default(100000) @db.Decimal(20, 8) // Starts with ₹1,00,000
+  availableBalance Decimal @default(100000) @db.Decimal(20, 8)
   lockedBalance    Decimal @default(0) @db.Decimal(20, 8)
 
   createdAt DateTime @default(now())
@@ -896,11 +896,17 @@ model Token {
   // Manual Price Fallback (if no API data found or preferred)
   manualPrice       Decimal  @default(0) @db.Decimal(20, 8)
 
+  // Live INR price, 24h change, 24h volume — written by price-cache.service every ~60s from CoinGecko
+  currentPrice      Decimal  @default(0) @db.Decimal(20, 8)
+  change24h         Float    @default(0)
+  volume24h         Decimal  @default(0) @db.Decimal(24, 2)
+  pricesUpdatedAt   DateTime?
+
   // Toggles (9 standard permissions)
   allowBuy          Boolean  @default(false)
   allowSell         Boolean  @default(false)
   allowTradeUsdt    Boolean  @default(false)
-  allowTradeUsd     Boolean  @default(false)
+  allowTradeInr     Boolean  @default(false)
   allowTradeEth     Boolean  @default(false)
   allowTradeTuit    Boolean  @default(false)
   allowDeposit      Boolean  @default(false)
@@ -954,7 +960,7 @@ model GlobalAssetSettings {
   defaultAllowP2P       Boolean @default(false)
   defaultAllowDeposit   Boolean @default(false)
   defaultAllowWithdraw  Boolean @default(false)
-  defaultAllowTradeUsd  Boolean @default(false)
+  defaultAllowTradeInr  Boolean @default(false)
   defaultAllowTradeUsdt Boolean @default(false)
   defaultAllowTradeEth  Boolean @default(false)
   defaultAllowTradeTuit Boolean @default(false)

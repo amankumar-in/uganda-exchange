@@ -1,6 +1,5 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
-import { CoinbaseService } from '../coinbase/coinbase.service';
 import { AssetsService } from '../assets/assets.service';
 import { TokensService } from '../tokens/tokens.service';
 import { Prisma, TradeStatus, OrderType } from '@prisma/client';
@@ -49,7 +48,6 @@ export class OrdersService {
 
   constructor(
     private prisma: PrismaService,
-    private coinbaseService: CoinbaseService,
     private assetsService: AssetsService,
     private tokensService: TokensService,
   ) {}
@@ -84,7 +82,7 @@ export class OrdersService {
 
       // Check trading pair permissions
       const pairChecks: Record<string, boolean | null> = {
-        'USD': baseToken.allowTradeUsd,
+        'INR': baseToken.allowTradeInr,
         'USDT': baseToken.allowTradeUsdt,
         'ETH': baseToken.allowTradeEth,
         'TUIT': baseToken.allowTradeTuit,
@@ -93,86 +91,39 @@ export class OrdersService {
         throw new BadRequestException(`${asset}-${quote} trading pair is not available.`);
       }
 
-      // Enforce transaction limits (calculate USD value first)
+      // Enforce transaction limits (calculate INR value first)
       const tokenPrice = baseToken.currentPrice || Number(baseToken.manualPrice) || 0;
-      let usdValueForLimits: number;
+      let inrValueForLimits: number;
 
-      if (side === 'BUY' && quote === 'USD') {
-        usdValueForLimits = amount;
+      if (side === 'BUY' && quote === 'INR') {
+        inrValueForLimits = amount;
       } else if (side === 'SELL') {
-        usdValueForLimits = amount * tokenPrice;
+        inrValueForLimits = amount * tokenPrice;
       } else {
-        // BUY with non-USD quote - convert to USD
+        // BUY with non-INR quote - convert to INR
         const quoteCustom = await this.tokensService.findBySymbol(quote);
-        let quoteUsdPrice = 1;
-        if (quoteCustom?.isNative) {
-          quoteUsdPrice = quoteCustom.currentPrice || Number(quoteCustom.manualPrice) || 1;
-        } else if (quote !== 'USD') {
-          try {
-            const quoteProduct = await this.coinbaseService.getProduct(`${quote}-USD`);
-            quoteUsdPrice = parseFloat(quoteProduct.price || '1');
-          } catch {
-            quoteUsdPrice = 1;
-          }
+        let quoteInrPrice = 1;
+        if (quoteCustom) {
+          quoteInrPrice = quoteCustom.currentPrice || Number(quoteCustom.manualPrice) || 1;
         }
-        usdValueForLimits = amount * quoteUsdPrice;
+        inrValueForLimits = amount * quoteInrPrice;
       }
 
       const minAmount = Number(baseToken.minTransactionAmount) || 0;
       const maxAmount = Number(baseToken.maxTransactionAmount) || 0;
 
-      if (minAmount > 0 && usdValueForLimits > 0 && usdValueForLimits < minAmount) {
+      if (minAmount > 0 && inrValueForLimits > 0 && inrValueForLimits < minAmount) {
         throw new BadRequestException(
-          `Minimum transaction for ${asset} is $${minAmount}. Your order is $${usdValueForLimits.toFixed(2)}.`
+          `Minimum transaction for ${asset} is ₹${minAmount}. Your order is ₹${inrValueForLimits.toFixed(2)}.`
         );
       }
-      if (maxAmount > 0 && usdValueForLimits > maxAmount) {
+      if (maxAmount > 0 && inrValueForLimits > maxAmount) {
         throw new BadRequestException(
-          `Maximum transaction for ${asset} is $${maxAmount}. Your order is $${usdValueForLimits.toFixed(2)}.`
+          `Maximum transaction for ${asset} is ₹${maxAmount}. Your order is ₹${inrValueForLimits.toFixed(2)}.`
         );
       }
     }
     // === END PERMISSION ENFORCEMENT ===
-
-    // Validate minimum order size: BUY orders must be at least $1 USD
-    if (side === 'BUY') {
-      let usdValue: number;
-      
-      if (quote === 'USD') {
-        // Direct USD pair - amount is already in USD
-        usdValue = amount;
-      } else {
-        // Non-USD quote (ETH, USDT, etc.) - need to convert to USD
-        try {
-          const quoteUsdPair = `${quote}-USD`;
-          let quotePrice = 0;
-          
-          const customQuote = await this.tokensService.findBySymbol(quote);
-          if (customQuote?.isNative) {
-            quotePrice = customQuote.currentPrice || 0;
-          } else {
-            const quoteProduct = await this.coinbaseService.getProduct(quoteUsdPair);
-            quotePrice = parseFloat(quoteProduct.price || '0');
-          }
-          
-          if (quotePrice <= 0) {
-            throw new BadRequestException(`Unable to get price for ${quote}. Please try again later.`);
-          }
-          
-          usdValue = amount * quotePrice;
-        } catch (error) {
-          if (error instanceof BadRequestException) throw error;
-          this.logger.error(`Failed to get USD value for ${quote}:`, error);
-          throw new BadRequestException(`Unable to validate order size for ${quote}. Please try again later.`);
-        }
-      }
-      
-      if (usdValue < 1) {
-        throw new BadRequestException(
-          `Order size is too small. Minimum order size is $1.00 USD. Your order value is $${usdValue.toFixed(2)} USD.`
-        );
-      }
-    }
 
     // Step 1: Check user balance in our ledger
     let requiredAsset: string;
@@ -225,225 +176,61 @@ export class OrdersService {
     });
 
     try {
-      // Step 3: Calculate fees and price
+      // Step 3: All trades settle internally against our ledger using token-table prices.
+      // Look up INR reference price for both base and quote, then compute cross-rate.
+      const baseToken = await this.tokensService.findBySymbol(asset);
+      const quoteToken = await this.tokensService.findBySymbol(quote);
+
+      const baseInrPrice = baseToken?.currentPrice || Number(baseToken?.manualPrice) || 0;
+      const quoteInrPrice = quote === 'INR'
+        ? 1
+        : (quoteToken?.currentPrice || Number(quoteToken?.manualPrice) || 0);
+
+      if (baseInrPrice <= 0 || quoteInrPrice <= 0) {
+        throw new BadRequestException(`Price not available for ${baseInrPrice <= 0 ? asset : quote}.`);
+      }
+
+      // Price of base asset expressed in quote currency
+      const currentPrice = baseInrPrice / quoteInrPrice;
+
       let platformFee: number;
-      let userPerceivedValue = 0;
-      let currentPrice = 0; // Price of base asset in terms of quote currency
-      
-      // Check if it's an internal trade (either side is a native platform token)
-      const baseCustom = await this.tokensService.findBySymbol(asset);
-      const quoteCustom = await this.tokensService.findBySymbol(quote);
-      const isInternalTrade = !!baseCustom?.isNative || !!quoteCustom?.isNative;
-
-      if (isInternalTrade) {
-        // Get USD prices for both
-        let baseUsdPrice = 0;
-        if (baseCustom?.isNative) {
-          baseUsdPrice = baseCustom.currentPrice || 0;
-        } else {
-          try {
-            const product = await this.coinbaseService.getProduct(`${asset}-USD`);
-            baseUsdPrice = parseFloat(product.price || '0');
-          } catch (e) {
-            this.logger.error(`Failed to get price for ${asset}`, e);
-          }
-        }
-
-        let quoteUsdPrice = 0;
-        if (quote === 'USD') {
-          quoteUsdPrice = 1;
-        } else if (quoteCustom?.isNative) {
-          quoteUsdPrice = quoteCustom.currentPrice || 0;
-        } else {
-          try {
-            const product = await this.coinbaseService.getProduct(`${quote}-USD`);
-            quoteUsdPrice = parseFloat(product.price || '0');
-          } catch (e) {
-            this.logger.error(`Failed to get price for ${quote}`, e);
-          }
-        }
-
-        if (baseUsdPrice <= 0 || quoteUsdPrice <= 0) {
-          throw new BadRequestException(`Price not available for ${baseUsdPrice <= 0 ? asset : quote}.`);
-        }
-
-        // Price of base asset in terms of quote currency
-        currentPrice = baseUsdPrice / quoteUsdPrice;
-
-        if (side === 'BUY') {
-          // BUY: amount is in quote currency
-          platformFee = amount * (this.PLATFORM_FEE_PERCENT / 100);
-          userPerceivedValue = amount;
-        } else {
-          // SELL: amount is in base asset
-          userPerceivedValue = amount * currentPrice;
-          platformFee = userPerceivedValue * (this.PLATFORM_FEE_PERCENT / 100);
-        }
-
-        // Internal trade - complete immediately
-        const filledAmount = side === 'BUY' ? (amount - platformFee) / currentPrice : amount;
-        const totalValue = side === 'BUY' ? amount - platformFee : (amount * currentPrice);
-
-        await this.prisma.client.trade.update({
-          where: { id: order.id },
-          data: {
-            filledAmount,
-            price: currentPrice,
-            totalValue,
-            platformFee,
-            status: 'COMPLETED',
-            completedAt: new Date(),
-          },
-        });
-
-        // Update balances
-        await this.assetsService.unlockBalance(userId, requiredAsset, requiredAmount);
-        
-        if (side === 'BUY') {
-          // Subtract quote currency (full amount)
-          await this.assetsService.updateBalanceAfterTrade(userId, quote, -amount);
-          // Add base asset (after fee)
-          await this.assetsService.updateBalanceAfterTrade(userId, asset, filledAmount);
-          // Add platform fee to revenue
-          await this.addRevenue(userId, quote, platformFee);
-        } else {
-          // Subtract base asset (full amount)
-          await this.assetsService.updateBalanceAfterTrade(userId, asset, -amount);
-          // Add quote currency (after fee)
-          await this.assetsService.updateBalanceAfterTrade(userId, quote, totalValue - platformFee);
-          // Add platform fee to revenue
-          await this.addRevenue(userId, quote, platformFee);
-        }
-
-        return this.mapOrderToResponse(await this.prisma.client.trade.findUnique({ where: { id: order.id } }));
-      }
-
-      // If not internal trade, proceed with Coinbase
-      let amountToSendCoinbase: string;
+      let userPerceivedValue: number;
       if (side === 'BUY') {
+        // amount is in quote currency
         platformFee = amount * (this.PLATFORM_FEE_PERCENT / 100);
-        amountToSendCoinbase = (amount - platformFee).toString();
+        userPerceivedValue = amount;
       } else {
-        const product = await this.coinbaseService.getProduct(productId);
-        currentPrice = parseFloat(product.price || '0');
-        if (currentPrice <= 0) {
-          throw new BadRequestException('Unable to get current price. Please try again later.');
-        }
-        userPerceivedValue = amount * currentPrice;
-        platformFee = userPerceivedValue * (this.PLATFORM_FEE_PERCENT / 100);
-        amountToSendCoinbase = amount.toString();
-      }
-
-      // Place order on Coinbase (our liquidity provider)
-      const coinbaseResult = await this.coinbaseService.placeMarketOrder(
-        productId,
-        side,
-        side === 'BUY' ? amountToSendCoinbase : undefined, // quoteSize for BUY (after our fee)
-        side === 'SELL' ? amountToSendCoinbase : undefined, // baseSize for SELL
-      );
-
-      // Note: placeMarketOrder now throws on error, so this check may not be needed
-      // But keeping it as a safety check
-      if (!coinbaseResult.success || !coinbaseResult.orderId) {
-        // Unlock balance and mark order as failed
-        await this.assetsService.unlockBalance(userId, requiredAsset, requiredAmount);
-        await this.prisma.client.trade.update({
-          where: { id: order.id },
-          data: { status: 'FAILED' },
-        });
-        throw new BadRequestException('Unable to process trade at this time. Please try again later.');
-      }
-
-      // Poll for order status until it's filled (market orders should fill quickly)
-      let coinbaseOrder = await this.coinbaseService.getOrder(coinbaseResult.orderId);
-      let attempts = 0;
-      const maxAttempts = 10; // Try for up to 5 seconds (10 attempts * 500ms)
-      
-      this.logger.log(`Order ${coinbaseResult.orderId} initial status: ${coinbaseOrder.status}`);
-      
-      while (coinbaseOrder.status !== 'FILLED' && coinbaseOrder.status !== 'CANCELLED' && coinbaseOrder.status !== 'EXPIRED' && coinbaseOrder.status !== 'FAILED' && attempts < maxAttempts) {
-        await new Promise(resolve => setTimeout(resolve, 500)); // Wait 500ms
-        coinbaseOrder = await this.coinbaseService.getOrder(coinbaseResult.orderId);
-        attempts++;
-        this.logger.log(`Order ${coinbaseResult.orderId} status check ${attempts}: ${coinbaseOrder.status}, filled_size: ${coinbaseOrder.filled_size}, filled_value: ${coinbaseOrder.filled_value}`);
-      }
-
-      // Calculate actual filled amounts
-      const filledAmount = parseFloat(coinbaseOrder.filled_size) || 0; // Base asset amount
-      const filledValue = parseFloat(coinbaseOrder.filled_value) || 0; // Quote currency value (after Coinbase fees)
-      const coinbaseCommission = parseFloat(coinbaseOrder.commission || '0'); // Coinbase fee
-      const filledPrice = filledAmount > 0 && filledValue > 0 
-        ? filledValue / filledAmount 
-        : parseFloat(coinbaseOrder.average_filled_price) || 0;
-
-      // Recalculate platform fee if SELL order (we calculated it before, but need to ensure it's correct)
-      if (side === 'SELL' && userPerceivedValue === 0) {
-        // Fallback: calculate from filled value if we didn't get price earlier
-        const product = await this.coinbaseService.getProduct(productId);
-        const currentPrice = parseFloat(product.price || '0');
+        // amount is in base asset
         userPerceivedValue = amount * currentPrice;
         platformFee = userPerceivedValue * (this.PLATFORM_FEE_PERCENT / 100);
       }
 
-      this.logger.log(`Order ${coinbaseResult.orderId} final status: ${coinbaseOrder.status}, filledAmount: ${filledAmount}, filledValue: ${filledValue}, filledPrice: ${filledPrice}, platformFee: ${platformFee}, coinbaseCommission: ${coinbaseCommission}`);
+      const filledAmount = side === 'BUY' ? (amount - platformFee) / currentPrice : amount;
+      const totalValue = side === 'BUY' ? amount - platformFee : amount * currentPrice;
 
-      // Update order with Coinbase details
       const updatedOrder = await this.prisma.client.trade.update({
         where: { id: order.id },
         data: {
-          coinbaseOrderId: coinbaseResult.orderId,
           filledAmount,
-          price: filledPrice,
-          totalValue: filledValue,
+          price: currentPrice,
+          totalValue,
           platformFee,
-          exchangeFee: coinbaseCommission, // Store Coinbase commission (hidden from users)
-          status: this.mapCoinbaseStatus(coinbaseOrder.status),
-          completedAt: coinbaseOrder.status === 'FILLED' ? new Date() : null,
+          status: 'COMPLETED',
+          completedAt: new Date(),
         },
       });
 
-      // Step 4: Update user balances in our ledger
-      if (coinbaseOrder.status === 'FILLED' && filledAmount > 0) {
-        // First, unlock the entire locked amount (it's no longer locked)
-        await this.assetsService.unlockBalance(userId, requiredAsset, requiredAmount);
-        
-        if (side === 'BUY') {
-          // BUY: User pays full requested amount (includes our fee)
-          // Subtract quote currency: full requested amount
-          await this.assetsService.updateBalanceAfterTrade(
-            userId,
-            quote,
-            -amount, // Subtract full requested amount (user pays this)
-          );
-          // Add base asset received from Coinbase
-          await this.assetsService.updateBalanceAfterTrade(
-            userId,
-            asset,
-            filledAmount, // Add base asset
-          );
-          // Add platform fee to revenue ledger
-          await this.addRevenue(userId, quote, platformFee);
-        } else {
-          // SELL: User receives filledValue minus our platform fee
-          // Subtract base asset
-          await this.assetsService.updateBalanceAfterTrade(
-            userId,
-            asset,
-            -filledAmount, // Subtract base asset
-          );
-          // Add quote currency: what Coinbase gave us minus our fee
-          const userReceives = filledValue - platformFee;
-          await this.assetsService.updateBalanceAfterTrade(
-            userId,
-            quote,
-            userReceives, // Add quote currency (after our fee)
-          );
-          // Add platform fee to revenue ledger
-          await this.addRevenue(userId, quote, platformFee);
-        }
+      // Step 4: Settle balances
+      await this.assetsService.unlockBalance(userId, requiredAsset, requiredAmount);
+
+      if (side === 'BUY') {
+        await this.assetsService.updateBalanceAfterTrade(userId, quote, -amount);
+        await this.assetsService.updateBalanceAfterTrade(userId, asset, filledAmount);
+        await this.addRevenue(userId, quote, platformFee);
       } else {
-        // Order not filled, unlock the entire locked balance
-        await this.assetsService.unlockBalance(userId, requiredAsset, requiredAmount);
+        await this.assetsService.updateBalanceAfterTrade(userId, asset, -amount);
+        await this.assetsService.updateBalanceAfterTrade(userId, quote, totalValue - platformFee);
+        await this.addRevenue(userId, quote, platformFee);
       }
 
       return this.mapOrderToResponse(updatedOrder);
@@ -562,25 +349,7 @@ export class OrdersService {
   }
 
   /**
-   * Map Coinbase status to our status
-   */
-  private mapCoinbaseStatus(coinbaseStatus: string): TradeStatus {
-    switch (coinbaseStatus) {
-      case 'FILLED':
-        return 'COMPLETED';
-      case 'CANCELLED':
-      case 'EXPIRED':
-        return 'CANCELLED';
-      case 'FAILED':
-        return 'FAILED';
-      default:
-        return 'PENDING';
-    }
-  }
-
-  /**
-   * Get quote for a trade (estimate based on current prices)
-   * For synthetic pairs, calculates sequentially with 2 steps
+   * Get quote for a trade (estimate based on token-table INR prices)
    */
   async getQuote(
     productId: string,
@@ -593,157 +362,30 @@ export class OrdersService {
     estimatedPrice: number;
   }> {
     const [asset, quote] = productId.split('-');
-    const isSynthetic = quote === 'ETH' || quote === 'USDT';
 
-    // Check if it's an internal trade (either side is a native platform token)
-    const baseCustom = await this.tokensService.findBySymbol(asset);
-    const quoteCustom = await this.tokensService.findBySymbol(quote);
-    const isInternalTrade = !!baseCustom?.isNative || !!quoteCustom?.isNative;
+    const baseToken = await this.tokensService.findBySymbol(asset);
+    const quoteToken = await this.tokensService.findBySymbol(quote);
 
-    if (isInternalTrade) {
-      // Get USD prices for both
-      let baseUsdPrice = 0;
-      if (baseCustom?.isNative) {
-        baseUsdPrice = baseCustom.currentPrice || 0;
-      } else {
-        baseUsdPrice = await this.coinbaseService.getProductPrice(`${asset}-USD`) || 0;
-      }
+    const baseInrPrice = baseToken?.currentPrice || Number(baseToken?.manualPrice) || 0;
+    const quoteInrPrice = quote === 'INR'
+      ? 1
+      : (quoteToken?.currentPrice || Number(quoteToken?.manualPrice) || 0);
 
-      let quoteUsdPrice = 0;
-      if (quote === 'USD') {
-        quoteUsdPrice = 1;
-      } else if (quoteCustom?.isNative) {
-        quoteUsdPrice = quoteCustom.currentPrice || 0;
-      } else {
-        quoteUsdPrice = await this.coinbaseService.getProductPrice(`${quote}-USD`) || 0;
-      }
-
-      if (baseUsdPrice <= 0 || quoteUsdPrice <= 0) {
-        throw new BadRequestException(`Price not available for quote calculation`);
-      }
-
-      // Price of base asset in terms of quote currency
-      const currentPrice = baseUsdPrice / quoteUsdPrice;
-
-      if (side === 'BUY') {
-        const platformFee = amount * (this.PLATFORM_FEE_PERCENT / 100);
-        const estimatedReceive = (amount - platformFee) / currentPrice;
-        return {
-          estimatedReceive,
-          platformFee,
-          totalFees: platformFee,
-          estimatedPrice: currentPrice,
-        };
-      } else {
-        const userPerceivedValue = amount * currentPrice;
-        const platformFee = userPerceivedValue * (this.PLATFORM_FEE_PERCENT / 100);
-        const estimatedReceive = userPerceivedValue - platformFee;
-        return {
-          estimatedReceive,
-          platformFee,
-          totalFees: platformFee,
-          estimatedPrice: currentPrice,
-        };
-      }
+    if (baseInrPrice <= 0 || quoteInrPrice <= 0) {
+      throw new BadRequestException(`Price not available for quote calculation`);
     }
 
-    if (isSynthetic) {
-      // Synthetic pair: 2-step calculation
-      // Step 1: Get quote for first trade
-      const step1Product = side === 'BUY' 
-        ? `${quote}-USD`  // BUY: sell quote asset to get USD
-        : `${asset}-USD`; // SELL: sell base asset to get USD
-      
-      const step1ProductData = await this.coinbaseService.getProduct(step1Product);
-      const step1Price = parseFloat(step1ProductData.price || '0');
-      
-      if (step1Price <= 0) {
-        throw new BadRequestException('Unable to get price for quote calculation');
-      }
+    const currentPrice = baseInrPrice / quoteInrPrice;
 
-      let step1UsdValue: number;
-      let step1PlatformFee: number;
-      
-      if (side === 'BUY') {
-        // BUY: User wants to buy asset with quote currency
-        // Step 1: Sell quote currency (e.g., ETH) to get USD
-        const userPerceivedValue = amount * step1Price; // User's perceived value
-        step1PlatformFee = userPerceivedValue * (this.PLATFORM_FEE_PERCENT / 100);
-        // Estimate Coinbase gives us 99% (1% fee estimate)
-        step1UsdValue = userPerceivedValue * 0.99 - step1PlatformFee;
-      } else {
-        // SELL: User wants to sell base asset for quote currency
-        // Step 1: Sell base asset to get USD
-        const userPerceivedValue = amount * step1Price;
-        step1PlatformFee = userPerceivedValue * (this.PLATFORM_FEE_PERCENT / 100);
-        // Estimate Coinbase gives us 99% (1% fee estimate)
-        step1UsdValue = userPerceivedValue * 0.99 - step1PlatformFee;
-      }
-
-      // Step 2: Get quote for second trade
-      const step2Product = side === 'BUY'
-        ? `${asset}-USD`  // BUY: buy base asset with USD
-        : `${quote}-USD`; // SELL: buy quote asset with USD
-      
-      const step2ProductData = await this.coinbaseService.getProduct(step2Product);
-      const step2Price = parseFloat(step2ProductData.price || '0');
-      
-      if (step2Price <= 0) {
-        throw new BadRequestException('Unable to get price for quote calculation');
-      }
-
-      // Step 2: Calculate our fee on available USD
-      const step2PlatformFee = step1UsdValue * (this.PLATFORM_FEE_PERCENT / 100);
-      const step2UsdToSpend = step1UsdValue - step2PlatformFee;
-      
-      // Estimate what we'll get from Coinbase (99% after their fees)
-      const step2Receive = side === 'BUY'
-        ? (step2UsdToSpend / step2Price) * 0.99  // BUY: get base asset
-        : (step2UsdToSpend / step2Price) * 0.99; // SELL: get quote asset
-
-      return {
-        estimatedReceive: step2Receive,
-        platformFee: step1PlatformFee + step2PlatformFee,
-        totalFees: step1PlatformFee + step2PlatformFee, // User only sees our fees
-        estimatedPrice: side === 'BUY' 
-          ? step2Price / step1Price  // Cross rate
-          : step1Price / step2Price,
-      };
+    if (side === 'BUY') {
+      const platformFee = amount * (this.PLATFORM_FEE_PERCENT / 100);
+      const estimatedReceive = (amount - platformFee) / currentPrice;
+      return { estimatedReceive, platformFee, totalFees: platformFee, estimatedPrice: currentPrice };
     } else {
-      // Direct pair: single step
-      const product = await this.coinbaseService.getProduct(productId);
-      const currentPrice = parseFloat(product.price || '0');
-      
-      if (currentPrice <= 0) {
-        throw new BadRequestException('Unable to get price for quote calculation');
-      }
-
-      if (side === 'BUY') {
-        // BUY: User wants to buy $amount worth of asset
-        const platformFee = amount * (this.PLATFORM_FEE_PERCENT / 100);
-        // Estimate: amount sent to Coinbase * 0.99 (after their fees) / price
-        const estimatedReceive = ((amount - platformFee) / currentPrice) * 0.99;
-        
-        return {
-          estimatedReceive,
-          platformFee,
-          totalFees: platformFee,
-          estimatedPrice: currentPrice,
-        };
-      } else {
-        // SELL: User wants to sell amount of base asset
-        const userPerceivedValue = amount * currentPrice;
-        const platformFee = userPerceivedValue * (this.PLATFORM_FEE_PERCENT / 100);
-        // Estimate: Coinbase gives us 99% after their fees, minus our fee
-        const estimatedReceive = (userPerceivedValue * 0.99) - platformFee;
-        
-        return {
-          estimatedReceive,
-          platformFee,
-          totalFees: platformFee,
-          estimatedPrice: currentPrice,
-        };
-      }
+      const userPerceivedValue = amount * currentPrice;
+      const platformFee = userPerceivedValue * (this.PLATFORM_FEE_PERCENT / 100);
+      const estimatedReceive = userPerceivedValue - platformFee;
+      return { estimatedReceive, platformFee, totalFees: platformFee, estimatedPrice: currentPrice };
     }
   }
 
@@ -792,7 +434,7 @@ export class OrdersService {
             phone: SYSTEM_PHONE,
             phoneCountry: SYSTEM_PHONE_COUNTRY,
             passwordHash: dummyPasswordHash,
-            country: 'US',
+            country: 'IN',
             emailVerified: true,
             phoneVerified: true,
             role: 'ADMIN', // SYSTEM user has admin role

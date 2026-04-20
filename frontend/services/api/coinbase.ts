@@ -1,23 +1,12 @@
 /**
- * Coinbase API Service
- * Handles all Coinbase trading-related API calls
+ * Orders API client.
+ * File is still named coinbase.ts for import-path stability; Coinbase integration
+ * has been removed and all endpoints here talk to the internal /orders backend.
  */
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
-// Types
-export interface CoinbaseProduct {
-  product_id: string;
-  base_currency: string;
-  quote_currency: string;
-  price: string;
-  price_percentage_change_24h: string;
-  volume_24h: string;
-  base_name: string;
-  quote_name: string;
-  status: string;
-}
-
+// Types shared with the exchange UI
 export interface CoinbaseCandle {
   start: string;
   open: string;
@@ -27,19 +16,6 @@ export interface CoinbaseCandle {
   volume: string;
 }
 
-export interface CoinbaseOrder {
-  order_id: string;
-  product_id: string;
-  side: 'BUY' | 'SELL';
-  status: string;
-  filled_size: string;
-  filled_value: string;
-  average_filled_price: string;
-  created_time: string;
-  completion_percentage: string;
-}
-
-// Internal order (from our database)
 export interface InternalOrder {
   id: string;
   transactionId: string;
@@ -59,14 +35,6 @@ export interface InternalOrder {
   completedAt: string | null;
 }
 
-export interface CoinbaseAccount {
-  uuid: string;
-  name: string;
-  currency: string;
-  available_balance: { value: string; currency: string };
-  hold: { value: string; currency: string };
-}
-
 export interface OrderBook {
   bids: Array<{ price: string; size: string }>;
   asks: Array<{ price: string; size: string }>;
@@ -81,143 +49,56 @@ export interface PublicTrade {
   side: string;
 }
 
-// Helper for API calls
-async function apiCall<T>(
-  endpoint: string,
-  options: RequestInit = {},
-): Promise<T> {
+async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
-
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
     ...(token && { Authorization: `Bearer ${token}` }),
     ...options.headers,
   };
-
   try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      ...options,
-      headers,
-    });
-
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, { ...options, headers });
     const data = await response.json();
-
     if (!response.ok) {
-      // Log technical details for debugging (only in development)
       if (process.env.NODE_ENV === 'development') {
         console.error(`API Error [${response.status}] ${endpoint}:`, data);
       }
-      // Create user-friendly error
-      // In development, this will show in Next.js overlay (good for debugging)
-      // In production, this will be caught and shown as user message
       throw new Error(data.message || 'Unable to process request. Please try again later.');
     }
-
     return data;
   } catch (error: any) {
-    // Network error or JSON parse error
     if (error.name === 'TypeError' && error.message.includes('fetch')) {
       throw new Error('Unable to connect to server. Please check your connection and try again.');
     }
-    // Re-throw with user-friendly message if it's already an Error with message
-    if (error instanceof Error) {
-      throw error;
-    }
-    // Fallback for unknown errors
+    if (error instanceof Error) throw error;
     throw new Error('An unexpected error occurred. Please try again later.');
   }
 }
 
-/**
- * Get all available trading products
- */
-export async function getProducts(quoteCurrency?: string): Promise<CoinbaseProduct[]> {
-  const query = quoteCurrency ? `?quote=${quoteCurrency}` : '';
-  const data = await apiCall<{ success: boolean; products: CoinbaseProduct[] }>(
-    `/coinbase/products${query}`,
-  );
-  return data.products;
-}
-
-/**
- * Get single product details with current price
- */
-export async function getProduct(productId: string): Promise<CoinbaseProduct> {
-  const data = await apiCall<{ success: boolean; product: CoinbaseProduct }>(
-    `/coinbase/products/${productId}`,
-  );
-  return data.product;
-}
-
-/**
- * Get candle data for charts
- */
-export async function getCandles(
-  productId: string,
-  granularity: 'ONE_MINUTE' | 'FIVE_MINUTE' | 'FIFTEEN_MINUTE' | 'ONE_HOUR' | 'SIX_HOUR' | 'ONE_DAY' = 'ONE_HOUR',
-  start?: number,
-  end?: number,
-): Promise<CoinbaseCandle[]> {
-  const params = new URLSearchParams({ granularity });
-  if (start) params.append('start', start.toString());
-  if (end) params.append('end', end.toString());
-
-  const data = await apiCall<{ success: boolean; candles: CoinbaseCandle[] }>(
-    `/coinbase/candles/${productId}?${params.toString()}`,
-  );
-  return data.candles;
-}
-
-/**
- * Get account balances
- */
-export async function getAccounts(): Promise<CoinbaseAccount[]> {
-  const data = await apiCall<{ success: boolean; accounts: CoinbaseAccount[] }>(
-    '/coinbase/accounts',
-  );
-  return data.accounts;
-}
-
-/**
- * Place a market order (uses internal orders API)
- * Returns result object with success flag and optional error
- * Wraps apiCall to catch errors synchronously and prevent Next.js overlay
- */
 export async function placeOrder(
   productId: string,
   side: 'BUY' | 'SELL',
   amount: number,
 ): Promise<{ order?: InternalOrder; success: boolean; error?: string }> {
-  // Wrap in Promise.resolve().then() to catch errors synchronously before Next.js can intercept
   return Promise.resolve().then(async () => {
     try {
-      const data = await apiCall<{ success: boolean; order: InternalOrder }>(
-        '/orders',
-        {
-          method: 'POST',
-          body: JSON.stringify({ productId, side, amount }),
-        },
-      );
+      const data = await apiCall<{ success: boolean; order: InternalOrder }>('/orders', {
+        method: 'POST',
+        body: JSON.stringify({ productId, side, amount }),
+      });
       return { order: data.order, success: data.success };
     } catch (error: any) {
-      // Return error instead of throwing to prevent Next.js overlay
       return {
         success: false,
         error: error?.message || 'Unable to process trade at this time. Please try again later.',
       };
     }
-  }).catch((error: any) => {
-    // Final catch to ensure no error escapes
-    return {
-      success: false,
-      error: error?.message || 'Unable to process trade at this time. Please try again later.',
-    };
-  });
+  }).catch((error: any) => ({
+    success: false,
+    error: error?.message || 'Unable to process trade at this time. Please try again later.',
+  }));
 }
 
-/**
- * Get user's order history (from our database)
- */
 export async function getOrders(options?: {
   productId?: string;
   limit?: number;
@@ -227,67 +108,29 @@ export async function getOrders(options?: {
   if (options?.limit) params.append('limit', options.limit.toString());
   if (options?.offset) params.append('offset', options.offset.toString());
   if (options?.productId) params.append('productId', options.productId);
-
   const data = await apiCall<{ success: boolean; orders: InternalOrder[]; total: number }>(
     `/orders?${params.toString()}`,
   );
   return { orders: data.orders, total: data.total };
 }
 
-/**
- * Get single order details (from our database)
- */
 export async function getOrder(orderId: string): Promise<InternalOrder> {
-  const data = await apiCall<{ success: boolean; order: InternalOrder }>(
-    `/orders/${orderId}`,
-  );
+  const data = await apiCall<{ success: boolean; order: InternalOrder }>(`/orders/${orderId}`);
   return data.order;
 }
 
-/**
- * Get order book (bids and asks)
- */
-export async function getOrderBook(productId: string, limit = 25): Promise<OrderBook> {
-  const data = await apiCall<{ success: boolean; orderBook: OrderBook }>(
-    `/coinbase/orderbook/${productId}?limit=${limit}`,
-  );
-  return data.orderBook;
-}
-
-/**
- * Get recent public trades
- */
-export async function getPublicTrades(productId: string, limit = 50): Promise<PublicTrade[]> {
-  const data = await apiCall<{ success: boolean; trades: PublicTrade[] }>(
-    `/coinbase/trades/${productId}?limit=${limit}`,
-  );
-  return data.trades;
-}
-
-/**
- * Get crypto icon URL from CoinGecko/CryptoCompare CDN
- */
-export function getCryptoIconUrl(symbol: string): string {
-  // Use CryptoCompare CDN for icons
-  const symbolLower = symbol.toLowerCase();
-  return `https://assets.coincap.io/assets/icons/${symbolLower}@2x.png`;
-}
-
-/**
- * Fallback icon URL if primary fails
- */
-export function getCryptoIconFallback(symbol: string): string {
-  const symbolLower = symbol.toLowerCase();
-  return `https://cryptoicons.org/api/icon/${symbolLower}/200`;
-}
-
-/**
- * Get platform revenue
- */
 export async function getRevenue(): Promise<Array<{ currency: string; amount: number }>> {
-  const data = await apiCall<{ success: boolean; revenue: Array<{ currency: string; amount: number }> }>(
-    '/orders/revenue',
-  );
+  const data = await apiCall<{
+    success: boolean;
+    revenue: Array<{ currency: string; amount: number }>;
+  }>('/orders/revenue');
   return data.revenue;
 }
 
+export function getCryptoIconUrl(symbol: string): string {
+  return `https://assets.coincap.io/assets/icons/${symbol.toLowerCase()}@2x.png`;
+}
+
+export function getCryptoIconFallback(symbol: string): string {
+  return `https://cryptoicons.org/api/icon/${symbol.toLowerCase()}/200`;
+}

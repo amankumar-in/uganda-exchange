@@ -67,7 +67,7 @@ export const UserBalances: React.FC<UserBalancesProps> = ({ userId }) => {
   // Build autocomplete options sorted by relevance: exact match > starts-with > contains
   const assetOptions = useMemo(() => {
     // Always include USD as a base option
-    const allSymbols = ['USD', ...tokens.map(t => t.symbol)];
+    const allSymbols = ['INR', ...tokens.map(t => t.symbol)];
     const unique = [...new Set(allSymbols)];
     if (!assetSearch) {
       return unique.map(s => {
@@ -120,7 +120,7 @@ export const UserBalances: React.FC<UserBalancesProps> = ({ userId }) => {
   }, [tokens, assetSearch]);
 
   const knownAssets = useMemo(() => {
-    const set = new Set(['USD', ...tokens.map(t => t.symbol.toUpperCase())]);
+    const set = new Set(['INR', ...tokens.map(t => t.symbol.toUpperCase())]);
     return set;
   }, [tokens]);
 
@@ -172,7 +172,7 @@ export const UserBalances: React.FC<UserBalancesProps> = ({ userId }) => {
   const handleResetLearner = async () => {
     try {
       await resetLearnerAccount(userId);
-      message.success('Learner account reset to $100,000');
+      message.success('Learner account reset to ₹1,00,000');
       fetchBalances();
     } catch (error: any) {
       message.error(error.message);
@@ -192,7 +192,7 @@ export const UserBalances: React.FC<UserBalancesProps> = ({ userId }) => {
       key: 'balance',
       render: (val: number, record: BalanceItem) => (
         <Text strong>
-          {record.asset === 'USD' ? `$${val.toFixed(2)}` : val.toFixed(8)}
+          {record.asset === 'INR' ? `₹${val.toFixed(2)}` : val.toFixed(8)}
         </Text>
       ),
     },
@@ -202,7 +202,7 @@ export const UserBalances: React.FC<UserBalancesProps> = ({ userId }) => {
       key: 'availableBalance',
       render: (val: number, record: BalanceItem) => (
         <Text type="success">
-          {record.asset === 'USD' ? `$${val.toFixed(2)}` : val.toFixed(8)}
+          {record.asset === 'INR' ? `₹${val.toFixed(2)}` : val.toFixed(8)}
         </Text>
       ),
     },
@@ -212,7 +212,7 @@ export const UserBalances: React.FC<UserBalancesProps> = ({ userId }) => {
       key: 'lockedBalance',
       render: (val: number, record: BalanceItem) => (
         <Text type={val > 0 ? 'warning' : 'secondary'}>
-          {record.asset === 'USD' ? `$${val.toFixed(2)}` : val.toFixed(8)}
+          {record.asset === 'INR' ? `₹${val.toFixed(2)}` : val.toFixed(8)}
         </Text>
       ),
     },
@@ -285,7 +285,7 @@ export const UserBalances: React.FC<UserBalancesProps> = ({ userId }) => {
                   </Button>
                   <Popconfirm
                     title="Reset Learner Account"
-                    description="Delete all learner trades and reset to $100,000?"
+                    description="Delete all learner trades and reset to ₹1,00,000?"
                     onConfirm={handleResetLearner}
                     okText="Reset"
                     cancelText="Cancel"
@@ -332,7 +332,7 @@ export const UserBalances: React.FC<UserBalancesProps> = ({ userId }) => {
             <AutoComplete
               options={assetOptions}
               onSearch={setAssetSearch}
-              placeholder="Type to search: USD, BTC, ETH..."
+              placeholder="Type to search: INR, BTC, ETH..."
               filterOption={false}
             />
           </Form.Item>

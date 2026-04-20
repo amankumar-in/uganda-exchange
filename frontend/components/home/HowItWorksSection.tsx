@@ -34,7 +34,7 @@ const steps = [
     number: "04",
     icon: <DollarOutlined />,
     title: "Redeem or Swap",
-    description: "Trade your TUIT for other cryptocurrencies, convert to USD, or redeem for tuition credits.",
+    description: "Trade your TUIT for other cryptocurrencies, convert to INR, or redeem for tuition credits.",
   },
 ];
 

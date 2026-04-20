@@ -253,13 +253,13 @@ export const TokenForm: React.FC<TokenFormProps> = ({
 
           <Form.Item 
             name="manualPrice" 
-            label="Manual Price (USD)" 
+            label="Manual Price (INR)" 
             rules={[{ required: true }]}
             help={priceSource !== 'manual' ? "Used as fallback if API fails." : "Primary price source."}
           >
              <InputNumber 
                style={{ width: '100%' }} 
-               prefix="$" 
+               prefix="₹" 
                min={0} 
                precision={8}
              />
@@ -346,8 +346,8 @@ export const TokenForm: React.FC<TokenFormProps> = ({
                 Enable quote currencies users can trade this token against
               </div>
 
-              <Form.Item name="allowTradeUsd" valuePropName="checked" style={{ marginBottom: 8 }}>
-                <Checkbox>USD Pair (TOKEN-USD)</Checkbox>
+              <Form.Item name="allowTradeInr" valuePropName="checked" style={{ marginBottom: 8 }}>
+                <Checkbox>INR Pair (TOKEN-INR)</Checkbox>
               </Form.Item>
               <Form.Item name="allowTradeUsdt" valuePropName="checked" style={{ marginBottom: 8 }}>
                 <Checkbox>USDT Pair (TOKEN-USDT)</Checkbox>
@@ -433,7 +433,7 @@ export const TokenForm: React.FC<TokenFormProps> = ({
         <Card title="Transaction Limits" extra={<Tag color="green">Step 4</Tag>}>
           <Alert
             message="Per-Transaction Limits"
-            description="These limits apply to each individual transaction in USD equivalent. Set to 0 for no limit."
+            description="These limits apply to each individual transaction in INR equivalent. Set to 0 for no limit."
             type="info"
             showIcon
             style={{ marginBottom: 16 }}
@@ -442,19 +442,19 @@ export const TokenForm: React.FC<TokenFormProps> = ({
             <Col span={12}>
               <Form.Item
                 name="minTransactionAmount"
-                label="Minimum Transaction Amount (USD)"
-                tooltip="Users cannot trade less than this USD value per transaction"
+                label="Minimum Transaction Amount (INR)"
+                tooltip="Users cannot trade less than this INR value per transaction"
               >
-                <InputNumber style={{ width: '100%' }} prefix="$" min={0} placeholder="0" />
+                <InputNumber style={{ width: '100%' }} prefix="₹" min={0} placeholder="0" />
               </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item
                 name="maxTransactionAmount"
-                label="Maximum Transaction Amount (USD)"
-                tooltip="Users cannot trade more than this USD value per transaction"
+                label="Maximum Transaction Amount (INR)"
+                tooltip="Users cannot trade more than this INR value per transaction"
               >
-                <InputNumber style={{ width: '100%' }} prefix="$" min={0} placeholder="0" />
+                <InputNumber style={{ width: '100%' }} prefix="₹" min={0} placeholder="0" />
               </Form.Item>
             </Col>
           </Row>

@@ -95,7 +95,7 @@ const PortfolioGrowthChart: React.FC<PortfolioGrowthChartProps> = ({
     if ((!data || data.length === 0) && typeof currentBalance === 'undefined') return [];
     
     const points = (data || []).map(d => ({
-      date: new Date(d.snapshotDate).toLocaleDateString('en-US', {
+      date: new Date(d.snapshotDate).toLocaleDateString('en-IN', {
         month: 'short',
         day: 'numeric',
       }),
@@ -166,7 +166,7 @@ const PortfolioGrowthChart: React.FC<PortfolioGrowthChartProps> = ({
                 fontSize: 13,
               }}
             >
-              {entry.name}: ${entry.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {entry.name}: ${entry.value.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
           ))}
         </div>
@@ -199,7 +199,7 @@ const PortfolioGrowthChart: React.FC<PortfolioGrowthChartProps> = ({
               fontWeight: fontWeights.bold, 
               color: token.colorText,
             }}>
-              ${performanceData.currentValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              ${performanceData.currentValue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
             <div style={{ 
               fontSize: token.fontSize, 
@@ -209,7 +209,7 @@ const PortfolioGrowthChart: React.FC<PortfolioGrowthChartProps> = ({
               alignItems: 'center',
               gap: 4,
             }}>
-              <span>{isPositive ? '+' : ''}{performanceData.change.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              <span>{isPositive ? '+' : ''}{performanceData.change.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
               <span>({isPositive ? '+' : ''}{performanceData.changePercent.toFixed(2)}%)</span>
             </div>
           </div>
@@ -325,7 +325,7 @@ const PortfolioGrowthChart: React.FC<PortfolioGrowthChartProps> = ({
                 axisLine={false}
                 tickLine={false}
                 tick={{ fontSize: 11, fill: token.colorTextTertiary }}
-                tickFormatter={(value) => `$${(value / 1000).toFixed(1)}k`}
+                tickFormatter={(value) => `₹${(value / 1000).toFixed(1)}k`}
                 dx={-5}
                 width={50}
                 domain={['dataMin', 'dataMax']}

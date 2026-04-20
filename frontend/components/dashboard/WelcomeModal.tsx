@@ -56,12 +56,12 @@ export default function WelcomeModal({
   if (!mounted) return null;
 
   // Get USD balance
-  const usdBalance = balances.find((b) => b.asset === 'USD');
+  const usdBalance = balances.find((b) => b.asset === 'INR');
   const cashAmount = usdBalance?.balance || 0;
 
   // Get college coin balances with names
   const collegeCoinsReceived = balances
-    .filter((b) => b.asset !== 'USD' && b.balance > 0)
+    .filter((b) => b.asset !== 'INR' && b.balance > 0)
     .map((b) => {
       const pair = pairs.find(
         (p) => p.baseCurrency === b.asset && p.isDemoCollegeCoin
@@ -319,7 +319,7 @@ export default function WelcomeModal({
                           color: token.colorTextTertiary,
                         }}
                       >
-                        USD
+                        INR
                       </div>
                     </div>
                   </div>
@@ -331,7 +331,7 @@ export default function WelcomeModal({
                     }}
                   >
                     $
-                    {cashAmount.toLocaleString('en-US', {
+                    {cashAmount.toLocaleString('en-IN', {
                       minimumFractionDigits: 0,
                       maximumFractionDigits: 0,
                     })}
@@ -353,7 +353,7 @@ export default function WelcomeModal({
                       }}
                     >
                       College Coins (~$
-                      {totalCryptoValue.toLocaleString('en-US', {
+                      {totalCryptoValue.toLocaleString('en-IN', {
                         maximumFractionDigits: 0,
                       })}
                       )
@@ -409,7 +409,7 @@ export default function WelcomeModal({
                             }}
                           >
                             ~$
-                            {coin.value.toLocaleString('en-US', {
+                            {coin.value.toLocaleString('en-IN', {
                               maximumFractionDigits: 0,
                             })}
                           </div>
@@ -440,8 +440,8 @@ export default function WelcomeModal({
                       marginBottom: 4,
                     }}
                   >
-                    Think you can turn $100K into{' '}
-                    <span style={{ color: '#0d7377' }}>$1,000,000</span>?
+                    Think you can turn ₹1 lakh into{' '}
+                    <span style={{ color: '#0d7377' }}>₹1 crore</span>?
                   </div>
                   <div
                     style={{

@@ -103,11 +103,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
   // Helper to format volume
   const formatVolume = (volume: number): string => {
-    if (isNaN(volume) || volume <= 0) return '$0';
-    if (volume >= 1e9) return `$${(volume / 1e9).toFixed(1)}B`;
-    if (volume >= 1e6) return `$${(volume / 1e6).toFixed(1)}M`;
-    if (volume >= 1e3) return `$${(volume / 1e3).toFixed(1)}K`;
-    return `$${volume.toFixed(0)}`;
+    if (isNaN(volume) || volume <= 0) return '₹0';
+    if (volume >= 1e9) return `₹${(volume / 1e9).toFixed(1)}B`;
+    if (volume >= 1e6) return `₹${(volume / 1e6).toFixed(1)}M`;
+    if (volume >= 1e3) return `₹${(volume / 1e3).toFixed(1)}K`;
+    return `₹${volume.toFixed(0)}`;
   };
 
   // If we are on the trade page, construct the live data object
@@ -991,9 +991,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                       {exchangeData.pair}
                     </span>
                     <span style={{ fontSize: token.fontSizeHeading4, fontWeight: fontWeights.bold, color: token.colorText }}>
-                      ${exchangeData.price.toLocaleString('en-US', { 
+                      ₹{exchangeData.price.toLocaleString('en-IN', {
                         maximumFractionDigits: exchangeData.price < 0.001 ? 8 : (exchangeData.price < 1 ? 6 : 2),
-                        minimumFractionDigits: 2 
+                        minimumFractionDigits: 2
                       })}
                     </span>
                     <span style={{ 
@@ -1037,7 +1037,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                 <div style={{ padding: '4px 0' }}>
                   <div style={{ fontWeight: 600, marginBottom: 4 }}>🎓 Learning Mode</div>
                   <div style={{ fontSize: 12, opacity: 0.9 }}>
-                    Practice trading with $100,000 virtual balance.
+                    Practice trading with ₹1,00,000 virtual balance.
                     <br />
                     Switch to Investor in Settings when ready.
                   </div>

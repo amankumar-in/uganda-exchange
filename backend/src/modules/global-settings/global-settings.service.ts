@@ -33,7 +33,7 @@ export class GlobalSettingsService {
       if (settingsData.defaultAllowP2P !== undefined) tokenUpdate.allowP2P = settingsData.defaultAllowP2P;
       if (settingsData.defaultAllowDeposit !== undefined) tokenUpdate.allowDeposit = settingsData.defaultAllowDeposit;
       if (settingsData.defaultAllowWithdraw !== undefined) tokenUpdate.allowWithdraw = settingsData.defaultAllowWithdraw;
-      if (settingsData.defaultAllowTradeUsd !== undefined) tokenUpdate.allowTradeUsd = settingsData.defaultAllowTradeUsd;
+      if (settingsData.defaultAllowTradeInr !== undefined) tokenUpdate.allowTradeInr = settingsData.defaultAllowTradeInr;
       if (settingsData.defaultAllowTradeUsdt !== undefined) tokenUpdate.allowTradeUsdt = settingsData.defaultAllowTradeUsdt;
       if (settingsData.defaultAllowTradeEth !== undefined) tokenUpdate.allowTradeEth = settingsData.defaultAllowTradeEth;
       if (settingsData.defaultAllowTradeTuit !== undefined) tokenUpdate.allowTradeTuit = settingsData.defaultAllowTradeTuit;

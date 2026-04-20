@@ -32,33 +32,13 @@ interface PairSelectorProps {
 }
 
 // Investor mode shows all currencies
-const INVESTOR_CURRENCIES = ['USD', 'USDT', 'ETH', 'TUIT'];
+const INVESTOR_CURRENCIES = ['INR', 'USDT', 'ETH', 'TUIT'];
 // Learner mode shows Popular first, then Colleges
 const LEARNER_CURRENCIES = ['Popular', 'Colleges'];
 
-export const mockPairs: TradingPair[] = [
-  { symbol: 'BTC-USD', name: 'Bitcoin', price: 90366.33, change: -2.05, volume: '5.4B', quote: 'USD' },
-  { symbol: 'ETH-USD', name: 'Ethereum', price: 3089.72, change: 1.23, volume: '2.1B', quote: 'USD' },
-  { symbol: 'SOL-USD', name: 'Solana', price: 132.69, change: 3.45, volume: '890M', quote: 'USD' },
-  { symbol: 'XRP-USD', name: 'Ripple', price: 2.34, change: -0.78, volume: '1.2B', quote: 'USD' },
-  { symbol: 'DOGE-USD', name: 'Dogecoin', price: 0.42, change: 5.67, volume: '450M', quote: 'USD' },
-  { symbol: 'ADA-USD', name: 'Cardano', price: 1.12, change: -1.34, volume: '320M', quote: 'USD' },
-  { symbol: 'AVAX-USD', name: 'Avalanche', price: 45.67, change: 2.89, volume: '280M', quote: 'USD' },
-  { symbol: 'DOT-USD', name: 'Polkadot', price: 8.90, change: -0.45, volume: '190M', quote: 'USD' },
-  { symbol: 'MATIC-USD', name: 'Polygon', price: 0.98, change: 1.56, volume: '210M', quote: 'USD' },
-  { symbol: 'LINK-USD', name: 'Chainlink', price: 24.56, change: 4.12, volume: '340M', quote: 'USD' },
-  { symbol: 'BTC-USDT', name: 'Bitcoin', price: 90350.00, change: -2.03, volume: '8.2B', quote: 'USDT' },
-  { symbol: 'ETH-USDT', name: 'Ethereum', price: 3088.50, change: 1.25, volume: '4.5B', quote: 'USDT' },
-  { symbol: 'SOL-USDT', name: 'Solana', price: 132.55, change: 3.48, volume: '1.2B', quote: 'USDT' },
-  { symbol: 'XRP-USDT', name: 'Ripple', price: 2.33, change: -0.75, volume: '2.1B', quote: 'USDT' },
-  { symbol: 'DOGE-USDT', name: 'Dogecoin', price: 0.419, change: 5.70, volume: '780M', quote: 'USDT' },
-  { symbol: 'BTC-ETH', name: 'Bitcoin', price: 29.25, change: -3.12, volume: '120M', quote: 'ETH' },
-  { symbol: 'SOL-ETH', name: 'Solana', price: 0.0429, change: 2.15, volume: '45M', quote: 'ETH' },
-  { symbol: 'LINK-ETH', name: 'Chainlink', price: 0.00795, change: 2.89, volume: '28M', quote: 'ETH' },
-  { symbol: 'BTC-TUIT', name: 'Bitcoin', price: 90366.33, change: -2.05, volume: '12M', quote: 'TUIT' },
-  { symbol: 'ETH-TUIT', name: 'Ethereum', price: 3089.72, change: 1.23, volume: '8M', quote: 'TUIT' },
-  { symbol: 'SOL-TUIT', name: 'Solana', price: 132.69, change: 3.45, volume: '5M', quote: 'TUIT' },
-];
+// mockPairs was static sample data from the US build; no longer referenced.
+// Real pairs come from ExchangeContext via /api/tokens.
+export const mockPairs: TradingPair[] = [];
 
 const PairSelector: React.FC<PairSelectorProps> = ({ 
   pairs, 
@@ -72,10 +52,10 @@ const PairSelector: React.FC<PairSelectorProps> = ({
   const isDark = mode === 'dark';
   const [search, setSearch] = useState('');
   const [drawerOpen, setDrawerOpen] = useState(false);
-  // Default to 'Popular' in learner mode, 'USD' in investor mode
+  // Default to 'Popular' in learner mode, 'INR' in investor mode
   const isLearnerMode = user?.appMode === 'LEARNER';
   const router = useRouter();
-  const [activeQuote, setActiveQuote] = useState(isLearnerMode ? 'Popular' : 'USD');
+  const [activeQuote, setActiveQuote] = useState(isLearnerMode ? 'Popular' : 'INR');
   const [hoveredPair, setHoveredPair] = useState<string | null>(null);
   const selectedItemRef = useRef<HTMLDivElement>(null);
   
@@ -143,8 +123,8 @@ const PairSelector: React.FC<PairSelectorProps> = ({
       
       if (isLearnerMode) {
         if (activeQuote === 'Popular') {
-          // Show USD pairs that are NOT college coins
-          matchesQuote = pair.quote === 'USD' && !pair.isDemoCollegeCoin;
+          // Show INR pairs that are NOT college coins
+          matchesQuote = pair.quote === 'INR' && !pair.isDemoCollegeCoin;
         } else if (activeQuote === 'Colleges') {
           // Show only college coins
           matchesQuote = pair.isDemoCollegeCoin === true;
@@ -161,68 +141,54 @@ const PairSelector: React.FC<PairSelectorProps> = ({
     });
   }, [pairs, activeQuote, search, isLearnerMode]);
 
-  // Scroll to the selected pair only when navigating from URL (not on every selection)
-  const hasScrolledRef = useRef(false);
+  // Scroll the selected pair into view whenever it changes — covers direct loads
+  // where the default (BTC-INR) is set programmatically without a URL query.
   useEffect(() => {
-    const urlPair = router.query.pair as string | undefined;
-    
-    // Only scroll if there's a URL pair and we haven't scrolled yet
-    if (urlPair && !hasScrolledRef.current && selectedItemRef.current) {
-      let rafId: number | null = null;
-      let timer: NodeJS.Timeout | null = null;
-      
-      // Use requestAnimationFrame to batch layout reads and avoid forced reflows
-      rafId = requestAnimationFrame(() => {
-        // Small delay to ensure the DOM has updated after tab switch
-        timer = setTimeout(() => {
-          if (selectedItemRef.current) {
-            // Find the scrollable parent container (the one with overflowY: auto)
-            const findScrollableParent = (element: HTMLElement | null): HTMLElement | null => {
-              while (element && element !== document.body) {
-                const style = window.getComputedStyle(element);
-                if (style.overflowY === 'auto' || style.overflowY === 'scroll') {
-                  return element;
-                }
-                element = element.parentElement;
-              }
-              return null;
-            };
-            
-            const scrollContainer = findScrollableParent(selectedItemRef.current.parentElement);
-            if (scrollContainer && selectedItemRef.current) {
-              // Batch all layout property reads together to avoid forced reflows
-              // Read all layout properties in one batch before any writes
-              const itemOffsetTop = selectedItemRef.current.offsetTop;
-              const itemHeight = selectedItemRef.current.clientHeight;
-              const containerHeight = scrollContainer.clientHeight;
-              
-              // Calculate scroll position to center the item in the container
-              const scrollTarget = itemOffsetTop - (containerHeight / 2) + (itemHeight / 2);
-              
-              // Write operation (scroll) happens after all reads are complete
-              scrollContainer.scrollTo({
-                top: Math.max(0, scrollTarget),
-                behavior: 'smooth',
-              });
-            }
-            hasScrolledRef.current = true;
+    if (!selectedItemRef.current) return;
+
+    const rafId = requestAnimationFrame(() => {
+      const timer = setTimeout(() => {
+        const el = selectedItemRef.current;
+        if (!el) return;
+
+        const findScrollableParent = (element: HTMLElement | null): HTMLElement | null => {
+          while (element && element !== document.body) {
+            const style = window.getComputedStyle(element);
+            if (style.overflowY === 'auto' || style.overflowY === 'scroll') return element;
+            element = element.parentElement;
           }
-        }, 150);
-      });
-      
-      return () => {
-        if (rafId !== null) cancelAnimationFrame(rafId);
-        if (timer !== null) clearTimeout(timer);
-      };
-    }
-  }, [router.query.pair, filteredPairs]);
+          return null;
+        };
+
+        const scrollContainer = findScrollableParent(el.parentElement);
+        if (!scrollContainer) return;
+
+        const itemOffsetTop = el.offsetTop;
+        const itemHeight = el.clientHeight;
+        const containerHeight = scrollContainer.clientHeight;
+        const scrollTarget = itemOffsetTop - containerHeight / 2 + itemHeight / 2;
+
+        scrollContainer.scrollTo({
+          top: Math.max(0, scrollTarget),
+          behavior: 'smooth',
+        });
+      }, 100);
+      (rafCleanup as any).timer = timer;
+    });
+    const rafCleanup = { rafId, timer: null as NodeJS.Timeout | null };
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      if (rafCleanup.timer) clearTimeout(rafCleanup.timer);
+    };
+  }, [selectedPair, filteredPairs]);
 
   const formatPrice = (priceInput: number | string, quote: string) => {
     const price = Number(priceInput);
     if (isNaN(price)) return '0.00';
     
     if (quote === 'ETH') return price.toFixed(6);
-    if (price >= 1000) return price.toLocaleString('en-US', { maximumFractionDigits: 2 });
+    if (price >= 1000) return price.toLocaleString('en-IN', { maximumFractionDigits: 2 });
     if (price >= 1) return price.toFixed(2);
     if (price < 0.001) return price.toFixed(8);
     return price.toFixed(6);

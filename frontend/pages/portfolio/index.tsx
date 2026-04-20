@@ -28,8 +28,6 @@ import { fontWeights } from '@/theme/themeConfig';
 import { useAuth } from '@/context/AuthContext';
 import { useExchange } from '@/context/ExchangeContext';
 import DepositModal from '@/components/wallet/DepositModal';
-import WithdrawModal from '@/components/wallet/WithdrawModal';
-import { getFiatTransactions, syncPaymentStatus } from '@/services/api/fiat';
 import { createPortfolioSnapshot, getLearnerBalances } from '@/services/api/learner';
 import { createInvestorPortfolioSnapshot, getBalances } from '@/services/api/assets';
 import { getMiningStatus, MiningStatus } from '@/services/api/mining';
@@ -71,7 +69,7 @@ const MiningBalanceRow = ({
   useEffect(() => {
     if (!coin.isMining || !coin.sessionStartTime) {
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
-      if (totalRef.current) totalRef.current.textContent = coin.walletBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+      if (totalRef.current) totalRef.current.textContent = coin.walletBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
       return;
     }
 
@@ -81,7 +79,7 @@ const MiningBalanceRow = ({
     const tick = () => {
       const elapsed = (Date.now() - startMs) / (1000 * 60 * 60);
       const earned = Math.max(0, elapsed * rate);
-      if (totalRef.current) totalRef.current.textContent = (coin.walletBalance + earned).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+      if (totalRef.current) totalRef.current.textContent = (coin.walletBalance + earned).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
       if (earningsRef.current) earningsRef.current.textContent = ` +${earned.toFixed(4)}`;
       animationRef.current = requestAnimationFrame(tick);
     };
@@ -192,11 +190,11 @@ const MiningBalanceRow = ({
         }}>
           {coin.isMining ? (
             <>
-              <span>{coin.walletBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              <span>{coin.walletBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
               <span ref={earningsRef} style={{ color: token.colorSuccess }} />
             </>
           ) : (
-            <span>Wallet: {coin.walletBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            <span>Wallet: {coin.walletBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
           )}
         </div>
       </div>
@@ -222,11 +220,8 @@ const WalletPage: NextPageWithLayout = () => {
   const [mounted, setMounted] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
   const [ordersVisible, setOrdersVisible] = useState(false);
+  const [syncLoading] = useState(false);
   const [depositModalVisible, setDepositModalVisible] = useState(false);
-  const [withdrawModalVisible, setWithdrawModalVisible] = useState(false);
-  const [depositSuccessVisible, setDepositSuccessVisible] = useState(false);
-  const [depositAmount, setDepositAmount] = useState<number | null>(null);
-  const [syncLoading, setSyncLoading] = useState(false);
   const [miningStatus, setMiningStatus] = useState<MiningStatus | null>(null);
   const [viewMode, setViewMode] = useState<'learner' | 'investor'>(appMode);
   const [viewBalances, setViewBalances] = useState<typeof balances>([]);
@@ -315,8 +310,8 @@ const WalletPage: NextPageWithLayout = () => {
           // Build crypto prices from current pairs
           const cryptoPrices: Record<string, number> = {};
           pairs.forEach(pair => {
-            if (pair.symbol.endsWith('-USD')) {
-              const asset = pair.symbol.replace('-USD', '');
+            if (pair.symbol.endsWith('-INR')) {
+              const asset = pair.symbol.replace('-INR', '');
               cryptoPrices[asset] = pair.price;
             }
           });
@@ -334,122 +329,29 @@ const WalletPage: NextPageWithLayout = () => {
     }
   }, [pageLoading, user, appMode, balances.length, pairs.length]);
 
-  // Handle deposit success redirect from Stripe
-  useEffect(() => {
-    if (router.query.deposit === 'success') {
-      // Close modal if open
-      setDepositModalVisible(false);
-      
-      // Try to sync payment status (fallback if webhook didn't process)
-      const syncPayment = async () => {
-        try {
-          // Get latest deposit transaction
-          const { transactions } = await getFiatTransactions({ type: 'DEPOSIT', limit: 1 });
-          if (transactions.length > 0) {
-            setDepositAmount(transactions[0].amount);
-            if (transactions[0].status === 'PENDING') {
-              // Try to sync payment status (webhook hasn't processed yet)
-              await syncPaymentStatus(transactions[0].id);
-            }
-          }
-        } catch (error) {
-          console.error('Failed to sync payment status:', error);
-        }
-      };
-      
-      syncPayment();
-      
-      // Store current balance for comparison (after balances are loaded)
-      const currentBalance = balances.find((b) => b.asset === 'USD')?.balance || 0;
-      previousBalanceRef.current = currentBalance;
-      
-      // Refresh balances immediately
-      refreshBalances();
-      
-      // Smart polling: stop when balance updates or after max attempts
-      let attempts = 0;
-      const maxAttempts = 5;
-      
-      pollIntervalRef.current = setInterval(() => {
-        attempts++;
-        refreshBalances();
-        
-        // Stop if max attempts reached
-        if (attempts >= maxAttempts) {
-          if (pollIntervalRef.current) {
-            clearInterval(pollIntervalRef.current);
-            pollIntervalRef.current = null;
-          }
-        }
-      }, 2000);
-      
-      // Show success modal
-      setDepositSuccessVisible(true);
-      
-      // Clear query parameter from URL
-      router.replace('/portfolio', undefined, { shallow: true });
-    }
-    
-    // Cleanup on unmount
-    return () => {
-      if (pollIntervalRef.current) {
-        clearInterval(pollIntervalRef.current);
-        pollIntervalRef.current = null;
-      }
-    };
-  }, [router.query.deposit, refreshBalances, router, balances]);
-  
-  // Stop polling when balance updates
-  useEffect(() => {
-    if (pollIntervalRef.current) {
-      const currentBalance = balances.find((b) => b.asset === 'USD')?.balance || 0;
-      if (currentBalance > previousBalanceRef.current) {
-        clearInterval(pollIntervalRef.current);
-        pollIntervalRef.current = null;
-      }
-    }
-  }, [balances]);
-
-  // Handle manual balance sync for pending deposits
   const handleSyncBalance = async () => {
-    setSyncLoading(true);
-    try {
-      // Get latest pending deposit transaction
-      const { transactions } = await getFiatTransactions({ type: 'DEPOSIT', limit: 5 });
-      const pendingTx = transactions.find(tx => tx.status === 'PENDING');
-
-      if (pendingTx) {
-        await syncPaymentStatus(pendingTx.id);
-      }
-
-      // Refresh balances regardless
-      await refreshBalances();
-    } catch (error) {
-      console.error('Failed to sync balance:', error);
-    } finally {
-      setSyncLoading(false);
-    }
+    await refreshBalances();
   };
 
-  // Separate USD and crypto assets — use viewBalances for display
+  // Separate INR and crypto assets — use viewBalances for display
   const usdBalance = useMemo(() => {
-    const usd = viewBalances.find((b) => b.asset === 'USD');
-    return usd ? {
-      symbol: 'USD',
-      name: 'US Dollar',
-      balance: usd.balance.toLocaleString('en-US', {
+    const inr = viewBalances.find((b) => b.asset === 'INR');
+    return inr ? {
+      symbol: 'INR',
+      name: 'Indian Rupee',
+      balance: inr.balance.toLocaleString('en-IN', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       }),
-      availableBalance: usd.availableBalance.toLocaleString('en-US', {
+      availableBalance: inr.availableBalance.toLocaleString('en-IN', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       }),
-      lockedBalance: usd.lockedBalance.toLocaleString('en-US', {
+      lockedBalance: inr.lockedBalance.toLocaleString('en-IN', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       }),
-      value: `$${usd.balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      value: `₹${inr.balance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
       change: 0,
       color: '#4CAF50',
       iconUrl: undefined,
@@ -472,7 +374,7 @@ const WalletPage: NextPageWithLayout = () => {
     // Create a map of existing balances
     const balanceMap = new Map(
       viewBalances
-        .filter((b) => b.asset !== 'USD')
+        .filter((b) => b.asset !== 'INR')
         .map((b) => [b.asset, b])
     );
 
@@ -487,7 +389,7 @@ const WalletPage: NextPageWithLayout = () => {
 
       // Find price from pairs (look for USD pairs)
       const usdPair = pairs.find(
-        (p) => p.baseCurrency === asset && p.quote === 'USD',
+        (p) => p.baseCurrency === asset && p.quote === 'INR',
       );
       const price = usdPair?.price || 0;
       const usdValue = balance.balance * price;
@@ -505,21 +407,21 @@ const WalletPage: NextPageWithLayout = () => {
       return {
         symbol: asset,
         name,
-        balance: balance.balance.toLocaleString('en-US', {
+        balance: balance.balance.toLocaleString('en-IN', {
           minimumFractionDigits: 2,
           maximumFractionDigits: 8,
         }),
-        availableBalance: balance.availableBalance.toLocaleString('en-US', {
+        availableBalance: balance.availableBalance.toLocaleString('en-IN', {
           minimumFractionDigits: 2,
           maximumFractionDigits: 8,
         }),
-        lockedBalance: balance.lockedBalance.toLocaleString('en-US', {
+        lockedBalance: balance.lockedBalance.toLocaleString('en-IN', {
           minimumFractionDigits: 2,
           maximumFractionDigits: 8,
         }),
-        value: usdValue > 0 
-          ? `$${usdValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` 
-          : '$0.00',
+        value: usdValue > 0
+          ? `₹${usdValue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+          : '₹0.00',
         change: usdPair?.change || 0,
         color,
         iconUrl,
@@ -528,11 +430,11 @@ const WalletPage: NextPageWithLayout = () => {
 
     // Add any other assets the user has (not in required list)
     const otherAssets = viewBalances
-      .filter((b) => b.asset !== 'USD' && !REQUIRED_ASSETS.includes(b.asset))
+      .filter((b) => b.asset !== 'INR' && !REQUIRED_ASSETS.includes(b.asset))
       .map((balance) => {
         // Check both regular pairs and college coin pairs
         const usdPair = pairs.find(
-          (p) => p.baseCurrency === balance.asset && (p.quote === 'USD' || p.isDemoCollegeCoin),
+          (p) => p.baseCurrency === balance.asset && (p.quote === 'INR' || p.isDemoCollegeCoin),
         );
         const price = usdPair?.price || 0;
         const usdValue = balance.balance * price;
@@ -543,21 +445,21 @@ const WalletPage: NextPageWithLayout = () => {
         return {
           symbol: balance.asset,
           name: usdPair?.name || balance.asset,
-          balance: balance.balance.toLocaleString('en-US', {
+          balance: balance.balance.toLocaleString('en-IN', {
             minimumFractionDigits: 0,
             maximumFractionDigits: 8,
           }),
-          availableBalance: balance.availableBalance.toLocaleString('en-US', {
+          availableBalance: balance.availableBalance.toLocaleString('en-IN', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 8,
           }),
-          lockedBalance: balance.lockedBalance.toLocaleString('en-US', {
+          lockedBalance: balance.lockedBalance.toLocaleString('en-IN', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 8,
           }),
           value: usdValue > 0 
-            ? `$${usdValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` 
-            : '$0.00',
+            ? `₹${usdValue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+            : '₹0.00',
           change: usdPair?.change || 0,
           color: token.colorPrimary,
           iconUrl,
@@ -606,7 +508,7 @@ const WalletPage: NextPageWithLayout = () => {
 
   const cryptoBalance = useMemo(() => {
     return assetsWithValues
-      .filter((a) => a.symbol !== 'USD')
+      .filter((a) => a.symbol !== 'INR')
       .reduce((sum, asset) => {
         const value = parseFloat(asset.value.replace(/[^0-9.-]/g, '')) || 0;
         return sum + value;
@@ -614,7 +516,7 @@ const WalletPage: NextPageWithLayout = () => {
   }, [assetsWithValues]);
 
   const fiatBalance = useMemo(() => {
-    const usdAsset = assetsWithValues.find((a) => a.symbol === 'USD');
+    const usdAsset = assetsWithValues.find((a) => a.symbol === 'INR');
     return usdAsset ? parseFloat(usdAsset.value.replace(/[^0-9.-]/g, '')) || 0 : 0;
   }, [assetsWithValues]);
 
@@ -699,19 +601,19 @@ const WalletPage: NextPageWithLayout = () => {
       title: 'Amount',
       dataIndex: 'filledAmount',
       key: 'filledAmount',
-      render: (amount: number, record: any) => `${amount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 8 })} ${record.asset}`,
+      render: (amount: number, record: any) => `${amount.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 8 })} ${record.asset}`,
     },
     {
       title: 'Price',
       dataIndex: 'price',
       key: 'price',
-      render: (price: number, record: any) => `$${price.toFixed(2)}`,
+      render: (price: number, record: any) => `₹${price.toFixed(2)}`,
     },
     {
       title: 'Total',
       dataIndex: 'totalValue',
       key: 'totalValue',
-      render: (value: number) => `$${value.toFixed(2)}`,
+      render: (value: number) => `₹${value.toFixed(2)}`,
     },
     {
       title: 'Status',
@@ -780,7 +682,7 @@ const WalletPage: NextPageWithLayout = () => {
                   cryptoBalance={cryptoBalance}
                   cashBalance={fiatBalance}
                   mode={viewMode}
-                  onDepositClick={() => setDepositModalVisible(true)}
+                  onDepositClick={viewMode === 'investor' ? () => setDepositModalVisible(true) : undefined}
                   onSyncClick={viewMode === 'investor' ? handleSyncBalance : undefined}
                   syncLoading={syncLoading}
                 />
@@ -792,8 +694,8 @@ const WalletPage: NextPageWithLayout = () => {
                   <div style={{ width: '100%', height: '100%', display: 'flex' }}>
                     <StatCard
                       title="Total Balance"
-                      value={`$${totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-                      subtitle={`Crypto: $${cryptoBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} • Cash: $${fiatBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                      value={`₹${totalBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                      subtitle={`Crypto: ₹${cryptoBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} • Cash: ₹${fiatBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                       icon={<WalletOutlined />}
                       gradient="linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)"
                       showDepositButton={false}
@@ -804,8 +706,8 @@ const WalletPage: NextPageWithLayout = () => {
                   <div style={{ width: '100%', height: '100%', display: 'flex' }}>
                     <StatCard
                       title="Crypto Balance"
-                      value={`$${cryptoBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-                      subtitle={`${assetsWithValues.filter((a) => a.symbol !== 'USD').length} assets • Cash: $${fiatBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                      value={`₹${cryptoBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                      subtitle={`${assetsWithValues.filter((a) => a.symbol !== 'INR').length} assets • Cash: ₹${fiatBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                       icon={<SwapOutlined />}
                       color={token.colorSuccess}
                     />
@@ -819,7 +721,7 @@ const WalletPage: NextPageWithLayout = () => {
                   <div style={{ width: '100%', height: '100%', display: 'flex' }}>
                     <StatCard
                       title="Total Balance"
-                      value={`$${totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                      value={`₹${totalBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                       icon={<WalletOutlined />}
                       gradient="linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)"
                       showDepositButton={false}
@@ -830,8 +732,8 @@ const WalletPage: NextPageWithLayout = () => {
                   <div style={{ width: '100%', height: '100%', display: 'flex' }}>
                     <StatCard
                       title="Crypto Balance"
-                      value={`$${cryptoBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-                      subtitle={`${assetsWithValues.filter((a) => a.symbol !== 'USD').length} assets`}
+                      value={`₹${cryptoBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                      subtitle={`${assetsWithValues.filter((a) => a.symbol !== 'INR').length} assets`}
                       icon={<SwapOutlined />}
                       color={token.colorSuccess}
                     />
@@ -841,7 +743,7 @@ const WalletPage: NextPageWithLayout = () => {
                   <div style={{ width: '100%', height: '100%', display: 'flex' }}>
                     <StatCard
                       title="Cash Balance"
-                      value={`$${fiatBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                      value={`₹${fiatBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                       subtitle={viewMode === 'investor' ? (
                         <span
                           onClick={handleSyncBalance}
@@ -854,7 +756,7 @@ const WalletPage: NextPageWithLayout = () => {
                           <SyncOutlined spin={syncLoading} style={{ marginRight: 4 }} />
                           {syncLoading ? 'Updating...' : 'Update Balance'}
                         </span>
-                      ) : 'USD'}
+                      ) : 'INR'}
                       icon={<PlusOutlined />}
                       color={token.colorWarning}
                     />
@@ -899,91 +801,30 @@ const WalletPage: NextPageWithLayout = () => {
         )}
 
         {/* Action Buttons */}
-        {!isMobile && (
-          <motion.div
-            style={sectionStyle}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-          >
-            <div style={actionButtonsStyle}>
+        <motion.div
+          style={sectionStyle}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          <div style={actionButtonsStyle}>
+            {viewMode === 'investor' && (
               <Button
                 type="primary"
                 style={buttonStyle}
                 onClick={() => setDepositModalVisible(true)}
               >
-                <PlusOutlined /> Deposit Cash
+                <PlusOutlined /> Add Funds
               </Button>
-              <Button 
-                style={buttonStyle}
-                onClick={() => setWithdrawModalVisible(true)}
-              >
-                <ArrowUpOutlined /> Withdraw
-              </Button>
-              <Button 
-                style={buttonStyle}
-                onClick={() => router.push('/portfolio/bank-accounts')}
-              >
-                <BankOutlined /> Bank Accounts
-              </Button>
-              <Button
-                style={buttonStyle}
-                onClick={() => router.push('/tuit-transfer')}
-              >
-                <LinkOutlined /> Link TUIT Wallet
-              </Button>
-            </div>
-          </motion.div>
-        )}
-        
-        {/* Mobile Action Buttons */}
-        {isMobile && (
-          <motion.div
-            style={sectionStyle}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-          >
-            <div style={actionButtonsStyle}>
-              <Button 
-                style={{
-                  ...buttonStyle,
-                  backgroundColor: token.colorSuccessBg,
-                  color: token.colorSuccess,
-                  border: `1px solid ${token.colorSuccess}40`,
-                }}
-                onClick={() => setWithdrawModalVisible(true)}
-              >
-                <ArrowUpOutlined />
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>Withdraw</span>
-              </Button>
-              <Button 
-                style={{
-                  ...buttonStyle,
-                  backgroundColor: token.colorPrimaryBg,
-                  color: token.colorPrimary,
-                  border: `1px solid ${token.colorPrimary}40`,
-                }}
-                onClick={() => router.push('/portfolio/bank-accounts')}
-              >
-                <BankOutlined />
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>Banks</span>
-              </Button>
-              <Button
-                style={{
-                  ...buttonStyle,
-                  backgroundColor: token.colorWarningBg,
-                  color: token.colorWarning,
-                  border: `1px solid ${token.colorWarning}40`,
-                }}
-                onClick={() => router.push('/tuit-transfer')}
-              >
-                <LinkOutlined />
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>TUIT</span>
-              </Button>
-            </div>
-          </motion.div>
-        )}
+            )}
+            <Button
+              style={buttonStyle}
+              onClick={() => router.push('/tuit-transfer')}
+            >
+              <LinkOutlined /> Link TUIT Wallet
+            </Button>
+          </div>
+        </motion.div>
 
         {/* Crypto Assets - Always show at least 4 tokens */}
         <motion.div
@@ -1030,7 +871,7 @@ const WalletPage: NextPageWithLayout = () => {
                     color={asset.color}
                     iconUrl={asset.iconUrl}
                     onTrade={() => {
-                      router.push(`/trade?pair=${asset.symbol}-USD`);
+                      router.push(`/trade?pair=${asset.symbol}-INR`);
                     }}
                   />
                 </motion.div>
@@ -1129,150 +970,14 @@ const WalletPage: NextPageWithLayout = () => {
           )}
         </motion.div>
 
-        {/* Deposit Modal */}
         <DepositModal
           visible={depositModalVisible}
           onClose={() => setDepositModalVisible(false)}
           onSuccess={() => {
             refreshBalances();
-            setDepositModalVisible(false);
           }}
         />
 
-        {/* Withdraw Modal */}
-        <WithdrawModal
-          visible={withdrawModalVisible}
-          onClose={() => setWithdrawModalVisible(false)}
-          onSuccess={() => {
-            refreshBalances();
-            setWithdrawModalVisible(false);
-          }}
-          availableBalance={fiatBalance}
-        />
-
-        {/* Deposit Success Modal */}
-        <AnimatePresence>
-          {depositSuccessVisible && (
-            <Modal
-              open={depositSuccessVisible}
-              onCancel={() => setDepositSuccessVisible(false)}
-              footer={null}
-              centered
-              closable={true}
-              width={500}
-              styles={{
-                body: {
-                  padding: token.paddingXL,
-                  textAlign: 'center',
-                },
-              }}
-            >
-              <motion.div
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.8, opacity: 0 }}
-                transition={{ type: 'spring', duration: 0.5 }}
-              >
-                {/* Success Icon */}
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ 
-                    type: 'spring',
-                    stiffness: 200,
-                    damping: 15,
-                    delay: 0.2,
-                  }}
-                  style={{
-                    width: 80,
-                    height: 80,
-                    borderRadius: '50%',
-                    background: `linear-gradient(135deg, ${token.colorSuccess} 0%, ${token.colorSuccess} 100%)`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    margin: '0 auto',
-                    marginBottom: token.marginLG,
-                    boxShadow: `0 8px 24px ${token.colorSuccess}40`,
-                  }}
-                >
-                  <CheckCircleOutlined
-                    style={{
-                      fontSize: 48,
-                      color: '#fff',
-                    }}
-                  />
-                </motion.div>
-
-                {/* Success Message */}
-                <motion.div
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.3 }}
-                >
-                  <Title
-                    level={3}
-                    style={{
-                      marginBottom: token.marginMD,
-                      fontWeight: fontWeights.bold,
-                      color: token.colorText,
-                    }}
-                  >
-                    Deposit Successful!
-                  </Title>
-                  {depositAmount && (
-                    <Text
-                      style={{
-                        fontSize: token.fontSizeHeading4,
-                        color: token.colorSuccess,
-                        fontWeight: fontWeights.semibold,
-                        display: 'block',
-                        marginBottom: token.marginMD,
-                      }}
-                    >
-                      +${depositAmount.toLocaleString('en-US', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
-                    </Text>
-                  )}
-                  <Text
-                    style={{
-                      fontSize: token.fontSize,
-                      color: token.colorTextSecondary,
-                      display: 'block',
-                      marginBottom: token.marginLG,
-                    }}
-                  >
-                    Your balance has been updated successfully.
-                  </Text>
-                </motion.div>
-
-                {/* Close Button */}
-                <motion.div
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.4 }}
-                >
-                  <Button
-                    type="primary"
-                    size="large"
-                    onClick={() => setDepositSuccessVisible(false)}
-                    style={{
-                      height: token.controlHeightLG,
-                      fontSize: token.fontSizeLG,
-                      fontWeight: fontWeights.semibold,
-                      paddingLeft: token.paddingXL,
-                      paddingRight: token.paddingXL,
-                    }}
-                  >
-                    Got it!
-                  </Button>
-                </motion.div>
-              </motion.div>
-            </Modal>
-          )}
-        </AnimatePresence>
     </>
   );
 };
