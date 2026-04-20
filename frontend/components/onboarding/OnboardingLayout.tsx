@@ -199,14 +199,17 @@ const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
                 height={32}
               />
               {!isMobile && (
-                <span style={{ 
-                  fontSize: token.fontSizeLG, 
-                  fontWeight: fontWeights.bold, 
-                  color: '#ffffff',
-                  textShadow: '0 1px 2px rgba(0,0,0,0.3)',
-                }}>
-                  InTuition
-                </span>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{
+                    fontSize: token.fontSizeLG,
+                    fontWeight: fontWeights.bold,
+                    color: '#ffffff',
+                    textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+                  }}>
+                    InTuition
+                  </span>
+                  <span style={{ fontSize: token.fontSizeSM - 1, color: 'rgba(255,255,255,0.6)', lineHeight: 1, marginTop: -2 }}>India</span>
+                </div>
               )}
             </Link>
           )}

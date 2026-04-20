@@ -71,7 +71,10 @@ export default function AuthHeader() {
           width={token.controlHeightLG}
           height={token.controlHeightLG}
         />
-        <span style={logoTextStyle}>InTuition</span>
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <span style={logoTextStyle}>InTuition</span>
+          <span style={{ fontSize: token.fontSizeSM - 1, color: token.colorTextSecondary, lineHeight: 1, marginTop: -2 }}>India</span>
+        </div>
       </Link>
 
       <div style={rightSectionStyle}>

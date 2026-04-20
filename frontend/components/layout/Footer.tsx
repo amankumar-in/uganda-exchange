@@ -132,9 +132,12 @@ export default function Footer() {
                   width={token.controlHeight}
                   height={token.controlHeight}
                 />
-                <Title level={4} style={{ margin: 0, color: token.colorText }}>
-                  InTuition Exchange
-                </Title>
+                <div style={{ display: "flex", flexDirection: "column" }}>
+                  <Title level={4} style={{ margin: 0, color: token.colorText }}>
+                    InTuition Exchange
+                  </Title>
+                  <Text style={{ fontSize: token.fontSizeSM - 1, color: token.colorTextSecondary, lineHeight: 1, marginTop: -2 }}>India</Text>
+                </div>
               </Link>
               <Text style={{ color: token.colorTextSecondary, display: "block", lineHeight: token.lineHeightLG }}>
                 The Campus For College Coins. Trade university-issued tokens with instant

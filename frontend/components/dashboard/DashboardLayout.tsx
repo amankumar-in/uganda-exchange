@@ -377,17 +377,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     fontSize: token.fontSizeXL,
     fontWeight: fontWeights.bold,
     // Learner mode: amber text, Investor mode: normal text
-    color: isLearnerMode 
+    color: isLearnerMode
       ? (isDark ? '#FBBF24' : '#D97706') // Amber-400 / Amber-600
       : (isDark ? '#ffffff' : '#111827'),
     letterSpacing: '-0.02em',
     WebkitFontSmoothing: 'antialiased',
     MozOsxFontSmoothing: 'grayscale',
-    opacity: sidebarCollapsed && !isMobile ? 0 : 1,
-    width: sidebarCollapsed && !isMobile ? 0 : 'auto',
-    overflow: 'hidden',
     whiteSpace: 'nowrap',
-    transition: 'all 0.3s ease',
   };
 
   const navSectionStyle: React.CSSProperties = {
@@ -828,7 +824,10 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               width={token.controlHeight}
               height={token.controlHeight}
             />
-            <span style={logoTextStyle}>InTuition</span>
+            <div style={{ display: 'flex', flexDirection: 'column', opacity: sidebarCollapsed && !isMobile ? 0 : 1, width: sidebarCollapsed && !isMobile ? 0 : 'auto', overflow: 'hidden', transition: 'all 0.3s ease' }}>
+              <span style={logoTextStyle}>InTuition</span>
+              <span style={{ fontSize: token.fontSizeSM - 1, color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.4)', lineHeight: 1, marginTop: -2, whiteSpace: 'nowrap' }}>India</span>
+            </div>
           </Link>
           {isMobile && (
             <CloseOutlined

@@ -131,7 +131,10 @@ export default function Header() {
               width={token.controlHeightLG}
               height={token.controlHeightLG}
             />
-            <span style={logoTextStyle}>InTuition</span>
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              <span style={logoTextStyle}>InTuition</span>
+              <span style={{ fontSize: token.fontSizeSM - 1, color: token.colorTextSecondary, lineHeight: 1, marginTop: -2 }}>India</span>
+            </div>
           </div>
         </Link>
 
@@ -248,13 +251,16 @@ export default function Header() {
                 width={36}
                 height={36}
               />
-              <span style={{ 
-                fontWeight: fontWeights.bold, 
-                fontSize: token.fontSizeLG,
-                color: mode === "dark" ? "#ffffff" : "#0f172a",
-              }}>
-                InTuition
-              </span>
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                <span style={{
+                  fontWeight: fontWeights.bold,
+                  fontSize: token.fontSizeLG,
+                  color: mode === "dark" ? "#ffffff" : "#0f172a",
+                }}>
+                  InTuition
+                </span>
+                <span style={{ fontSize: token.fontSizeSM - 1, color: mode === "dark" ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.45)", lineHeight: 1, marginTop: -2 }}>India</span>
+              </div>
             </div>
             <Button
               type="text"
