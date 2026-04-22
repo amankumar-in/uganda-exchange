@@ -1,11 +1,14 @@
 import {
   Injectable,
   BadRequestException,
+  ConflictException,
   NotFoundException,
   Logger,
 } from '@nestjs/common';
 import { promises as fs } from 'fs';
+import { createHmac } from 'crypto';
 import { join } from 'path';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma.service';
 import { SandboxKycService } from './sandbox-kyc.service';
 import {
@@ -19,6 +22,14 @@ import { AddressConfirmDto } from './dto/address-confirm.dto';
 
 export const KYC_UPLOADS_DIR = join(process.cwd(), 'uploads', 'kyc');
 const PAN_AADHAAR_REASON = 'KYC verification for crypto exchange account onboarding';
+
+// Hash a full 12-digit Aadhaar with a server-side secret so duplicate detection
+// works without ever persisting the plaintext number. HMAC-SHA-256 means the
+// secret is required to replay the check — so a DB leak alone doesn't let an
+// attacker test whether a given Aadhaar is in our system.
+function hashAadhaar(aadhaarNumber: string, secret: string): string {
+  return createHmac('sha256', secret).update(aadhaarNumber).digest('hex');
+}
 
 // Normalize name for fuzzy matching: lowercase, collapse whitespace, strip punctuation
 function normalizeName(name: string | null | undefined): string {
@@ -48,11 +59,25 @@ function namesMatch(a: string | null | undefined, b: string | null | undefined):
 export class KycService {
   private readonly logger = new Logger(KycService.name);
 
+  private readonly aadhaarHashSecret: string;
+
   constructor(
     private prisma: PrismaService,
     private sandbox: SandboxKycService,
     private restrictions: KycRestrictionsService,
-  ) {}
+    private configService: ConfigService,
+  ) {
+    // Fall back to JWT_SECRET so dev environments don't need a second env var.
+    // For prod, set KYC_HASH_SECRET to a distinct value so rotating JWT keys
+    // doesn't accidentally invalidate every stored Aadhaar hash.
+    this.aadhaarHashSecret =
+      this.configService.get<string>('KYC_HASH_SECRET') ||
+      this.configService.get<string>('JWT_SECRET') ||
+      '';
+    if (!this.aadhaarHashSecret) {
+      this.logger.warn('Neither KYC_HASH_SECRET nor JWT_SECRET is set — Aadhaar uniqueness will be non-functional');
+    }
+  }
 
   async getOrCreateKyc(userId: string) {
     let kyc = await this.prisma.client.kyc.findUnique({ where: { userId } });
@@ -158,6 +183,18 @@ export class KycService {
 
     const pan = dto.pan.toUpperCase();
 
+    // Block before burning a Sandbox credit if this PAN is already in use by
+    // another account. The current user's own row is allowed (retries).
+    const panTaken = await this.prisma.client.kyc.findFirst({
+      where: { pan, NOT: { userId } },
+      select: { id: true },
+    });
+    if (panTaken) {
+      throw new ConflictException(
+        'This PAN is already linked to another account. If this is yours, contact support.',
+      );
+    }
+
     // Sandbox PAN verify expects date in DD/MM/YYYY per most of their older endpoints.
     // Their newer ones accept YYYY-MM-DD. We send DD/MM/YYYY to be safe.
     const [yyyy, mm, dd] = dto.dateOfBirth.split('-');
@@ -209,12 +246,27 @@ export class KycService {
       throw new BadRequestException('Please verify your PAN first');
     }
 
+    // Block before calling Sandbox (which costs credits) if this Aadhaar is
+    // already linked to another account. Uses a salted hash so we never store
+    // the full number. Current user's own row is allowed (retries).
+    const aadhaarHash = hashAadhaar(dto.aadhaarNumber, this.aadhaarHashSecret);
+    const aadhaarTaken = await this.prisma.client.kyc.findFirst({
+      where: { aadhaarHash, NOT: { userId } },
+      select: { id: true },
+    });
+    if (aadhaarTaken) {
+      throw new ConflictException(
+        'This Aadhaar is already linked to another account. If this is yours, contact support.',
+      );
+    }
+
     const result = await this.sandbox.aadhaarRequestOtp(dto.aadhaarNumber, PAN_AADHAAR_REASON);
 
     await this.prisma.client.kyc.update({
       where: { id: kyc.id },
       data: {
         aadhaarLast4: dto.aadhaarNumber.slice(-4),
+        aadhaarHash,
         aadhaarRefId: result.referenceId,
         aadhaarOtpSentAt: new Date(),
         currentStep: Math.max(kyc.currentStep, 3),
@@ -521,6 +573,7 @@ export class KycService {
         panVerifiedAt: null,
         panRawData: undefined,
         aadhaarLast4: null,
+        aadhaarHash: null,
         aadhaarRefId: null,
         aadhaarOtpSentAt: null,
         aadhaarVerifiedAt: null,

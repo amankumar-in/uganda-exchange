@@ -23,10 +23,22 @@ async function bootstrap() {
   
   // API prefix
   app.setGlobalPrefix('api');
-  
+
+  // Graceful shutdown: close HTTP + WebSocket connections before exit so
+  // nest start --watch restarts don't race with an old child still holding
+  // the port (see EADDRINUSE debugging).
+  app.enableShutdownHooks();
+  const shutdown = async (signal: string) => {
+    console.log(`Received ${signal}, closing server…`);
+    await app.close();
+    process.exit(0);
+  };
+  process.on('SIGTERM', () => void shutdown('SIGTERM'));
+  process.on('SIGINT', () => void shutdown('SIGINT'));
+
   const port = process.env.PORT || 8000;
   await app.listen(port);
-  
+
   console.log(`🚀 Server running on http://localhost:${port}`);
   console.log(`📡 API available at http://localhost:${port}/api`);
 }

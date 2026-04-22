@@ -86,36 +86,31 @@ export class AuthService {
       };
     }
 
-    // Step 1: No OTPs provided - send OTPs
-    // NOTE: Phone OTP temporarily disabled - will be re-enabled in future
-    if (!otpEmail /* || !otpPhone */) {
+    // Step 1: No OTPs provided - send both email + phone OTPs
+    if (!otpEmail || !otpPhone) {
       await Promise.all([
         this.otpService.sendEmailOtp(email, 'REGISTER'),
-        // Phone OTP temporarily disabled
-        // this.otpService.sendPhoneOtp(phoneCountry, phone, 'REGISTER'),
+        this.otpService.sendPhoneOtp(phoneCountry, phone, 'REGISTER'),
       ]);
 
       return {
-        message: 'Verification code sent to your email',
+        message: 'Verification codes sent to your email and phone',
       };
     }
 
-    // Step 2: OTPs provided - verify and create account
-    // NOTE: Phone OTP verification temporarily disabled
-    const [emailValid /* , phoneValid */] = await Promise.all([
+    // Step 2: Both OTPs provided - verify and create account
+    const [emailValid, phoneValid] = await Promise.all([
       this.otpService.verifyEmailOtp(email, otpEmail, 'REGISTER'),
-      // Phone OTP verification temporarily disabled
-      // this.otpService.verifyPhoneOtp(phoneCountry, phone, otpPhone, 'REGISTER'),
+      this.otpService.verifyPhoneOtp(phoneCountry, phone, otpPhone, 'REGISTER'),
     ]);
 
     if (!emailValid) {
       throw new BadRequestException('Invalid or expired email verification code');
     }
 
-    // Phone OTP verification temporarily disabled
-    // if (!phoneValid) {
-    //   throw new BadRequestException('Invalid or expired phone verification code');
-    // }
+    if (!phoneValid) {
+      throw new BadRequestException('Invalid or expired phone verification code');
+    }
 
     // Hash password
     const passwordHash = await bcrypt.hash(password, 10);
@@ -132,7 +127,7 @@ export class AuthService {
         passwordHash,
         country,
         emailVerified: true,
-        phoneVerified: false, // Phone verification temporarily disabled
+        phoneVerified: true,
         role: 'USER',
       },
     });

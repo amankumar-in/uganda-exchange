@@ -102,7 +102,8 @@ model Kyc {
   consentedAt DateTime?
 
   // PAN (Step 2) — Sandbox /kyc/pan/verify
-  pan               String?   // PAN number (upper)
+  // @unique so the same PAN can't be used across multiple accounts
+  pan               String?   @unique
   panName           String?   // Name as per PAN (authoritative from NSDL)
   panDob            DateTime? // DOB user submitted (verified by Sandbox)
   panStatus         String?   // valid / invalid / not_found etc.
@@ -114,6 +115,9 @@ model Kyc {
 
   // Aadhaar (Steps 3-4) — Sandbox /kyc/aadhaar/okyc
   aadhaarLast4      String?   // Only last 4 stored for display (compliance)
+  // Salted SHA-256 of the full 12-digit Aadhaar; @unique so same Aadhaar
+  // can't be used across accounts. Full number itself is never stored.
+  aadhaarHash       String?   @unique
   aadhaarRefId      String?   // reference_id from OTP-gen; cleared after OTP verify
   aadhaarOtpSentAt  DateTime?
   aadhaarVerifiedAt DateTime?

@@ -30,7 +30,7 @@ import {
   registerUser,
   verifyRegistration,
   resendEmailOtp,
-  // resendPhoneOtp, // Phone OTP temporarily disabled
+  resendPhoneOtp,
   loginUser,
   RegisterData,
   ApiError,
@@ -70,8 +70,7 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState<RegisterData | null>(null);
   const [otpEmail, setOtpEmail] = useState('');
-  // Phone OTP temporarily disabled - will be re-enabled in future
-  // const [otpPhone, setOtpPhone] = useState('');
+  const [otpPhone, setOtpPhone] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
   const [mounted, setMounted] = useState(false);
   const [countryDrawerOpen, setCountryDrawerOpen] = useState(false);
@@ -130,19 +129,18 @@ export default function RegisterPage() {
 
   const handleOtpSubmit = async () => {
     if (!formData) return;
-    // Phone OTP temporarily disabled
-    if (otpEmail.length !== 6 /* || otpPhone.length !== 6 */) {
-      message.error('Please enter the 6-digit verification code');
+    if (otpEmail.length !== 6 || otpPhone.length !== 6) {
+      message.error('Please enter both the 6-digit email and phone codes');
       return;
     }
 
     setLoading(true);
     try {
-      // Verify and create account
-      // Phone OTP temporarily disabled - not sending otpPhone
+      // Verify both OTPs and create the account
       await verifyRegistration({
         ...formData,
         otpEmail,
+        otpPhone,
       });
 
       message.success('Account created successfully!');
@@ -182,17 +180,16 @@ export default function RegisterPage() {
     }
   };
 
-  // Phone OTP resend temporarily disabled - will be re-enabled in future
-  // const handleResendPhone = async () => {
-  //   if (!formData || resendCooldown > 0) return;
-  //   try {
-  //     await resendPhoneOtp(formData.phone, formData.phoneCountry, 'REGISTER');
-  //     setResendCooldown(60);
-  //     message.success('Phone OTP resent');
-  //   } catch {
-  //     message.error('Failed to resend phone OTP');
-  //   }
-  // };
+  const handleResendPhone = async () => {
+    if (!formData || resendCooldown > 0) return;
+    try {
+      await resendPhoneOtp(formData.phone, formData.phoneCountry, 'REGISTER');
+      setResendCooldown(60);
+      message.success('Phone OTP resent');
+    } catch {
+      message.error('Failed to resend phone OTP');
+    }
+  };
 
   // Password validation rules
   const passwordRules = [
@@ -939,8 +936,8 @@ export default function RegisterPage() {
                     </Text>
                   </div>
 
-                  {/* Phone OTP - temporarily disabled, will be re-enabled in future */}
-                  {/* <div style={{ marginBottom: token.marginXL }}>
+                  {/* Phone OTP */}
+                  <div style={{ marginBottom: token.marginXL }}>
                     <Text
                       style={{
                         fontSize: token.fontSize,
@@ -951,6 +948,11 @@ export default function RegisterPage() {
                       }}
                     >
                       Phone Verification Code
+                      {formData?.phone && (
+                        <Text style={{ color: token.colorTextSecondary, fontWeight: fontWeights.normal, marginLeft: 8 }}>
+                          (+{formData.phoneCountry} {formData.phone})
+                        </Text>
+                      )}
                     </Text>
                     <OTPInput value={otpPhone} onChange={setOtpPhone} disabled={loading} autoFocus={false} />
                     <Text
@@ -964,15 +966,15 @@ export default function RegisterPage() {
                         textAlign: 'center',
                       }}
                     >
-                      {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend code'}
+                      {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend SMS code'}
                     </Text>
-                  </div> */}
+                  </div>
 
                   {/* Verify Button */}
                   <LoadingButton
                     loading={loading}
                     onClick={handleOtpSubmit}
-                    disabled={otpEmail.length !== 6}
+                    disabled={otpEmail.length !== 6 || otpPhone.length !== 6}
                     style={{
                       height: 52,
                       background: 'linear-gradient(135deg, #0d7377 0%, #14919b 100%)',

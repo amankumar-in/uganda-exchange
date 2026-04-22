@@ -35,6 +35,24 @@ export class UploadsController {
   }
 
   /**
+   * Serve KYC files (Aadhaar photos, selfies)
+   * GET /api/uploads/kyc/:filename
+   *
+   * NOTE: Currently unauthenticated so <img> tags in the admin panel can
+   * load these directly (browsers can't attach JWT headers to image
+   * requests). This is PII — Aadhaar photo + user selfie. Before
+   * production, switch to short-lived signed URLs or a cookie-based
+   * session so these aren't world-readable to anyone with the URL.
+   */
+  @Get('kyc/:filename')
+  async serveKycFile(
+    @Param('filename') filename: string,
+    @Res() res: Response,
+  ) {
+    return this.serveFile('kyc', filename, res);
+  }
+
+  /**
    * Generic file serving helper
    */
   private serveFile(folder: string, filename: string, res: Response) {

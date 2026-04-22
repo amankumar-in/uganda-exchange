@@ -100,7 +100,13 @@ export class OtpService {
     } else {
       console.warn(`⚠️  Twilio not configured - OTP code for +${phoneCountry}${phone}: ${code}`);
     }
-    
+
+    // Dev-only: print the plaintext code so you can test without your phone.
+    // Stripped automatically in production to avoid leaking OTPs into server logs.
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`📱 Phone OTP for +${phoneCountry}${phone} (${type}): ${code}`);
+    }
+
     return code;
   }
 
