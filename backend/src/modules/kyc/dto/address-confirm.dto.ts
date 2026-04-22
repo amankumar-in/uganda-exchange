@@ -1,6 +1,6 @@
 import { IsString, IsOptional, MinLength, MaxLength } from 'class-validator';
 
-export class AddressDto {
+export class AddressConfirmDto {
   @IsString()
   @MinLength(1)
   @MaxLength(200)
@@ -22,13 +22,12 @@ export class AddressDto {
   region: string;
 
   @IsString()
-  @MinLength(1)
-  @MaxLength(20)
+  @MinLength(4)
+  @MaxLength(10)
   postalCode: string;
 
   @IsString()
   @MinLength(2)
   @MaxLength(2)
-  country: string; // ISO 3166-1 alpha-2 code
+  country: string; // ISO alpha-2 — "IN"
 }
-

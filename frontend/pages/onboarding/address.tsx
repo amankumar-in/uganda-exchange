@@ -1,285 +1,93 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
-import { Form, Input, Select, message, theme, Skeleton, Row, Col, Button } from 'antd';
-import { HomeOutlined, ArrowRightOutlined, ArrowLeftOutlined } from '@ant-design/icons';
-import { Country, State, ICountry, IState } from 'country-state-city';
+import { Form, Input, Select, Button, Skeleton, message, Alert, Row, Col } from 'antd';
+import { HomeOutlined, ArrowLeftOutlined, ArrowRightOutlined } from '@ant-design/icons';
+import { State, IState } from 'country-state-city';
 import { motion } from 'motion/react';
 import OnboardingLayout from '@/components/onboarding/OnboardingLayout';
-import { fontWeights } from '@/theme/themeConfig';
 import { useAuth } from '@/context/AuthContext';
-import { useThemeMode } from '@/context/ThemeContext';
-import { getKycDetails, saveAddress, AddressData, ApiError } from '@/services/api/onboarding';
+import { useOnboardingStyles } from '@/hooks/useOnboardingStyles';
+import { fontWeights } from '@/theme/themeConfig';
+import { confirmAddress, getKycDetails, getKycStatus, ApiError, AddressData } from '@/services/api/onboarding';
 
-const { useToken } = theme;
-const { useBreakpoint } = Grid;
-import { Grid } from 'antd';
-
-// Theme colors
-const themeColors = {
-  primary: '#6366F1',
-  light: '#A5B4FC',
-  dark: '#4338CA',
-};
-
-// Warm palette for light mode buttons
-const warmColors = {
-  buttonText: '#3D2B1F',
-  coral: '#E07A5F',
-};
+interface FormValues extends AddressData {}
 
 export default function AddressPage() {
   const router = useRouter();
-  const { token } = useToken();
   const { user } = useAuth();
-  const { mode } = useThemeMode();
-  const screens = useBreakpoint();
-  const [form] = Form.useForm();
-  const isDark = mode === 'dark';
-  const isMobile = !screens.md;
-  
-  const [loading, setLoading] = useState(false);
+  const s = useOnboardingStyles();
+  const [form] = Form.useForm<FormValues>();
   const [pageLoading, setPageLoading] = useState(true);
-  const [selectedCountry, setSelectedCountry] = useState<string>(user?.country || '');
-  const [selectedRegion, setSelectedRegion] = useState<string>('');
+  const [submitting, setSubmitting] = useState(false);
+  const [prefilledFromAadhaar, setPrefilledFromAadhaar] = useState(false);
 
-  // Get all countries
-  const countryOptions = useMemo(() => {
-    const countries = Country.getAllCountries();
-    return countries.map((country: ICountry) => ({
-      value: country.isoCode,
-      label: `${country.flag} ${country.name}`,
-      searchValue: `${country.name} ${country.isoCode}`,
-    }));
-  }, []);
-
-  // Get states for selected country
-  const stateOptions = useMemo(() => {
-    const states = State.getStatesOfCountry(selectedCountry);
-    return states.map((state: IState) => ({
-      value: state.isoCode,
-      label: state.name,
-      searchValue: `${state.name} ${state.isoCode}`,
-    }));
-  }, [selectedCountry]);
-
-  const hasStates = stateOptions.length > 0;
+  const stateOptions = useMemo(
+    () =>
+      State.getStatesOfCountry('IN').map((st: IState) => ({
+        value: st.name, // Aadhaar returns state names, not ISO codes
+        label: st.name,
+      })),
+    [],
+  );
 
   useEffect(() => {
     if (!user) {
-      router.push('/login?redirect=/onboarding');
+      router.push('/login?redirect=/onboarding/address');
       return;
     }
-
-    const loadData = async () => {
+    (async () => {
       try {
+        const status = await getKycStatus();
+        if (status.status === 'APPROVED') { router.replace('/overview'); return; }
+        if (!status.hasAadhaar) { router.replace('/onboarding/aadhaar'); return; }
+
         const details = await getKycDetails();
-        if (details?.address) {
-          const { street1, street2, city, region, postalCode, country } = details.address;
-          const countryValue = country || user?.country || '';
+        if (details?.address?.street1) {
           form.setFieldsValue({
-            street1: street1 || '',
-            street2: street2 || '',
-            city: city || '',
-            region: region || undefined,
-            postalCode: postalCode || '',
-            country: countryValue,
+            street1: details.address.street1 || '',
+            street2: details.address.street2 || '',
+            city: details.address.city || '',
+            region: details.address.region || '',
+            postalCode: details.address.postalCode || '',
+            country: details.address.country || 'IN',
           });
-          setSelectedCountry(countryValue);
-          setSelectedRegion(region || '');
+          setPrefilledFromAadhaar(true);
         } else {
-          const userCountry = user?.country || '';
-          form.setFieldsValue({ country: userCountry });
-          setSelectedCountry(userCountry);
+          form.setFieldsValue({ country: 'IN' });
         }
       } catch {
-        const userCountry = user?.country || '';
-        form.setFieldsValue({ country: userCountry });
-        setSelectedCountry(userCountry);
+        form.setFieldsValue({ country: 'IN' });
       } finally {
         setPageLoading(false);
       }
-    };
-
-    loadData();
+    })();
   }, [user, router, form]);
 
-  const handleSubmit = async (values: AddressData) => {
-    setLoading(true);
+  const handleSubmit = async (values: FormValues) => {
+    setSubmitting(true);
     try {
-      await saveAddress({
-        street1: values.street1,
-        street2: values.street2 || undefined,
-        city: values.city,
-        region: values.region,
-        postalCode: values.postalCode,
-        country: values.country,
+      await confirmAddress({
+        street1: values.street1.trim(),
+        street2: values.street2?.trim() || undefined,
+        city: values.city.trim(),
+        region: values.region.trim(),
+        postalCode: values.postalCode.trim(),
+        country: (values.country || 'IN').toUpperCase(),
       });
-
-      message.success('Address saved');
-      router.push('/onboarding/verify');
-    } catch (error) {
-      const apiError = error as ApiError;
-      message.error(apiError.message || 'Failed to save. Please try again.');
+      router.push('/onboarding/selfie');
+    } catch (err) {
+      message.error((err as ApiError).message || 'Could not save address');
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
-
-  const handleCountryChange = (value: string) => {
-    setSelectedCountry(value);
-    setSelectedRegion('');
-    form.setFieldValue('region', undefined);
-  };
-
-  const filterOption = (input: string, option: { label?: string; value?: string; searchValue?: string } | undefined) => {
-    const searchValue = option?.searchValue || option?.label || '';
-    return searchValue.toLowerCase().startsWith(input.toLowerCase());
-  };
-
-  // Dynamic labels
-  const getRegionLabel = () => {
-    if (selectedCountry === 'US') return 'State';
-    if (selectedCountry === 'CA') return 'Province';
-    if (selectedCountry === 'GB') return 'County';
-    if (selectedCountry === 'AU') return 'State/Territory';
-    if (selectedCountry === 'IN') return 'State';
-    return 'Region';
-  };
-
-  const getPostalCodeLabel = () => {
-    if (selectedCountry === 'US') return 'ZIP Code';
-    if (selectedCountry === 'GB') return 'Postcode';
-    return 'Postal Code';
-  };
-
-  // Themed styles
-  const getInputStyle = (): React.CSSProperties => ({
-    background: isDark ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.9)',
-    border: isDark ? '1px solid rgba(255,255,255,0.15)' : '1px solid rgba(255,255,255,0.5)',
-    borderRadius: 12,
-    height: 48,
-    fontSize: token.fontSize,
-    color: isDark ? '#ffffff' : '#1a1a2e',
-  });
-
-  const getLabelStyle = (): React.CSSProperties => ({
-    fontWeight: fontWeights.medium,
-    fontSize: token.fontSize,
-    color: '#ffffff',
-    textShadow: '0 1px 2px rgba(0,0,0,0.3)',
-  });
-
-  const getButtonStyle = (primary = true): React.CSSProperties => ({
-    background: primary
-      ? (isDark
-          ? `linear-gradient(135deg, ${themeColors.primary} 0%, ${themeColors.dark} 100%)`
-          : `linear-gradient(135deg, ${warmColors.coral} 0%, #C45C44 100%)`)
-      : (isDark
-          ? 'rgba(255,255,255,0.1)'
-          : 'rgba(255,255,255,0.15)'),
-    boxShadow: primary
-      ? (isDark ? `0 4px 14px rgba(99, 102, 241, 0.4)` : `0 4px 14px rgba(224,122,95,0.4)`)
-      : 'none',
-    border: primary ? 'none' : '1px solid rgba(255,255,255,0.3)',
-    borderRadius: 12,
-    color: '#ffffff',
-    fontWeight: fontWeights.bold,
-    height: 48,
-    fontSize: token.fontSize,
-  });
-
-  // Form error styles
-  const formStyles = isDark 
-    ? `
-      .onboarding-form .ant-form-item-explain-error {
-        color: #FCA5A5 !important;
-        text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-        font-weight: 500;
-      }
-      .onboarding-form .ant-form-item-has-error .ant-input,
-      .onboarding-form .ant-form-item-has-error .ant-select-selector {
-        border-color: #FCA5A5 !important;
-      }
-      .onboarding-form .ant-input::placeholder {
-        color: rgba(255,255,255,0.4) !important;
-      }
-      .onboarding-form .ant-input-prefix {
-        color: rgba(255,255,255,0.5) !important;
-      }
-      .onboarding-form .ant-select {
-        height: 48px !important;
-      }
-      .onboarding-form .ant-select-selector {
-        background: rgba(0,0,0,0.3) !important;
-        border: 1px solid rgba(255,255,255,0.15) !important;
-        border-radius: 12px !important;
-        height: 48px !important;
-        min-height: 48px !important;
-        padding: 0 11px !important;
-      }
-      .onboarding-form .ant-select-selection-search-input {
-        height: 46px !important;
-      }
-      .onboarding-form .ant-select-selection-item {
-        color: #ffffff !important;
-        line-height: 46px !important;
-      }
-      .onboarding-form .ant-select-selection-placeholder {
-        line-height: 46px !important;
-        color: rgba(255,255,255,0.4) !important;
-      }
-      .onboarding-form .ant-select-arrow {
-        color: rgba(255,255,255,0.5) !important;
-      }
-    `
-    : `
-      .onboarding-form .ant-form-item-explain-error {
-        color: #FFE066 !important;
-        text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-        font-weight: 500;
-      }
-      .onboarding-form .ant-form-item-has-error .ant-input,
-      .onboarding-form .ant-form-item-has-error .ant-select-selector {
-        border-color: #FFE066 !important;
-      }
-      .onboarding-form .ant-input::placeholder {
-        color: rgba(0,0,0,0.35) !important;
-      }
-      .onboarding-form .ant-select {
-        height: 48px !important;
-      }
-      .onboarding-form .ant-select-selector {
-        background: rgba(255,255,255,0.9) !important;
-        border: 1px solid rgba(255,255,255,0.5) !important;
-        border-radius: 12px !important;
-        height: 48px !important;
-        min-height: 48px !important;
-        padding: 0 11px !important;
-      }
-      .onboarding-form .ant-select-selection-search-input {
-        height: 46px !important;
-      }
-      .onboarding-form .ant-select-selection-item {
-        line-height: 46px !important;
-        color: #1a1a2e !important;
-      }
-      .onboarding-form .ant-select-selection-placeholder {
-        line-height: 46px !important;
-        color: rgba(0,0,0,0.35) !important;
-      }
-      .onboarding-form .ant-select-arrow {
-        color: rgba(0,0,0,0.4) !important;
-      }
-    `;
 
   if (pageLoading) {
     return (
       <>
-        <Head>
-          <title>Address - InTuition Exchange</title>
-        </Head>
-        <OnboardingLayout currentStep={2} title="Your Address" subtitle="Where do you currently live?">
+        <Head><title>Address · InTuition India</title></Head>
+        <OnboardingLayout currentStep={4} title="Address" subtitle="Step 4 of 6">
           <Skeleton active paragraph={{ rows: 8 }} />
         </OnboardingLayout>
       </>
@@ -288,228 +96,109 @@ export default function AddressPage() {
 
   return (
     <>
-      <Head>
-        <title>Address - InTuition Exchange</title>
-        <meta name="description" content="Enter your address for verification" />
-      </Head>
-
+      <Head><title>Address · InTuition India</title></Head>
       <OnboardingLayout
-        currentStep={2}
-        title="Your Address"
-        subtitle="Enter your current residential address"
+        currentStep={4}
+        title="Confirm Address"
+        subtitle={prefilledFromAadhaar ? 'Pre-filled from Aadhaar — add your flat/apartment if needed' : 'Your current residential address'}
         showBack
-        onBack={() => router.push('/onboarding/personal')}
+        onBack={() => router.push('/onboarding/otp')}
       >
-        <style>{formStyles}</style>
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-        >
-          <Form
-            form={form}
-            layout="vertical"
-            onFinish={handleSubmit}
-            requiredMark={false}
-            size="large"
-            initialValues={{  }}
-            className="onboarding-form"
-          >
-            {/* Street Address - full width */}
+        <style>{s.formErrorCss}</style>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+          {prefilledFromAadhaar && (
+            <Alert
+              type="info"
+              showIcon
+              message="From your Aadhaar"
+              description="We pulled this from UIDAI. Check it's right, or edit anything that's different (e.g. flat/apt number)."
+              style={{ marginBottom: s.token.marginMD, background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.3)' }}
+            />
+          )}
+          <Form form={form} layout="vertical" onFinish={handleSubmit} requiredMark={false} size="large" className="onboarding-form">
             <Form.Item
               name="street1"
-              label={<span style={getLabelStyle()}>Street Address</span>}
-              rules={[
-                { required: true, message: 'Please enter your street address' },
-                { max: 200, message: 'Address is too long' },
-              ]}
-              style={{ marginBottom: token.marginMD }}
+              label={<span style={s.label}>House / Street</span>}
+              rules={[{ required: true, message: 'Please enter your street' }, { max: 200 }]}
+              style={{ marginBottom: s.token.marginMD }}
             >
-              <Input
-                prefix={<HomeOutlined />}
-                placeholder="123 Main Street"
-                style={getInputStyle()}
-                disabled={loading}
-              />
+              <Input prefix={<HomeOutlined />} placeholder="123, Main Road" style={s.input} disabled={submitting} />
             </Form.Item>
 
-            {/* Apt/Suite - full width */}
             <Form.Item
               name="street2"
-              label={<span style={getLabelStyle()}>Apt, Suite, etc. <span style={{ fontWeight: 400, opacity: 0.7 }}>(Optional)</span></span>}
-              rules={[{ max: 200, message: 'Address is too long' }]}
-              style={{ marginBottom: token.marginMD }}
+              label={
+                <span style={s.label}>
+                  Flat / Apt / Landmark <span style={{ fontWeight: 400, opacity: 0.7 }}>(Optional)</span>
+                </span>
+              }
+              style={{ marginBottom: s.token.marginMD }}
             >
-              <Input
-                placeholder="Apt 4B"
-                style={getInputStyle()}
-                disabled={loading}
-              />
+              <Input placeholder="Flat 4B, Near Metro Station" style={s.input} disabled={submitting} />
             </Form.Item>
 
-            {/* Row 1: Country + City */}
-            <Row gutter={token.marginSM}>
-              <Col xs={12}>
-                <Form.Item
-                  name="country"
-                  label={<span style={getLabelStyle()}>Country</span>}
-                  rules={[{ required: true, message: 'Required', validator: (_, value) => value ? Promise.resolve() : Promise.reject('Required') }]}
-                  style={{ marginBottom: token.marginMD }}
-                >
-                  {isMobile ? (
-                    <select
-                      style={{
-                        ...getInputStyle(),
-                        width: '100%',
-                        padding: '0 12px',
-                        appearance: 'none',
-                        WebkitAppearance: 'none',
-                        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E")`,
-                        backgroundRepeat: 'no-repeat',
-                        backgroundPosition: 'right 12px center',
-                        cursor: loading ? 'not-allowed' : 'pointer',
-                        opacity: loading ? 0.5 : 1,
-                        color: selectedCountry ? (isDark ? '#ffffff' : '#1a1a2e') : 'rgba(255,255,255,0.4)',
-                      }}
-                      value={selectedCountry}
-                      disabled={loading}
-                      onChange={(e) => {
-                        form.setFieldsValue({ country: e.target.value, region: undefined });
-                        setSelectedCountry(e.target.value);
-                        setSelectedRegion('');
-                      }}
-                    >
-                      <option value="">Select</option>
-                      {countryOptions.map(c => (
-                        <option key={c.value} value={c.value}>{c.label}</option>
-                      ))}
-                    </select>
-                  ) : (
-                    <Select
-                      showSearch
-                      placeholder="Select"
-                      options={countryOptions}
-                      disabled={loading}
-                      onChange={handleCountryChange}
-                      optionFilterProp="searchValue"
-                      filterOption={filterOption}
-                    />
-                  )}
-                </Form.Item>
-              </Col>
+            <Row gutter={s.token.marginSM}>
               <Col xs={12}>
                 <Form.Item
                   name="city"
-                  label={<span style={getLabelStyle()}>City</span>}
-                  rules={[
-                    { required: true, message: 'Required' },
-                    { max: 100, message: 'Too long' },
-                  ]}
-                  style={{ marginBottom: token.marginMD }}
+                  label={<span style={s.label}>City</span>}
+                  rules={[{ required: true, message: 'Required' }, { max: 100 }]}
+                  style={{ marginBottom: s.token.marginMD }}
                 >
-                  <Input
-                    placeholder="City"
-                    style={getInputStyle()}
-                    disabled={loading}
-                  />
-                </Form.Item>
-              </Col>
-            </Row>
-
-            {/* Row 2: State + Postal Code */}
-            <Row gutter={token.marginSM}>
-              <Col xs={12}>
-                <Form.Item
-                  name="region"
-                  label={<span style={getLabelStyle()}>{getRegionLabel()}</span>}
-                  rules={[{ required: true, message: 'Required', validator: (_, value) => value ? Promise.resolve() : Promise.reject('Required') }]}
-                  style={{ marginBottom: token.marginLG }}
-                >
-                  {hasStates ? (
-                    isMobile ? (
-                      <select
-                        style={{
-                          ...getInputStyle(),
-                          width: '100%',
-                          padding: '0 12px',
-                          appearance: 'none',
-                          WebkitAppearance: 'none',
-                          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E")`,
-                          backgroundRepeat: 'no-repeat',
-                          backgroundPosition: 'right 12px center',
-                          cursor: loading ? 'not-allowed' : 'pointer',
-                          opacity: loading ? 0.5 : 1,
-                          color: selectedRegion ? (isDark ? '#ffffff' : '#1a1a2e') : 'rgba(255,255,255,0.4)',
-                        }}
-                        value={selectedRegion}
-                        disabled={loading}
-                        onChange={(e) => {
-                          form.setFieldsValue({ region: e.target.value });
-                          setSelectedRegion(e.target.value);
-                        }}
-                      >
-                        <option value="">Select</option>
-                        {stateOptions.map(s => (
-                          <option key={s.value} value={s.value}>{s.label}</option>
-                        ))}
-                      </select>
-                    ) : (
-                      <Select
-                        showSearch
-                        placeholder="Select"
-                        options={stateOptions}
-                        disabled={loading}
-                        filterOption={filterOption}
-                      />
-                    )
-                  ) : (
-                    <Input
-                      placeholder={getRegionLabel()}
-                      style={getInputStyle()}
-                      disabled={loading}
-                    />
-                  )}
+                  <Input placeholder="Mumbai" style={s.input} disabled={submitting} />
                 </Form.Item>
               </Col>
               <Col xs={12}>
                 <Form.Item
                   name="postalCode"
-                  label={<span style={getLabelStyle()}>{getPostalCodeLabel()}</span>}
+                  label={<span style={s.label}>PIN Code</span>}
                   rules={[
                     { required: true, message: 'Required' },
-                    { max: 20, message: 'Too long' },
+                    { pattern: /^\d{6}$/, message: '6 digits' },
                   ]}
-                  style={{ marginBottom: token.marginLG }}
+                  style={{ marginBottom: s.token.marginMD }}
                 >
-                  <Input
-                    placeholder={getPostalCodeLabel()}
-                    style={getInputStyle()}
-                    disabled={loading}
-                  />
+                  <Input placeholder="400001" inputMode="numeric" maxLength={6} style={s.input} disabled={submitting} />
                 </Form.Item>
               </Col>
             </Row>
 
-            {/* Buttons */}
+            <Form.Item
+              name="region"
+              label={<span style={s.label}>State</span>}
+              rules={[{ required: true, message: 'Please select your state' }]}
+              style={{ marginBottom: s.token.marginLG }}
+            >
+              <Select
+                showSearch
+                placeholder="Select state"
+                options={stateOptions}
+                disabled={submitting}
+                filterOption={(input, option) => {
+                  const label = String(option?.label ?? '');
+                  return label.toLowerCase().includes(input.toLowerCase());
+                }}
+              />
+            </Form.Item>
+
+            <Form.Item name="country" hidden initialValue="IN">
+              <Input />
+            </Form.Item>
+
             <Form.Item style={{ marginBottom: 0 }}>
-              <div style={{ display: 'flex', gap: token.marginSM }}>
-                <Button
-                  size="large"
-                  onClick={() => router.push('/onboarding/personal')}
-                  style={{ ...getButtonStyle(false), flex: 1 }}
-                >
+              <div style={{ display: 'flex', gap: s.token.marginSM }}>
+                <Button size="large" onClick={() => router.push('/onboarding/otp')} style={{ ...s.buttonSecondary, flex: 1 }} disabled={submitting}>
                   <ArrowLeftOutlined />
                 </Button>
-                <Button
-                  type="primary"
-                  htmlType="submit"
-                  loading={loading}
-                  style={{ ...getButtonStyle(), flex: 3 }}
-                >
+                <Button type="primary" htmlType="submit" loading={submitting} style={{ ...s.buttonPrimary, flex: 3 }}>
                   Continue <ArrowRightOutlined />
                 </Button>
               </div>
             </Form.Item>
+
+            <p style={{ ...s.hint, textAlign: 'center', marginTop: s.token.marginMD, fontWeight: fontWeights.medium }}>
+              We only operate in select states — we&apos;ll confirm availability when you submit
+            </p>
           </Form>
         </motion.div>
       </OnboardingLayout>

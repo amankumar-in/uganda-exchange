@@ -3,6 +3,15 @@ import { PrismaService } from '../../prisma.service';
 import { UserRole, KycStatus, TransactionStatus, AppMode, TradeStatus } from '@prisma/client';
 import { LearnerService } from '../learner/learner.service';
 
+// Split a full name into (first, last). Prefers Aadhaar over PAN since UIDAI is authoritative.
+function splitFullName(primary?: string | null, fallback?: string | null): { firstName: string | null; lastName: string | null } {
+  const name = (primary || fallback || '').trim();
+  if (!name) return { firstName: null, lastName: null };
+  const parts = name.split(/\s+/);
+  if (parts.length === 1) return { firstName: parts[0], lastName: null };
+  return { firstName: parts[0], lastName: parts.slice(1).join(' ') };
+}
+
 // ============================================
 // INTERFACES
 // ============================================
@@ -27,21 +36,36 @@ export interface UserListItem {
 export interface FullUserDetails extends UserListItem {
   kyc: {
     id: string;
-    firstName: string | null;
-    middleName: string | null;
-    lastName: string | null;
-    dateOfBirth: Date | null;
+    consentedAt: Date | null;
+    pan: string | null;
+    panName: string | null;
+    panDob: Date | null;
+    panStatus: string | null;
+    panNameMatch: boolean | null;
+    panDobMatch: boolean | null;
+    panAadhaarSeeding: string | null;
+    panVerifiedAt: Date | null;
+    aadhaarLast4: string | null;
+    aadhaarName: string | null;
+    aadhaarDob: Date | null;
+    aadhaarYob: string | null;
+    aadhaarGender: string | null;
+    aadhaarCareOf: string | null;
+    aadhaarPhotoUrl: string | null;
+    aadhaarVerifiedAt: Date | null;
+    panAadhaarLinked: boolean | null;
     street1: string | null;
     street2: string | null;
     city: string | null;
     region: string | null;
     postalCode: string | null;
     country: string | null;
+    selfieUrl: string | null;
+    selfieUploadedAt: Date | null;
     currentStep: number;
     status: string;
-    veriffSessionId: string | null;
-    veriffStatus: string | null;
-    veriffReason: string | null;
+    rejectionReason: string | null;
+    autoDecidedAt: Date | null;
     reviewNotes: string | null;
     reviewedAt: Date | null;
     reviewedBy: string | null;
@@ -181,8 +205,9 @@ export class AdminService {
         { email: { contains: options.search, mode: 'insensitive' } },
         { phone: { contains: options.search } },
         { id: { contains: options.search } },
-        { kyc: { firstName: { contains: options.search, mode: 'insensitive' } } },
-        { kyc: { lastName: { contains: options.search, mode: 'insensitive' } } },
+        { kyc: { panName: { contains: options.search, mode: 'insensitive' } } },
+        { kyc: { aadhaarName: { contains: options.search, mode: 'insensitive' } } },
+        { kyc: { pan: { contains: options.search.toUpperCase() } } },
       ];
     }
 
@@ -203,8 +228,8 @@ export class AdminService {
         include: {
           kyc: {
             select: {
-              firstName: true,
-              lastName: true,
+              aadhaarName: true,
+              panName: true,
             },
           },
         },
@@ -213,22 +238,25 @@ export class AdminService {
     ]);
 
     return {
-      users: users.map((user) => ({
-        id: user.id,
-        email: user.email,
-        phone: user.phone,
-        phoneCountry: user.phoneCountry,
-        country: user.country,
-        role: user.role,
-        appMode: user.appMode,
-        kycStatus: user.kycStatus,
-        emailVerified: user.emailVerified,
-        phoneVerified: user.phoneVerified,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
-        firstName: user.kyc?.firstName || null,
-        lastName: user.kyc?.lastName || null,
-      })),
+      users: users.map((user) => {
+        const { firstName, lastName } = splitFullName(user.kyc?.aadhaarName, user.kyc?.panName);
+        return {
+          id: user.id,
+          email: user.email,
+          phone: user.phone,
+          phoneCountry: user.phoneCountry,
+          country: user.country,
+          role: user.role,
+          appMode: user.appMode,
+          kycStatus: user.kycStatus,
+          emailVerified: user.emailVerified,
+          phoneVerified: user.phoneVerified,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
+          firstName,
+          lastName,
+        };
+      }),
       total,
       page,
       limit,
@@ -264,6 +292,7 @@ export class AdminService {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
 
+    const { firstName, lastName } = splitFullName(user.kyc?.aadhaarName, user.kyc?.panName);
     return {
       id: user.id,
       email: user.email,
@@ -277,26 +306,41 @@ export class AdminService {
       phoneVerified: user.phoneVerified,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
-      firstName: user.kyc?.firstName || null,
-      lastName: user.kyc?.lastName || null,
+      firstName,
+      lastName,
       kyc: user.kyc
         ? {
             id: user.kyc.id,
-            firstName: user.kyc.firstName,
-            middleName: user.kyc.middleName,
-            lastName: user.kyc.lastName,
-            dateOfBirth: user.kyc.dateOfBirth,
+            consentedAt: user.kyc.consentedAt,
+            pan: user.kyc.pan,
+            panName: user.kyc.panName,
+            panDob: user.kyc.panDob,
+            panStatus: user.kyc.panStatus,
+            panNameMatch: user.kyc.panNameMatch,
+            panDobMatch: user.kyc.panDobMatch,
+            panAadhaarSeeding: user.kyc.panAadhaarSeeding,
+            panVerifiedAt: user.kyc.panVerifiedAt,
+            aadhaarLast4: user.kyc.aadhaarLast4,
+            aadhaarName: user.kyc.aadhaarName,
+            aadhaarDob: user.kyc.aadhaarDob,
+            aadhaarYob: user.kyc.aadhaarYob,
+            aadhaarGender: user.kyc.aadhaarGender,
+            aadhaarCareOf: user.kyc.aadhaarCareOf,
+            aadhaarPhotoUrl: user.kyc.aadhaarPhotoPath ? `/api/uploads/kyc/${user.kyc.aadhaarPhotoPath}` : null,
+            aadhaarVerifiedAt: user.kyc.aadhaarVerifiedAt,
+            panAadhaarLinked: user.kyc.panAadhaarLinked,
             street1: user.kyc.street1,
             street2: user.kyc.street2,
             city: user.kyc.city,
             region: user.kyc.region,
             postalCode: user.kyc.postalCode,
             country: user.kyc.country,
+            selfieUrl: user.kyc.selfiePath ? `/api/uploads/kyc/${user.kyc.selfiePath}` : null,
+            selfieUploadedAt: user.kyc.selfieUploadedAt,
             currentStep: user.kyc.currentStep,
             status: user.kyc.status,
-            veriffSessionId: user.kyc.veriffSessionId,
-            veriffStatus: user.kyc.veriffStatus,
-            veriffReason: user.kyc.veriffReason,
+            rejectionReason: user.kyc.rejectionReason,
+            autoDecidedAt: user.kyc.autoDecidedAt,
             reviewNotes: user.kyc.reviewNotes,
             reviewedAt: user.kyc.reviewedAt,
             reviewedBy: user.kyc.reviewedBy,
@@ -858,8 +902,8 @@ export class AdminService {
       include: {
         kyc: {
           select: {
-            firstName: true,
-            lastName: true,
+            aadhaarName: true,
+            panName: true,
           },
         },
       },
@@ -867,6 +911,7 @@ export class AdminService {
 
     this.logger.log(`Admin ${adminId} updated user ${id}: ${JSON.stringify(dto)}`);
 
+    const { firstName, lastName } = splitFullName(updatedUser.kyc?.aadhaarName, updatedUser.kyc?.panName);
     return {
       id: updatedUser.id,
       email: updatedUser.email,
@@ -880,8 +925,8 @@ export class AdminService {
       phoneVerified: updatedUser.phoneVerified,
       createdAt: updatedUser.createdAt,
       updatedAt: updatedUser.updatedAt,
-      firstName: updatedUser.kyc?.firstName || null,
-      lastName: updatedUser.kyc?.lastName || null,
+      firstName,
+      lastName,
     };
   }
 

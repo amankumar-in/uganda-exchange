@@ -1,8 +1,9 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useAuth } from '@/context/AuthContext';
+import { getWsUrl } from '@/services/api/config';
 
-const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:8000';
+const WS_URL = getWsUrl();
 
 interface UseMiningSocketOptions {
   onMiningUpdate?: (data: any) => void;

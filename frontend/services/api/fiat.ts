@@ -2,7 +2,8 @@
  * Fiat (INR) deposits via Razorpay.
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001/api';
+import { getApiBaseUrl } from './config';
+const API_BASE_URL = getApiBaseUrl();
 
 export interface CreateDepositResponse {
   orderId: string;           // our internal FiatTransaction id

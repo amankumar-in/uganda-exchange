@@ -1,46 +1,51 @@
 /**
- * Onboarding / KYC API Service
- * Handles all KYC-related API calls
+ * Onboarding / KYC API Service — India (Sandbox.co.in)
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+import { getApiBaseUrl } from './config';
+const API_BASE_URL = getApiBaseUrl();
 
-// Types
-export interface PersonalDetailsData {
-  firstName: string;
-  middleName?: string;
-  lastName: string;
-  dateOfBirth: string; // YYYY-MM-DD
-}
+// ============================================
+// TYPES
+// ============================================
 
-export interface AddressData {
-  street1: string;
-  street2?: string;
-  city: string;
-  region: string;
-  postalCode: string;
-  country: string; // ISO 3166-1 alpha-2 code
-}
+export type KycDecisionStatus = 'PENDING' | 'SUBMITTED' | 'APPROVED' | 'REJECTED';
 
 export interface KycStatus {
   currentStep: number;
-  status: 'PENDING' | 'SUBMITTED' | 'APPROVED' | 'REJECTED';
-  veriffStatus: string | null;
-  veriffReason: string | null;
-  hasPersonalDetails: boolean;
+  status: KycDecisionStatus;
+  hasConsent: boolean;
+  hasPan: boolean;
+  hasAadhaar: boolean;
+  hasAadhaarRefId: boolean;
   hasAddress: boolean;
-  hasVeriffSession: boolean;
+  hasSelfie: boolean;
+  rejectionReason: string | null;
+  aadhaarLast4: string | null;
+  panMasked: string | null;
 }
 
 export interface KycDetails {
   id: string;
   currentStep: number;
-  status: 'PENDING' | 'SUBMITTED' | 'APPROVED' | 'REJECTED';
-  personalDetails: {
-    firstName: string | null;
-    middleName: string | null;
-    lastName: string | null;
-    dateOfBirth: string | null;
+  status: KycDecisionStatus;
+  consent: { consentedAt: string | null };
+  pan: {
+    pan: string | null;
+    panName: string | null;
+    panStatus: string | null;
+    panNameMatch: boolean | null;
+    panDobMatch: boolean | null;
+    panVerifiedAt: string | null;
+  };
+  aadhaar: {
+    aadhaarLast4: string | null;
+    aadhaarName: string | null;
+    aadhaarDob: string | null;
+    aadhaarGender: string | null;
+    aadhaarCareOf: string | null;
+    aadhaarPhotoUrl: string | null;
+    aadhaarVerifiedAt: string | null;
   };
   address: {
     street1: string | null;
@@ -50,32 +55,48 @@ export interface KycDetails {
     postalCode: string | null;
     country: string | null;
   };
-  verification: {
-    sessionId: string | null;
-    status: string | null;
-    reason: string | null;
-    decisionTime: string | null;
+  selfie: {
+    selfieUrl: string | null;
+    selfieUploadedAt: string | null;
   };
+  panAadhaarLinked: boolean | null;
+  rejectionReason: string | null;
+  autoDecidedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface VeriffSession {
-  sessionId: string;
-  sessionUrl?: string;
-  sessionToken?: string;
-  message?: string;
+export interface PanVerifyData {
+  pan: string;
+  nameAsPerPan: string;
+  dateOfBirth: string; // YYYY-MM-DD
 }
 
-export interface VeriffDecision {
-  status: 'PENDING' | 'SUBMITTED' | 'APPROVED' | 'REJECTED';
-  veriffStatus: string;
-  reason: string | null;
+export interface AddressData {
+  street1: string;
+  street2?: string;
+  city: string;
+  region: string;
+  postalCode: string;
+  country: string;
 }
 
-export interface ApiResponse {
+export interface PanVerifyResponse {
   message: string;
-  currentStep?: number;
+  currentStep: number;
+  fullName: string | null;
+  category: string | null;
+}
+
+export interface StepResponse {
+  message: string;
+  currentStep: number;
+}
+
+export interface DecisionResponse {
+  status: KycDecisionStatus;
+  reason?: string;
+  currentStep: number;
 }
 
 export interface ApiError {
@@ -84,102 +105,105 @@ export interface ApiError {
   errors?: Record<string, string[]>;
 }
 
-// Helper function for API calls
-async function apiCall<T>(
-  endpoint: string,
-  options: RequestInit = {}
-): Promise<T> {
-  const url = `${API_BASE_URL}${endpoint}`;
-  
-  const defaultHeaders: HeadersInit = {
-    'Content-Type': 'application/json',
-  };
+// ============================================
+// HTTP HELPER
+// ============================================
 
-  // Add auth token if available
-  if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('authToken');
-    if (token) {
-      (defaultHeaders as Record<string, string>)['Authorization'] = `Bearer ${token}`;
-    }
-  }
+function getAuthHeader(): Record<string, string> {
+  if (typeof window === 'undefined') return {};
+  const token = localStorage.getItem('authToken');
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
 
-  const response = await fetch(url, {
+async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  const res = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
     headers: {
-      ...defaultHeaders,
+      'Content-Type': 'application/json',
+      ...getAuthHeader(),
       ...options.headers,
     },
   });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    const error: ApiError = {
-      message: data.message || 'An error occurred',
-      statusCode: response.status,
-      errors: data.errors,
-    };
-    throw error;
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw {
+      message: (data as { message?: string }).message || 'An error occurred',
+      statusCode: res.status,
+      errors: (data as { errors?: Record<string, string[]> }).errors,
+    } as ApiError;
   }
-
   return data as T;
 }
 
-// Onboarding API Functions
+async function apiUpload<T>(endpoint: string, formData: FormData): Promise<T> {
+  const res = await fetch(`${API_BASE_URL}${endpoint}`, {
+    method: 'POST',
+    headers: { ...getAuthHeader() }, // NOTE: no Content-Type — browser sets multipart boundary
+    body: formData,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw {
+      message: (data as { message?: string }).message || 'Upload failed',
+      statusCode: res.status,
+    } as ApiError;
+  }
+  return data as T;
+}
 
-/**
- * Get current KYC status
- */
-export async function getKycStatus(): Promise<KycStatus> {
-  return apiCall<KycStatus>('/onboarding/status', {
-    method: 'GET',
+// ============================================
+// API FUNCTIONS
+// ============================================
+
+export function getKycStatus(): Promise<KycStatus> {
+  return apiCall<KycStatus>('/onboarding/status');
+}
+
+export function getKycDetails(): Promise<KycDetails | null> {
+  return apiCall<KycDetails | null>('/onboarding/details');
+}
+
+export function saveConsent(): Promise<StepResponse> {
+  return apiCall<StepResponse>('/onboarding/consent', {
+    method: 'POST',
+    body: JSON.stringify({ consented: true }),
   });
 }
 
-/**
- * Get full KYC details
- */
-export async function getKycDetails(): Promise<KycDetails | null> {
-  return apiCall<KycDetails | null>('/onboarding/details', {
-    method: 'GET',
-  });
-}
-
-/**
- * Save personal details (Step 1)
- */
-export async function savePersonalDetails(data: PersonalDetailsData): Promise<ApiResponse> {
-  return apiCall<ApiResponse>('/onboarding/personal', {
+export function verifyPan(data: PanVerifyData): Promise<PanVerifyResponse> {
+  return apiCall<PanVerifyResponse>('/onboarding/pan/verify', {
     method: 'POST',
     body: JSON.stringify(data),
   });
 }
 
-/**
- * Save address (Step 2)
- */
-export async function saveAddress(data: AddressData): Promise<ApiResponse> {
-  return apiCall<ApiResponse>('/onboarding/address', {
+export function requestAadhaarOtp(aadhaarNumber: string): Promise<StepResponse> {
+  return apiCall<StepResponse>('/onboarding/aadhaar/otp/request', {
+    method: 'POST',
+    body: JSON.stringify({ aadhaarNumber }),
+  });
+}
+
+export function verifyAadhaarOtp(otp: string): Promise<StepResponse> {
+  return apiCall<StepResponse>('/onboarding/aadhaar/otp/verify', {
+    method: 'POST',
+    body: JSON.stringify({ otp }),
+  });
+}
+
+export function confirmAddress(data: AddressData): Promise<StepResponse> {
+  return apiCall<StepResponse>('/onboarding/address', {
     method: 'POST',
     body: JSON.stringify(data),
   });
 }
 
-/**
- * Create Veriff verification session (Step 3)
- */
-export async function createVeriffSession(): Promise<VeriffSession> {
-  return apiCall<VeriffSession>('/onboarding/veriff/session', {
-    method: 'POST',
-  });
+export function uploadSelfie(file: Blob, filename = 'selfie.jpg'): Promise<DecisionResponse> {
+  const fd = new FormData();
+  fd.append('selfie', file, filename);
+  return apiUpload<DecisionResponse>('/onboarding/selfie', fd);
 }
 
-/**
- * Check Veriff decision (polling)
- */
-export async function checkVeriffDecision(): Promise<VeriffDecision> {
-  return apiCall<VeriffDecision>('/onboarding/veriff/decision', {
-    method: 'GET',
-  });
+export function resetKyc(): Promise<StepResponse> {
+  return apiCall<StepResponse>('/onboarding/reset', { method: 'POST' });
 }
-

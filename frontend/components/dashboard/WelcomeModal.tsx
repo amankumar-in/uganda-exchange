@@ -55,9 +55,9 @@ export default function WelcomeModal({
 
   if (!mounted) return null;
 
-  // Get USD balance
-  const usdBalance = balances.find((b) => b.asset === 'INR');
-  const cashAmount = usdBalance?.balance || 0;
+  // Get INR balance
+  const inrBalance = balances.find((b) => b.asset === 'INR');
+  const cashAmount = inrBalance?.balance || 0;
 
   // Get college coin balances with names
   const collegeCoinsReceived = balances
@@ -301,7 +301,7 @@ export default function WelcomeModal({
                         fontSize: 16,
                       }}
                     >
-                      $
+                      ₹
                     </div>
                     <div>
                       <div
@@ -330,7 +330,7 @@ export default function WelcomeModal({
                       fontSize: token.fontSizeLG,
                     }}
                   >
-                    $
+                    ₹
                     {cashAmount.toLocaleString('en-IN', {
                       minimumFractionDigits: 0,
                       maximumFractionDigits: 0,
@@ -352,7 +352,7 @@ export default function WelcomeModal({
                         marginBottom: token.marginXS,
                       }}
                     >
-                      College Coins (~$
+                      College Coins (~₹
                       {totalCryptoValue.toLocaleString('en-IN', {
                         maximumFractionDigits: 0,
                       })}
@@ -408,7 +408,7 @@ export default function WelcomeModal({
                               color: token.colorTextTertiary,
                             }}
                           >
-                            ~$
+                            ~₹
                             {coin.value.toLocaleString('en-IN', {
                               maximumFractionDigits: 0,
                             })}

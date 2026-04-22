@@ -3,14 +3,17 @@
  * Handles user settings, password change, and notification preferences
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+import { getApiBaseUrl } from './config';
+const API_BASE_URL = getApiBaseUrl();
 
 // Types
 export interface KycDetails {
-  firstName: string | null;
-  middleName: string | null;
-  lastName: string | null;
-  dateOfBirth: string | null;
+  pan: string | null;
+  panName: string | null;
+  aadhaarLast4: string | null;
+  aadhaarName: string | null;
+  aadhaarDob: string | null;
+  aadhaarGender: string | null;
   street1: string | null;
   street2: string | null;
   city: string | null;
@@ -18,8 +21,9 @@ export interface KycDetails {
   postalCode: string | null;
   country: string | null;
   status: 'PENDING' | 'SUBMITTED' | 'APPROVED' | 'REJECTED';
-  veriffStatus: string | null;
-  veriffReason: string | null;
+  rejectionReason: string | null;
+  panAadhaarLinked: boolean | null;
+  currentStep: number;
 }
 
 export type AppMode = 'LEARNER' | 'INVESTOR';

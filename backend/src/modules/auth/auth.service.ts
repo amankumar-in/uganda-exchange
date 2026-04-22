@@ -8,6 +8,14 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import * as bcrypt from 'bcrypt';
 
+function splitFullName(primary?: string | null, fallback?: string | null): { firstName: string | null; lastName: string | null } {
+  const name = (primary || fallback || '').trim();
+  if (!name) return { firstName: null, lastName: null };
+  const parts = name.split(/\s+/);
+  if (parts.length === 1) return { firstName: parts[0], lastName: null };
+  return { firstName: parts[0], lastName: parts.slice(1).join(' ') };
+}
+
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
@@ -167,8 +175,8 @@ export class AuthService {
       include: {
         kyc: {
           select: {
-            firstName: true,
-            lastName: true,
+            aadhaarName: true,
+            panName: true,
           },
         },
       },
@@ -213,8 +221,8 @@ export class AuthService {
         role: user.role,
         emailVerified: user.emailVerified,
         phoneVerified: user.phoneVerified,
-        firstName: user.kyc?.firstName || null,
-        lastName: user.kyc?.lastName || null,
+        firstName: splitFullName(user.kyc?.aadhaarName, user.kyc?.panName).firstName,
+        lastName: splitFullName(user.kyc?.aadhaarName, user.kyc?.panName).lastName,
       },
     };
   }
@@ -239,8 +247,8 @@ export class AuthService {
         createdAt: true,
         kyc: {
           select: {
-            firstName: true,
-            lastName: true,
+            aadhaarName: true,
+            panName: true,
           },
         },
       },
@@ -251,10 +259,11 @@ export class AuthService {
     }
 
     // Flatten kyc name fields into user object for convenience
+    const { firstName, lastName } = splitFullName(user.kyc?.aadhaarName, user.kyc?.panName);
     return {
       ...user,
-      firstName: user.kyc?.firstName || null,
-      lastName: user.kyc?.lastName || null,
+      firstName,
+      lastName,
       kyc: undefined, // Remove nested kyc object
     };
   }

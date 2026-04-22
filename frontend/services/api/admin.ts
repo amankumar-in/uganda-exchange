@@ -3,7 +3,8 @@
  * Handles all admin-related API calls
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+import { getApiBaseUrl } from './config';
+const API_BASE_URL = getApiBaseUrl();
 
 // ============================================
 // TYPES
@@ -28,21 +29,36 @@ export interface AdminUser {
 
 export interface AdminUserKyc {
   id: string;
-  firstName: string | null;
-  middleName: string | null;
-  lastName: string | null;
-  dateOfBirth: string | null;
+  consentedAt: string | null;
+  pan: string | null;
+  panName: string | null;
+  panDob: string | null;
+  panStatus: string | null;
+  panNameMatch: boolean | null;
+  panDobMatch: boolean | null;
+  panAadhaarSeeding: string | null;
+  panVerifiedAt: string | null;
+  aadhaarLast4: string | null;
+  aadhaarName: string | null;
+  aadhaarDob: string | null;
+  aadhaarYob: string | null;
+  aadhaarGender: string | null;
+  aadhaarCareOf: string | null;
+  aadhaarPhotoUrl: string | null;
+  aadhaarVerifiedAt: string | null;
+  panAadhaarLinked: boolean | null;
   street1: string | null;
   street2: string | null;
   city: string | null;
   region: string | null;
   postalCode: string | null;
   country: string | null;
+  selfieUrl: string | null;
+  selfieUploadedAt: string | null;
   currentStep: number;
   status: string;
-  veriffSessionId: string | null;
-  veriffStatus: string | null;
-  veriffReason: string | null;
+  rejectionReason: string | null;
+  autoDecidedAt: string | null;
   reviewNotes: string | null;
   reviewedAt: string | null;
   reviewedBy: string | null;

@@ -3,7 +3,8 @@
  * Handles all balance-related API calls
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+import { getApiBaseUrl } from './config';
+const API_BASE_URL = getApiBaseUrl();
 
 export interface Balance {
   asset: string;

@@ -4,7 +4,8 @@
  * has been removed and all endpoints here talk to the internal /orders backend.
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+import { getApiBaseUrl } from './config';
+const API_BASE_URL = getApiBaseUrl();
 
 // Types shared with the exchange UI
 export interface CoinbaseCandle {

@@ -3,7 +3,8 @@
  * Provides rich token metadata including descriptions, market data, and links
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+import { getApiBaseUrl } from './config';
+const API_BASE_URL = getApiBaseUrl();
 
 // Types
 export interface TokenMarketData {

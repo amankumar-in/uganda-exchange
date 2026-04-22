@@ -39,7 +39,8 @@ const { Text } = Typography;
 
 type IconSourceType = 'upload' | 'url' | 'media';
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api').replace(/\/api$/, '');
+import { getBackendRootUrl } from '@/services/api/config';
+const API_BASE = getBackendRootUrl();
 
 function getFullMediaUrl(url: string): string {
   if (url.startsWith('http://') || url.startsWith('https://')) return url;

@@ -25,7 +25,8 @@ const { Text, Title } = Typography;
 const { useToken } = theme;
 const { useBreakpoint } = Grid;
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+import { getApiBaseUrl } from '@/services/api/config';
+const API_BASE_URL = getApiBaseUrl();
 
 export default function BridgeAuthorizePage() {
   const router = useRouter();

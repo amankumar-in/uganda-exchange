@@ -56,7 +56,6 @@ import {
   type AppMode,
 } from '@/services/api/settings';
 import { resetLearnerAccount } from '@/services/api/learner';
-import { checkVeriffDecision } from '@/services/api/onboarding';
 import OTPInput from '@/components/auth/OTPInput';
 import dayjs from 'dayjs';
 import { Country, State } from 'country-state-city';
@@ -136,6 +135,20 @@ const SettingsPage: NextPageWithLayout = () => {
     }
   }, [user, authLoading, router]);
 
+  // Scroll to a specific settings section when the URL has a hash (e.g. /settings#trading).
+  // We wait a tick so the Collapse has rendered before measuring.
+  useEffect(() => {
+    if (!mounted || loading) return;
+    const hash = router.asPath.includes('#') ? router.asPath.split('#')[1] : '';
+    if (!hash) return;
+    const id = `settings-section-${hash}`;
+    const timer = setTimeout(() => {
+      const el = document.getElementById(id);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 120);
+    return () => clearTimeout(timer);
+  }, [mounted, loading, router.asPath]);
+
   useEffect(() => {
     if (resendCooldown > 0) {
       const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
@@ -149,16 +162,7 @@ const SettingsPage: NextPageWithLayout = () => {
     try {
       const settingsData = await getUserSettings();
 
-      if (settingsData.kycStatus === 'PENDING' || settingsData.kycStatus === 'SUBMITTED') {
-        try {
-          const decision = await checkVeriffDecision();
-          if (decision.status !== settingsData.kycStatus) {
-            settingsData.kycStatus = decision.status;
-          }
-        } catch {
-          // Ignore
-        }
-      }
+      // KYC decision is synchronous now (Sandbox REST). Backend kycStatus is authoritative.
 
       setSettings(settingsData);
       setBankAccounts([]);
@@ -359,11 +363,13 @@ const SettingsPage: NextPageWithLayout = () => {
   // KYC items for Descriptions
   const kycItems = settings?.kyc ? [
     { 
-      key: 'name', 
-      label: 'Full Name', 
-      children: [settings.kyc.firstName, settings.kyc.middleName, settings.kyc.lastName].filter(Boolean).join(' ') || '—' 
+      key: 'name',
+      label: 'Full Name',
+      children: settings.kyc.aadhaarName || settings.kyc.panName || '—'
     },
-    { key: 'dob', label: 'Date of Birth', children: formatDate(settings.kyc.dateOfBirth) },
+    { key: 'dob', label: 'Date of Birth', children: formatDate(settings.kyc.aadhaarDob) },
+    { key: 'pan', label: 'PAN', children: settings.kyc.pan ? `${settings.kyc.pan.slice(0, 2)}XXXX${settings.kyc.pan.slice(-2)}` : '—' },
+    { key: 'aadhaar', label: 'Aadhaar', children: settings.kyc.aadhaarLast4 ? `XXXX XXXX ${settings.kyc.aadhaarLast4}` : '—' },
     { 
       key: 'address', 
       label: 'Address', 
@@ -407,20 +413,20 @@ const SettingsPage: NextPageWithLayout = () => {
     {
       key: 'trading',
       label: (
-        <Flex align="center" gap={token.marginSM}>
-          <Avatar 
-            size={32} 
-            icon={appMode === 'investor' ? <RocketOutlined /> : <ExperimentOutlined />} 
-            style={{ 
-              background: appMode === 'investor' 
-                ? 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)' 
+        <Flex align="center" gap={token.marginSM} id="settings-section-trading" style={{ scrollMarginTop: 80 }}>
+          <Avatar
+            size={32}
+            icon={appMode === 'investor' ? <RocketOutlined /> : <ExperimentOutlined />}
+            style={{
+              background: appMode === 'investor'
+                ? 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)'
                 : 'linear-gradient(135deg, #F59E0B 0%, #F97316 100%)',
-            }} 
+            }}
           />
           <div>
             <Text strong>Trading Mode</Text>
-            <Tag 
-              color={appMode === 'investor' ? 'success' : 'warning'} 
+            <Tag
+              color={appMode === 'investor' ? 'success' : 'warning'}
               style={{ margin: 0, marginLeft: 8 }}
             >
               {appMode === 'investor' ? 'Investor' : 'Learner'}

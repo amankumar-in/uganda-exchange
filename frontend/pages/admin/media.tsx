@@ -38,7 +38,8 @@ function formatFileSize(bytes: number): string {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api').replace(/\/api$/, '');
+import { getBackendRootUrl } from '@/services/api/config';
+const API_BASE = getBackendRootUrl();
 
 function getFullUrl(url: string): string {
   if (url.startsWith('http://') || url.startsWith('https://')) return url;

@@ -21,7 +21,8 @@ import { Token } from '@/types/token';
 import { useAuth } from '@/context/AuthContext';
 
 // API base URL for resolving upload paths
-const API_BASE = process.env.NEXT_PUBLIC_API_URL?.replace(/\/api$/, '') || 'http://localhost:8000';
+import { getBackendRootUrl, getWsUrl } from '@/services/api/config';
+const API_BASE = getBackendRootUrl();
 
 // Helper to resolve upload URLs (prepend API base for /api/ paths)
 const resolveUploadUrl = (url: string | null | undefined): string => {
@@ -34,11 +35,8 @@ const resolveUploadUrl = (url: string | null | undefined): string => {
   return url;
 };
 
-// WebSocket URL - use environment variable or default to localhost
-// Only connect if explicitly configured or in development
-const WS_URL = typeof window !== 'undefined' 
-  ? (process.env.NEXT_PUBLIC_WS_URL || (process.env.NODE_ENV === 'development' ? 'http://localhost:8000' : null))
-  : null;
+// WebSocket URL derived from env or the current window host (see services/api/config.ts)
+const WS_URL = typeof window !== 'undefined' ? getWsUrl() : null;
 
 interface PriceUpdate {
   product_id: string;

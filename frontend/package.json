@@ -10,7 +10,6 @@
     "analyze": "ANALYZE=true next build --webpack"
   },
   "dependencies": {
-    "@veriff/js-sdk": "^2.0.0",
     "antd": "^6.1.0",
     "country-state-city": "^3.2.1",
     "dayjs": "^1.11.19",

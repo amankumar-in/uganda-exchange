@@ -8,7 +8,15 @@ import {
   UpdateStateDto,
 } from './dto/kyc-restrictions.dto';
 
-export type KycRejectionType = 'STATE_MISMATCH' | 'RESTRICTED_STATE' | 'RESTRICTED_COUNTRY' | 'COUNTRY_MISMATCH';
+export type KycRejectionType =
+  | 'STATE_MISMATCH'
+  | 'RESTRICTED_STATE'
+  | 'RESTRICTED_COUNTRY'
+  | 'COUNTRY_MISMATCH'
+  | 'PAN_INVALID'
+  | 'PAN_NAME_MISMATCH'
+  | 'AADHAAR_FAIL'
+  | 'NAME_MISMATCH';
 
 interface CreateRejectionLogDto {
   rejectionType: KycRejectionType;
@@ -17,7 +25,7 @@ interface CreateRejectionLogDto {
   documentCountry?: string;
   documentState?: string;
   reason: string;
-  veriffSessionId?: string;
+  providerRefId?: string;
 }
 
 @Injectable()
@@ -319,7 +327,7 @@ export class KycRestrictionsService {
         documentCountry: data.documentCountry,
         documentState: data.documentState,
         reason: data.reason,
-        veriffSessionId: data.veriffSessionId,
+        providerRefId: data.providerRefId,
       },
     });
   }

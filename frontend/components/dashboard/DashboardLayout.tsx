@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import Image from 'next/image';
-import { theme, Grid, Button, Dropdown, Tooltip } from 'antd';
+import { theme, Grid, Button, Dropdown, Tooltip, Popover } from 'antd';
 import type { MenuProps } from 'antd';
 import {
   AppstoreOutlined,
@@ -1030,21 +1030,35 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             </>
           )}
           
-          {/* Learner Mode Badge with Tooltip */}
+          {/* Learner Mode Badge with Popover */}
           {mounted && isLearnerMode && (
-            <Tooltip
-              title={
-                <div style={{ padding: '4px 0' }}>
-                  <div style={{ fontWeight: 600, marginBottom: 4 }}>🎓 Learning Mode</div>
-                  <div style={{ fontSize: 12, opacity: 0.9 }}>
-                    Practice trading with ₹1,00,000 virtual balance.
-                    <br />
-                    Switch to Investor in Settings when ready.
+            <Popover
+              placement="bottom"
+              trigger={['hover', 'click']}
+              content={
+                <div style={{ maxWidth: 260 }}>
+                  <div style={{ fontWeight: fontWeights.semibold, marginBottom: token.marginXS, color: token.colorText }}>
+                    🎓 Learner Mode
                   </div>
+                  <div style={{ fontSize: token.fontSizeSM, color: token.colorTextSecondary, lineHeight: 1.5, marginBottom: token.marginMD }}>
+                    You&apos;re practising with ₹1,00,000 virtual balance. Trades are simulated — no real money
+                    moves. Switch to Investor Mode to start trading with your own funds.
+                  </div>
+                  <Button
+                    type="primary"
+                    size="small"
+                    block
+                    onClick={() => router.push('/settings#trading')}
+                    style={{
+                      background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+                      border: 'none',
+                      fontWeight: fontWeights.semibold,
+                    }}
+                  >
+                    Switch to Investor Mode
+                  </Button>
                 </div>
               }
-              placement="bottom"
-              color={isDark ? '#92400E' : '#D97706'}
             >
               <div
                 style={{
@@ -1053,16 +1067,16 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                   justifyContent: 'center',
                   gap: isMobile ? 4 : token.marginXS,
                   height: token.controlHeight - 4,
-                  background: isDark 
+                  background: isDark
                     ? 'linear-gradient(135deg, #92400E 0%, #B45309 100%)'
                     : 'linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%)',
                   borderRadius: token.borderRadius,
                   padding: isMobile ? '0 10px' : `0 ${token.paddingSM}px`,
                   marginLeft: isMobile ? 0 : token.marginSM,
-                  boxShadow: isDark 
+                  boxShadow: isDark
                     ? '0 2px 6px rgba(146, 64, 14, 0.25)'
                     : '0 2px 6px rgba(245, 158, 11, 0.2)',
-                  cursor: 'help',
+                  cursor: 'pointer',
                 }}
               >
                 <span style={{ fontSize: isMobile ? 11 : 13, lineHeight: 1 }}>🎓</span>
@@ -1073,12 +1087,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                     color: isDark ? '#FEF3C7' : '#78350F',
                     letterSpacing: '0.01em',
                     lineHeight: 1,
+                    whiteSpace: 'nowrap',
                   }}
                 >
-                  Learner
+                  Learner Mode
                 </span>
               </div>
-            </Tooltip>
+            </Popover>
           )}
         </div>
 

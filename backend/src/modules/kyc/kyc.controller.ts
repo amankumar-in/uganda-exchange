@@ -5,107 +5,103 @@ import {
   Body,
   UseGuards,
   Request,
-  Headers,
-  Req,
+  UploadedFile,
+  UseInterceptors,
+  BadRequestException,
 } from '@nestjs/common';
-import type { RawBodyRequest } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { KycService } from './kyc.service';
-import { PersonalDetailsDto } from './dto/personal-details.dto';
-import { AddressDto } from './dto/address.dto';
+import { KycService, KYC_UPLOADS_DIR } from './kyc.service';
+import { ConsentDto } from './dto/consent.dto';
+import { PanVerifyDto } from './dto/pan-verify.dto';
+import { AadhaarRequestOtpDto } from './dto/aadhaar-request-otp.dto';
+import { AadhaarVerifyOtpDto } from './dto/aadhaar-verify-otp.dto';
+import { AddressConfirmDto } from './dto/address-confirm.dto';
 
 interface AuthRequest extends Request {
-  user: {
-    id: string;
-    email: string;
-  };
+  user: { id: string; email: string };
 }
+
+const ALLOWED_SELFIE_MIME = ['image/jpeg', 'image/png', 'image/webp'];
+const MAX_SELFIE_BYTES = 5 * 1024 * 1024; // 5 MB
 
 @Controller('onboarding')
 export class KycController {
-  constructor(private kycService: KycService) {}
+  constructor(private kyc: KycService) {}
 
-  /**
-   * Get current KYC status
-   */
   @Get('status')
   @UseGuards(JwtAuthGuard)
   async getStatus(@Request() req: AuthRequest) {
-    return this.kycService.getKycStatus(req.user.id);
+    return this.kyc.getKycStatus(req.user.id);
   }
 
-  /**
-   * Get full KYC details
-   */
   @Get('details')
   @UseGuards(JwtAuthGuard)
   async getDetails(@Request() req: AuthRequest) {
-    return this.kycService.getKycDetails(req.user.id);
+    return this.kyc.getKycDetails(req.user.id);
   }
 
-  /**
-   * Save personal details (Step 1)
-   */
-  @Post('personal')
+  @Post('consent')
   @UseGuards(JwtAuthGuard)
-  async savePersonalDetails(
-    @Request() req: AuthRequest,
-    @Body() dto: PersonalDetailsDto,
-  ) {
-    return this.kycService.savePersonalDetails(req.user.id, dto);
+  async saveConsent(@Request() req: AuthRequest, @Body() _dto: ConsentDto) {
+    return this.kyc.saveConsent(req.user.id);
   }
 
-  /**
-   * Save address (Step 2)
-   */
+  @Post('pan/verify')
+  @UseGuards(JwtAuthGuard)
+  async verifyPan(@Request() req: AuthRequest, @Body() dto: PanVerifyDto) {
+    return this.kyc.verifyPan(req.user.id, dto);
+  }
+
+  @Post('aadhaar/otp/request')
+  @UseGuards(JwtAuthGuard)
+  async aadhaarRequestOtp(@Request() req: AuthRequest, @Body() dto: AadhaarRequestOtpDto) {
+    return this.kyc.aadhaarRequestOtp(req.user.id, dto);
+  }
+
+  @Post('aadhaar/otp/verify')
+  @UseGuards(JwtAuthGuard)
+  async aadhaarVerifyOtp(@Request() req: AuthRequest, @Body() dto: AadhaarVerifyOtpDto) {
+    return this.kyc.aadhaarVerifyOtp(req.user.id, dto);
+  }
+
   @Post('address')
   @UseGuards(JwtAuthGuard)
-  async saveAddress(@Request() req: AuthRequest, @Body() dto: AddressDto) {
-    return this.kycService.saveAddress(req.user.id, dto);
+  async confirmAddress(@Request() req: AuthRequest, @Body() dto: AddressConfirmDto) {
+    return this.kyc.confirmAddress(req.user.id, dto);
   }
 
-  /**
-   * Create Veriff session (Step 3)
-   */
-  @Post('veriff/session')
+  @Post('selfie')
   @UseGuards(JwtAuthGuard)
-  async createVeriffSession(@Request() req: AuthRequest) {
-    return this.kycService.createVeriffSession(req.user.id);
+  @UseInterceptors(
+    FileInterceptor('selfie', {
+      storage: diskStorage({
+        destination: KYC_UPLOADS_DIR,
+        filename: (req, file, cb) => {
+          const userId = (req as unknown as AuthRequest).user?.id || 'unknown';
+          const ext = extname(file.originalname || '.jpg').toLowerCase() || '.jpg';
+          cb(null, `selfie-${userId}-${Date.now()}${ext}`);
+        },
+      }),
+      limits: { fileSize: MAX_SELFIE_BYTES },
+      fileFilter: (_req, file, cb) => {
+        if (!ALLOWED_SELFIE_MIME.includes(file.mimetype)) {
+          cb(new BadRequestException('Only JPG, PNG, or WebP images are allowed'), false);
+          return;
+        }
+        cb(null, true);
+      },
+    }),
+  )
+  async uploadSelfie(@Request() req: AuthRequest, @UploadedFile() file: Express.Multer.File) {
+    return this.kyc.uploadSelfie(req.user.id, file);
   }
 
-  /**
-   * Check Veriff decision (polling fallback)
-   */
-  @Get('veriff/decision')
+  @Post('reset')
   @UseGuards(JwtAuthGuard)
-  async checkVeriffDecision(@Request() req: AuthRequest) {
-    return this.kycService.checkVeriffDecision(req.user.id);
-  }
-
-  /**
-   * Veriff webhook handler
-   * Note: This endpoint should NOT have auth guard - Veriff calls it
-   */
-  @Post('veriff/webhook')
-  async handleVeriffWebhook(
-    @Req() req: RawBodyRequest<Request>,
-    @Headers('x-hmac-signature') signature: string,
-    @Body() payload: unknown,
-  ) {
-    // Raw body is required for HMAC signature verification
-    const rawBodyBuffer = req.rawBody as Buffer;
-
-    if (!rawBodyBuffer) {
-      console.error('[Veriff Webhook] Missing raw body - signature verification will fail');
-      console.error('[Veriff Webhook] req.rawBody type:', typeof req.rawBody);
-      console.error('[Veriff Webhook] Headers:', JSON.stringify(req.headers, null, 2));
-      throw new Error('Missing raw body for webhook signature verification');
-    }
-
-    const rawBody = rawBodyBuffer.toString('utf8');
-    console.log(`[Veriff Webhook] Received webhook, signature: ${signature?.substring(0, 16)}...`);
-
-    return this.kycService.handleVeriffWebhook(payload, signature, rawBody);
+  async reset(@Request() req: AuthRequest) {
+    return this.kyc.resetForRetry(req.user.id);
   }
 }
-

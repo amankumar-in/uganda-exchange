@@ -98,37 +98,60 @@ model Kyc {
   userId String @unique
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // Personal Details
-  firstName   String?
-  middleName  String?
-  lastName    String?
-  dateOfBirth DateTime?
+  // Consent (Step 1)
+  consentedAt DateTime?
 
-  // Address
+  // PAN (Step 2) — Sandbox /kyc/pan/verify
+  pan               String?   // PAN number (upper)
+  panName           String?   // Name as per PAN (authoritative from NSDL)
+  panDob            DateTime? // DOB user submitted (verified by Sandbox)
+  panStatus         String?   // valid / invalid / not_found etc.
+  panNameMatch      Boolean?  // Did user-submitted name match PAN records
+  panDobMatch       Boolean?  // Did user-submitted DOB match PAN records
+  panAadhaarSeeding String?   // linked / not_linked from PAN verify
+  panVerifiedAt     DateTime?
+  panRawData        Json?     // Full Sandbox response for audit
+
+  // Aadhaar (Steps 3-4) — Sandbox /kyc/aadhaar/okyc
+  aadhaarLast4      String?   // Only last 4 stored for display (compliance)
+  aadhaarRefId      String?   // reference_id from OTP-gen; cleared after OTP verify
+  aadhaarOtpSentAt  DateTime?
+  aadhaarVerifiedAt DateTime?
+  aadhaarName       String?   // Name as per Aadhaar (UIDAI-authoritative)
+  aadhaarDob        DateTime?
+  aadhaarYob        String?   // Year of birth (when DOB not available)
+  aadhaarGender     String?
+  aadhaarCareOf     String?
+  aadhaarPhotoPath  String?   // local path under uploads/kyc/
+  aadhaarRawData    Json?     // Full Sandbox response (photo base64 stripped)
+
+  // Address (Step 5) — prefilled from Aadhaar, user can edit flat/apt
   street1    String?
   street2    String?
   city       String?
-  region     String?
-  postalCode String?
-  country    String?
+  region     String?    // Indian state name
+  postalCode String?    // pincode
+  country    String?    // "IN"
 
-  // Veriff Integration
-  veriffSessionId    String?   @unique
-  veriffAttemptId    String?
-  veriffDecisionTime DateTime?
-  veriffStatus       String? // approved, declined, resubmission_requested, expired, abandoned
-  veriffReason       String? // Decline reason if applicable
+  // Selfie (Step 6)
+  selfiePath       String?
+  selfieUploadedAt DateTime?
 
-  // Document data extracted from Veriff
-  documentCountry  String?  // ISO 3166 country code from document
-  documentState    String?  // ISO 3166-2 subdivision code from document
-  documentType     String?  // DRIVERS_LICENSE, ID_CARD, PASSPORT, etc.
-  stateValidated   Boolean  @default(false)
+  // PAN <-> Aadhaar linkage (computed after Aadhaar verify)
+  panAadhaarLinked   Boolean?
+  panAadhaarLinkedAt DateTime?
+
+  // Decision
+  status          KycStatus @default(PENDING)
+  rejectionReason String?
+  autoDecidedAt   DateTime?
 
   // Onboarding Progress
-  currentStep Int @default(0) // 0: welcome, 1: personal, 2: address, 3: verify, 4: complete
+  // 0: intro, 1: consented, 2: pan verified, 3: aadhaar# submitted (OTP sent),
+  // 4: aadhaar verified, 5: address confirmed, 6: selfie uploaded, 7: done
+  currentStep Int @default(0)
 
-  status      KycStatus @default(PENDING)
+  // Admin manual override
   reviewNotes String?
   reviewedAt  DateTime?
   reviewedBy  String?
@@ -175,13 +198,13 @@ model KycRejectionLog {
   id                   String   @id @default(uuid())
   kycId                String
   userId               String
-  rejectionType        String   // STATE_MISMATCH, RESTRICTED_STATE, RESTRICTED_COUNTRY, COUNTRY_MISMATCH
+  rejectionType        String   // PAN_INVALID, PAN_NAME_MISMATCH, AADHAAR_FAIL, NAME_MISMATCH, RESTRICTED_STATE, RESTRICTED_COUNTRY
   userProvidedCountry  String?
   userProvidedState    String?
   documentCountry      String?
   documentState        String?
   reason               String
-  veriffSessionId      String?
+  providerRefId        String?  // Sandbox reference id or equivalent
   createdAt            DateTime @default(now())
 
   @@index([userId])

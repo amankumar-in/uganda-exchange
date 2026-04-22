@@ -41,7 +41,7 @@ const warmColors = {
 const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
   children,
   currentStep,
-  totalSteps = 4,
+  totalSteps = 6, // 0..6 → 7 screens total (intro, pan, aadhaar#, otp, address, selfie, status)
   title,
   subtitle,
   showBack = false,

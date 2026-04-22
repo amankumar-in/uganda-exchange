@@ -1,7 +1,8 @@
 
 import { Token, CreateTokenDto, UpdateTokenDto, GlobalAssetSettings } from '../../types/token';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+import { getApiBaseUrl } from './config';
+const API_BASE_URL = getApiBaseUrl();
 
 function getAuthHeaders(): Record<string, string> {
   const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;

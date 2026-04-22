@@ -34,27 +34,29 @@ const RequireKyc: React.FC<RequireKycProps> = ({ children, fallback }) => {
       return;
     }
 
-    // Check KYC status
+    // Check KYC status and redirect to the appropriate onboarding step
     const checkKyc = async () => {
       try {
         const status = await getKycStatus();
-        
+
         if (status.status === 'APPROVED') {
           setKycApproved(true);
-        } else {
-          // Redirect to appropriate onboarding step
-          if (status.currentStep === 0 || !status.hasPersonalDetails) {
-            router.push('/onboarding');
-          } else if (!status.hasAddress) {
-            router.push('/onboarding/address');
-          } else if (!status.hasVeriffSession) {
-            router.push('/onboarding/verify');
-          } else {
-            router.push('/onboarding/status');
-          }
+          return;
         }
+
+        if (status.status === 'REJECTED') {
+          router.push('/onboarding/status');
+          return;
+        }
+
+        if (!status.hasConsent) router.push('/onboarding');
+        else if (!status.hasPan) router.push('/onboarding/pan');
+        else if (!status.hasAadhaar && !status.hasAadhaarRefId) router.push('/onboarding/aadhaar');
+        else if (!status.hasAadhaar && status.hasAadhaarRefId) router.push('/onboarding/otp');
+        else if (!status.hasAddress) router.push('/onboarding/address');
+        else if (!status.hasSelfie) router.push('/onboarding/selfie');
+        else router.push('/onboarding/status');
       } catch {
-        // If API fails, redirect to onboarding start
         router.push('/onboarding');
       } finally {
         setChecking(false);

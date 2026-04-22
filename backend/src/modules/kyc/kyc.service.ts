@@ -1,26 +1,47 @@
 import {
   Injectable,
-  NotFoundException,
   BadRequestException,
+  NotFoundException,
   Logger,
 } from '@nestjs/common';
+import { promises as fs } from 'fs';
+import { join } from 'path';
 import { PrismaService } from '../../prisma.service';
-import { VeriffService } from './veriff.service';
+import { SandboxKycService } from './sandbox-kyc.service';
 import {
   KycRestrictionsService,
   KycRejectionType,
 } from './kyc-restrictions.service';
-import { PersonalDetailsDto } from './dto/personal-details.dto';
-import { AddressDto } from './dto/address.dto';
-import { KycStatus, Kyc } from '@prisma/client';
+import { PanVerifyDto } from './dto/pan-verify.dto';
+import { AadhaarRequestOtpDto } from './dto/aadhaar-request-otp.dto';
+import { AadhaarVerifyOtpDto } from './dto/aadhaar-verify-otp.dto';
+import { AddressConfirmDto } from './dto/address-confirm.dto';
 
-interface StateValidationResult {
-  valid: boolean;
-  rejectionType?: KycRejectionType;
-  reason?: string;
-  documentCountry?: string | null;
-  documentState?: string | null;
-  documentType?: string | null;
+export const KYC_UPLOADS_DIR = join(process.cwd(), 'uploads', 'kyc');
+const PAN_AADHAAR_REASON = 'KYC verification for crypto exchange account onboarding';
+
+// Normalize name for fuzzy matching: lowercase, collapse whitespace, strip punctuation
+function normalizeName(name: string | null | undefined): string {
+  if (!name) return '';
+  return name
+    .toLowerCase()
+    .replace(/[^a-z\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+// Check if two names "match" — one contains all tokens of the other or vice versa
+function namesMatch(a: string | null | undefined, b: string | null | undefined): boolean {
+  const na = normalizeName(a);
+  const nb = normalizeName(b);
+  if (!na || !nb) return false;
+  if (na === nb) return true;
+  const ta = na.split(' ').filter(Boolean);
+  const tb = nb.split(' ').filter(Boolean);
+  if (ta.length === 0 || tb.length === 0) return false;
+  // Every token of the shorter name must appear in the longer name
+  const [short, long] = ta.length <= tb.length ? [ta, tb] : [tb, ta];
+  return short.every((t) => long.includes(t));
 }
 
 @Injectable()
@@ -29,696 +50,66 @@ export class KycService {
 
   constructor(
     private prisma: PrismaService,
-    private veriffService: VeriffService,
-    private kycRestrictionsService: KycRestrictionsService,
+    private sandbox: SandboxKycService,
+    private restrictions: KycRestrictionsService,
   ) {}
 
-  /**
-   * Get or create KYC record for user
-   */
   async getOrCreateKyc(userId: string) {
-    let kyc = await this.prisma.client.kyc.findUnique({
-      where: { userId },
-    });
-
+    let kyc = await this.prisma.client.kyc.findUnique({ where: { userId } });
     if (!kyc) {
       kyc = await this.prisma.client.kyc.create({
-        data: {
-          userId,
-          currentStep: 0,
-        },
+        data: { userId, currentStep: 0 },
       });
     }
-
     return kyc;
   }
 
-  /**
-   * Get KYC status for user
-   */
   async getKycStatus(userId: string) {
     const kyc = await this.getOrCreateKyc(userId);
     const user = await this.prisma.client.user.findUnique({
       where: { id: userId },
       select: { kycStatus: true },
     });
-
     return {
       currentStep: kyc.currentStep,
       status: user?.kycStatus || 'PENDING',
-      veriffStatus: kyc.veriffStatus,
-      veriffReason: kyc.veriffReason,
-      hasPersonalDetails: !!(kyc.firstName && kyc.lastName && kyc.dateOfBirth),
-      hasAddress: !!(
-        kyc.street1 &&
-        kyc.city &&
-        kyc.region &&
-        kyc.postalCode &&
-        kyc.country
-      ),
-      hasVeriffSession: !!kyc.veriffSessionId,
+      hasConsent: !!kyc.consentedAt,
+      hasPan: !!kyc.panVerifiedAt,
+      hasAadhaar: !!kyc.aadhaarVerifiedAt,
+      hasAadhaarRefId: !!kyc.aadhaarRefId,
+      hasAddress: !!(kyc.street1 && kyc.city && kyc.region && kyc.postalCode && kyc.country),
+      hasSelfie: !!kyc.selfiePath,
+      rejectionReason: kyc.rejectionReason || null,
+      // Masked Aadhaar last4 for display ("XXXX XXXX 1234")
+      aadhaarLast4: kyc.aadhaarLast4 || null,
+      panMasked: kyc.pan ? kyc.pan.slice(0, 2) + 'XXXX' + kyc.pan.slice(-2) : null,
     };
   }
 
-  /**
-   * Save personal details (Step 1)
-   */
-  async savePersonalDetails(userId: string, dto: PersonalDetailsDto) {
-    const kyc = await this.getOrCreateKyc(userId);
-
-    const updated = await this.prisma.client.kyc.update({
-      where: { id: kyc.id },
-      data: {
-        firstName: dto.firstName,
-        middleName: dto.middleName || null,
-        lastName: dto.lastName,
-        dateOfBirth: new Date(dto.dateOfBirth),
-        currentStep: Math.max(kyc.currentStep, 1),
-      },
-    });
-
-    return {
-      message: 'Personal details saved',
-      currentStep: updated.currentStep,
-    };
-  }
-
-  /**
-   * Save address (Step 2)
-   */
-  async saveAddress(userId: string, dto: AddressDto) {
-    const kyc = await this.getOrCreateKyc(userId);
-
-    // Ensure personal details are completed first
-    if (!kyc.firstName || !kyc.lastName || !kyc.dateOfBirth) {
-      throw new BadRequestException('Please complete personal details first');
-    }
-
-    // Save the address data first (we always want to capture this)
-    const updated = await this.prisma.client.kyc.update({
-      where: { id: kyc.id },
-      data: {
-        street1: dto.street1,
-        street2: dto.street2 || null,
-        city: dto.city,
-        region: dto.region,
-        postalCode: dto.postalCode,
-        country: dto.country,
-        currentStep: Math.max(kyc.currentStep, 2),
-      },
-    });
-
-    // Check geographic restrictions
-    const stateCheck = await this.kycRestrictionsService.isStateAllowed(
-      dto.country,
-      dto.region,
-    );
-
-    if (!stateCheck.allowed) {
-      this.logger.log(
-        `User ${userId} blocked due to geographic restriction: ${stateCheck.reason}`,
-      );
-
-      // Log the rejection
-      await this.kycRestrictionsService.logRejection(kyc.id, userId, {
-        rejectionType: 'RESTRICTED_STATE',
-        userProvidedCountry: dto.country,
-        userProvidedState: dto.region,
-        reason:
-          stateCheck.reason ||
-          `State ${dto.region} is not allowed for verification`,
-      });
-
-      // Update KYC status to reflect the restriction
-      await this.prisma.client.kyc.update({
-        where: { id: kyc.id },
-        data: {
-          status: 'REJECTED',
-          veriffReason:
-            stateCheck.reason ||
-            `State ${dto.region} is not available for verification`,
-        },
-      });
-
-      await this.prisma.client.user.update({
-        where: { id: userId },
-        data: { kycStatus: 'REJECTED' },
-      });
-
-      throw new BadRequestException(
-        `We're not available in ${dto.region} yet, but we're coming to your location very soon! Your information has been saved.`,
-      );
-    }
-
-    return {
-      message: 'Address saved',
-      currentStep: updated.currentStep,
-    };
-  }
-
-  /**
-   * Create Veriff session (Step 3)
-   */
-  async createVeriffSession(userId: string) {
-    const kyc = await this.getOrCreateKyc(userId);
-
-    // Ensure previous steps are completed
-    if (!kyc.firstName || !kyc.lastName || !kyc.dateOfBirth) {
-      throw new BadRequestException('Please complete personal details first');
-    }
-    if (
-      !kyc.street1 ||
-      !kyc.city ||
-      !kyc.region ||
-      !kyc.postalCode ||
-      !kyc.country
-    ) {
-      throw new BadRequestException('Please complete address details first');
-    }
-
-    // Check for existing session that can be reused
-    const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
-    const isStaleSession =
-      kyc.veriffSessionId &&
-      kyc.veriffStatus === 'created' &&
-      kyc.updatedAt < new Date(Date.now() - SESSION_TIMEOUT_MS);
-
-    // If there's an existing non-stale session, return it
-    if (
-      kyc.veriffSessionId &&
-      kyc.veriffStatus === 'created' &&
-      !isStaleSession
-    ) {
-      this.logger.log(
-        `Reusing existing Veriff session for user ${userId}: ${kyc.veriffSessionId}`,
-      );
-      // We don't have the URL stored, so we need to create a new session
-      // But first check if user is just returning - Veriff sessions are valid for a while
-    }
-
-    if (isStaleSession) {
-      this.logger.log(
-        `Clearing stale Veriff session for user ${userId}: ${kyc.veriffSessionId}`,
-      );
-    }
-
-    // Format date of birth for Veriff (YYYY-MM-DD)
-    const dob = kyc.dateOfBirth
-      ? kyc.dateOfBirth.toISOString().split('T')[0]
-      : '';
-
-    // Create new Veriff session
-    const session = await this.veriffService.createSession(
-      userId,
-      kyc.firstName,
-      kyc.lastName,
-      dob,
-    );
-
-    // Save session details but DON'T set status to SUBMITTED yet
-    // Status will be updated when Veriff webhook confirms actual submission
-    await this.prisma.client.kyc.update({
-      where: { id: kyc.id },
-      data: {
-        veriffSessionId: session.verification.id,
-        veriffStatus: 'created',
-        veriffAttemptId: null,
-        veriffReason: null,
-        veriffDecisionTime: null,
-        // Keep status as PENDING until Veriff confirms submission
-        // currentStep stays at 2 until actual submission
-      },
-    });
-
-    // Don't update user status - wait for webhook confirmation
-
-    return {
-      sessionId: session.verification.id,
-      sessionUrl: session.verification.url,
-      sessionToken: session.verification.sessionToken,
-    };
-  }
-
-  /**
-   * Handle Veriff webhook
-   */
-  async handleVeriffWebhook(
-    payload: unknown,
-    signature: string,
-    rawBody: string,
-  ) {
-    // Verify signature
-    if (!this.veriffService.verifyWebhookSignature(rawBody, signature)) {
-      this.logger.warn('Invalid Veriff webhook signature');
-      throw new BadRequestException('Invalid signature');
-    }
-
-    const webhookData = this.veriffService.parseWebhookPayload(payload);
-    const {
-      sessionId,
-      attemptId,
-      status,
-      code,
-      reason,
-      reasonCode,
-      isFullauto,
-    } = webhookData;
-
-    this.logger.log(
-      `Veriff webhook received: session=${sessionId}, status=${status}, code=${code}, isFullauto=${isFullauto}`,
-    );
-
-    // Find KYC by session ID
-    const kyc = await this.prisma.client.kyc.findUnique({
-      where: { veriffSessionId: sessionId },
-    });
-
-    if (!kyc) {
-      this.logger.warn(`KYC not found for Veriff session: ${sessionId}`);
-      return { received: true };
-    }
-
-    // Map Veriff status to our status
-    let kycStatus = this.veriffService.mapVeriffStatusToKycStatus(status, code);
-
-    // Handle session started - user opened Veriff but hasn't submitted yet
-    if (status === 'started') {
-      this.logger.log(`Veriff session started for user ${kyc.userId}`);
-
-      // Just update veriffStatus, don't change KYC status yet
-      await this.prisma.client.kyc.update({
-        where: { id: kyc.id },
-        data: {
-          veriffStatus: status,
-          veriffAttemptId: attemptId,
-        },
-      });
-
-      return { received: true };
-    }
-
-    // Handle session submitted - user has actually completed and submitted documents
-    if (status === 'submitted') {
-      this.logger.log(`Veriff session submitted for user ${kyc.userId}`);
-
-      await this.prisma.client.kyc.update({
-        where: { id: kyc.id },
-        data: {
-          veriffStatus: status,
-          veriffAttemptId: attemptId,
-          status: 'SUBMITTED',
-          currentStep: 3,
-        },
-      });
-
-      await this.prisma.client.user.update({
-        where: { id: kyc.userId },
-        data: { kycStatus: 'SUBMITTED' },
-      });
-
-      return { received: true };
-    }
-
-    // Handle resubmission requested - Veriff wants user to try again
-    if (status === 'resubmission_requested') {
-      this.logger.log(
-        `Veriff resubmission requested for user ${kyc.userId}: ${reason || reasonCode}`,
-      );
-
-      // Reset to allow retry
-      await this.prisma.client.kyc.update({
-        where: { id: kyc.id },
-        data: {
-          veriffStatus: status,
-          veriffAttemptId: attemptId,
-          veriffReason: reason || reasonCode || 'Resubmission requested',
-          veriffSessionId: null, // Clear session to allow new one
-          status: 'PENDING',
-          currentStep: 2, // Back to address step so they can proceed to verify
-        },
-      });
-
-      await this.prisma.client.user.update({
-        where: { id: kyc.userId },
-        data: { kycStatus: 'PENDING' },
-      });
-
-      return { received: true };
-    }
-
-    // Handle retriable rejection codes
-    // 9104 - Document expired
-    // 9151 - Physical document not used (photo of screen)
-    // 9161 - Document damaged or not fully visible
-    const RETRIABLE_CODES = [9104, 9151, 9161];
-    if (code && RETRIABLE_CODES.includes(code)) {
-      this.logger.log(
-        `Veriff retriable rejection for user ${kyc.userId}: code=${code}, reason=${reason || reasonCode}`,
-      );
-
-      // Reset to allow retry
-      await this.prisma.client.kyc.update({
-        where: { id: kyc.id },
-        data: {
-          veriffStatus: status,
-          veriffAttemptId: attemptId,
-          veriffReason:
-            reason ||
-            reasonCode ||
-            `Rejected (code ${code}) - please try again`,
-          veriffSessionId: null, // Clear session to allow new one
-          status: 'PENDING',
-          currentStep: 2,
-        },
-      });
-
-      await this.prisma.client.user.update({
-        where: { id: kyc.userId },
-        data: { kycStatus: 'PENDING' },
-      });
-
-      return { received: true };
-    }
-
-    // For approved decisions, validate state restrictions
-    if (code === 9001) {
-      const decision = await this.veriffService.getDecision(sessionId);
-
-      if (decision) {
-        const validationResult = await this.validateStateRestrictions(
-          kyc,
-          decision,
-        );
-
-        if (!validationResult.valid) {
-          // Log rejection
-          await this.kycRestrictionsService.logRejection(kyc.id, kyc.userId, {
-            rejectionType: validationResult.rejectionType!,
-            userProvidedCountry: kyc.country || undefined,
-            userProvidedState: kyc.region || undefined,
-            documentCountry: validationResult.documentCountry || undefined,
-            documentState: validationResult.documentState || undefined,
-            reason: validationResult.reason!,
-            veriffSessionId: sessionId,
-          });
-
-          // Override to REJECTED
-          kycStatus = 'REJECTED';
-
-          // Update KYC with rejection and document data
-          await this.prisma.client.kyc.update({
-            where: { id: kyc.id },
-            data: {
-              veriffAttemptId: attemptId,
-              veriffStatus: status,
-              veriffReason: validationResult.reason,
-              veriffDecisionTime: webhookData.decisionTime
-                ? new Date(webhookData.decisionTime)
-                : null,
-              documentCountry: validationResult.documentCountry,
-              documentState: validationResult.documentState,
-              documentType: validationResult.documentType,
-              stateValidated: false,
-              status: 'REJECTED',
-            },
-          });
-
-          await this.prisma.client.user.update({
-            where: { id: kyc.userId },
-            data: { kycStatus: 'REJECTED' },
-          });
-
-          this.logger.log(
-            `KYC rejected for user ${kyc.userId}: ${validationResult.reason}`,
-          );
-          return { received: true };
-        }
-
-        // Validation passed - store document data
-        await this.prisma.client.kyc.update({
-          where: { id: kyc.id },
-          data: {
-            veriffAttemptId: attemptId,
-            veriffStatus: status,
-            veriffReason: reason || reasonCode || null,
-            veriffDecisionTime: webhookData.decisionTime
-              ? new Date(webhookData.decisionTime)
-              : null,
-            documentCountry: validationResult.documentCountry,
-            documentState: validationResult.documentState,
-            documentType: validationResult.documentType,
-            stateValidated: true,
-            status: 'APPROVED',
-            currentStep: 4,
-          },
-        });
-
-        await this.prisma.client.user.update({
-          where: { id: kyc.userId },
-          data: { kycStatus: 'APPROVED' },
-        });
-
-        this.logger.log(`KYC approved for user ${kyc.userId}`);
-        return { received: true };
-      }
-    }
-
-    // For non-approved decisions, just update status
-    await this.prisma.client.kyc.update({
-      where: { id: kyc.id },
-      data: {
-        veriffAttemptId: attemptId,
-        veriffStatus: status,
-        veriffReason: reason || reasonCode || null,
-        veriffDecisionTime: webhookData.decisionTime
-          ? new Date(webhookData.decisionTime)
-          : null,
-        status: kycStatus,
-        currentStep: kycStatus === 'APPROVED' ? 4 : kyc.currentStep,
-      },
-    });
-
-    await this.prisma.client.user.update({
-      where: { id: kyc.userId },
-      data: { kycStatus },
-    });
-
-    this.logger.log(`KYC updated for user ${kyc.userId}: status=${kycStatus}`);
-
-    return { received: true };
-  }
-
-  /**
-   * Validate state restrictions against Veriff decision
-   */
-  private async validateStateRestrictions(
-    kyc: Kyc,
-    decision: Awaited<ReturnType<VeriffService['getDecision']>>,
-  ): Promise<StateValidationResult> {
-    if (!decision) {
-      return { valid: true };
-    }
-
-    const location = this.veriffService.extractLocationFromDecision(decision);
-    const documentCountry = location.country;
-    const documentState = location.state;
-    const documentType = this.veriffService.getDocumentType(decision);
-
-    // Check if any restrictions are configured
-    const hasRestrictions = await this.kycRestrictionsService.hasRestrictions();
-    if (!hasRestrictions) {
-      // No restrictions configured = allow all
-      return {
-        valid: true,
-        documentCountry,
-        documentState,
-        documentType,
-      };
-    }
-
-    // 1. Check if country is allowed
-    const countryAllowed = await this.kycRestrictionsService.isCountryAllowed(
-      documentCountry || kyc.country || '',
-    );
-    if (!countryAllowed) {
-      return {
-        valid: false,
-        rejectionType: 'RESTRICTED_COUNTRY',
-        reason: `Country ${documentCountry || kyc.country} is not allowed for verification`,
-        documentCountry,
-        documentState,
-        documentType,
-      };
-    }
-
-    // 2. Check country mismatch (document vs user-provided)
-    if (
-      documentCountry &&
-      kyc.country &&
-      documentCountry.toUpperCase() !== kyc.country.toUpperCase()
-    ) {
-      return {
-        valid: false,
-        rejectionType: 'COUNTRY_MISMATCH',
-        reason: `Document country (${documentCountry}) does not match provided country (${kyc.country})`,
-        documentCountry,
-        documentState,
-        documentType,
-      };
-    }
-
-    // 3. If document has state info, validate it
-    if (documentState) {
-      // Check state mismatch (document vs user-provided)
-      if (
-        kyc.region &&
-        documentState.toUpperCase() !== kyc.region.toUpperCase()
-      ) {
-        return {
-          valid: false,
-          rejectionType: 'STATE_MISMATCH',
-          reason: `Document state (${documentState}) does not match provided state (${kyc.region})`,
-          documentCountry,
-          documentState,
-          documentType,
-        };
-      }
-
-      // Check if state is in allowed list
-      const stateCheck = await this.kycRestrictionsService.isStateAllowed(
-        documentCountry || kyc.country || '',
-        documentState,
-      );
-      if (!stateCheck.allowed) {
-        return {
-          valid: false,
-          rejectionType: 'RESTRICTED_STATE',
-          reason:
-            stateCheck.reason ||
-            `State ${documentState} is not allowed for verification`,
-          documentCountry,
-          documentState,
-          documentType,
-        };
-      }
-    } else {
-      // Document has no state (e.g., passport) - validate user-provided state
-      if (kyc.region && kyc.country) {
-        const stateCheck = await this.kycRestrictionsService.isStateAllowed(
-          kyc.country,
-          kyc.region,
-        );
-        if (!stateCheck.allowed) {
-          return {
-            valid: false,
-            rejectionType: 'RESTRICTED_STATE',
-            reason:
-              stateCheck.reason ||
-              `State ${kyc.region} is not allowed for verification`,
-            documentCountry,
-            documentState,
-            documentType,
-          };
-        }
-      }
-    }
-
-    return {
-      valid: true,
-      documentCountry,
-      documentState,
-      documentType,
-    };
-  }
-
-  /**
-   * Manually check Veriff decision (polling fallback)
-   */
-  async checkVeriffDecision(userId: string) {
-    const kyc = await this.prisma.client.kyc.findUnique({
-      where: { userId },
-    });
-
-    console.log(
-      `[CheckDecision] userId=${userId}, sessionId=${kyc?.veriffSessionId}, dbStatus=${kyc?.status}`,
-    );
-
-    if (!kyc || !kyc.veriffSessionId) {
-      throw new NotFoundException('No active verification session');
-    }
-
-    const decision = await this.veriffService.getDecision(kyc.veriffSessionId);
-
-    console.log(
-      `[CheckDecision] Veriff response:`,
-      decision ? { status: decision.status, code: decision.code } : 'null',
-    );
-
-    if (!decision) {
-      console.log(
-        `[CheckDecision] No decision from Veriff, returning db status: ${kyc.status}`,
-      );
-      return {
-        status: kyc.status || 'PENDING',
-        veriffStatus: kyc.veriffStatus || null,
-        reason: null,
-      };
-    }
-
-    // Update if decision is available
-    const kycStatus = this.veriffService.mapVeriffStatusToKycStatus(
-      decision.status,
-      decision.code,
-    );
-
-    if (kycStatus !== kyc.status) {
-      await this.prisma.client.kyc.update({
-        where: { id: kyc.id },
-        data: {
-          veriffStatus: decision.status,
-          veriffReason: decision.reason || decision.reasonCode || null,
-          veriffDecisionTime: decision.decisionTime
-            ? new Date(decision.decisionTime)
-            : null,
-          status: kycStatus,
-          currentStep: kycStatus === 'APPROVED' ? 4 : kyc.currentStep,
-        },
-      });
-
-      await this.prisma.client.user.update({
-        where: { id: userId },
-        data: { kycStatus },
-      });
-    }
-
-    return {
-      status: kycStatus,
-      veriffStatus: decision.status,
-      reason: decision.reason,
-    };
-  }
-
-  /**
-   * Get full KYC details (for admin or user profile)
-   */
   async getKycDetails(userId: string) {
-    const kyc = await this.prisma.client.kyc.findUnique({
-      where: { userId },
-    });
-
-    if (!kyc) {
-      return null;
-    }
-
+    const kyc = await this.prisma.client.kyc.findUnique({ where: { userId } });
+    if (!kyc) return null;
     return {
       id: kyc.id,
       currentStep: kyc.currentStep,
       status: kyc.status,
-      personalDetails: {
-        firstName: kyc.firstName,
-        middleName: kyc.middleName,
-        lastName: kyc.lastName,
-        dateOfBirth: kyc.dateOfBirth,
+      consent: { consentedAt: kyc.consentedAt },
+      pan: {
+        pan: kyc.pan,
+        panName: kyc.panName,
+        panStatus: kyc.panStatus,
+        panNameMatch: kyc.panNameMatch,
+        panDobMatch: kyc.panDobMatch,
+        panVerifiedAt: kyc.panVerifiedAt,
+      },
+      aadhaar: {
+        aadhaarLast4: kyc.aadhaarLast4,
+        aadhaarName: kyc.aadhaarName,
+        aadhaarDob: kyc.aadhaarDob,
+        aadhaarGender: kyc.aadhaarGender,
+        aadhaarCareOf: kyc.aadhaarCareOf,
+        aadhaarPhotoUrl: kyc.aadhaarPhotoPath ? `/api/uploads/kyc/${kyc.aadhaarPhotoPath}` : null,
+        aadhaarVerifiedAt: kyc.aadhaarVerifiedAt,
       },
       address: {
         street1: kyc.street1,
@@ -728,14 +119,456 @@ export class KycService {
         postalCode: kyc.postalCode,
         country: kyc.country,
       },
-      verification: {
-        sessionId: kyc.veriffSessionId,
-        status: kyc.veriffStatus,
-        reason: kyc.veriffReason,
-        decisionTime: kyc.veriffDecisionTime,
+      selfie: {
+        selfieUrl: kyc.selfiePath ? `/api/uploads/kyc/${kyc.selfiePath}` : null,
+        selfieUploadedAt: kyc.selfieUploadedAt,
       },
+      panAadhaarLinked: kyc.panAadhaarLinked,
+      rejectionReason: kyc.rejectionReason,
+      autoDecidedAt: kyc.autoDecidedAt,
       createdAt: kyc.createdAt,
       updatedAt: kyc.updatedAt,
     };
   }
+
+  // ============================================
+  // Step 1: Consent
+  // ============================================
+  async saveConsent(userId: string) {
+    const kyc = await this.getOrCreateKyc(userId);
+    await this.prisma.client.kyc.update({
+      where: { id: kyc.id },
+      data: {
+        consentedAt: new Date(),
+        currentStep: Math.max(kyc.currentStep, 1),
+      },
+    });
+    return { message: 'Consent recorded', currentStep: 1 };
+  }
+
+  // ============================================
+  // Step 2: PAN verify
+  // ============================================
+  async verifyPan(userId: string, dto: PanVerifyDto) {
+    const kyc = await this.getOrCreateKyc(userId);
+
+    if (!kyc.consentedAt) {
+      throw new BadRequestException('Please accept the consent terms first');
+    }
+
+    const pan = dto.pan.toUpperCase();
+
+    // Sandbox PAN verify expects date in DD/MM/YYYY per most of their older endpoints.
+    // Their newer ones accept YYYY-MM-DD. We send DD/MM/YYYY to be safe.
+    const [yyyy, mm, dd] = dto.dateOfBirth.split('-');
+    const dobDdMmYyyy = `${dd}/${mm}/${yyyy}`;
+
+    const result = await this.sandbox.panVerify(pan, dto.nameAsPerPan, dobDdMmYyyy, PAN_AADHAAR_REASON);
+
+    await this.prisma.client.kyc.update({
+      where: { id: kyc.id },
+      data: {
+        pan,
+        panName: result.fullName || dto.nameAsPerPan,
+        panDob: new Date(dto.dateOfBirth),
+        panStatus: result.panStatus,
+        panNameMatch: result.nameMatch,
+        panDobMatch: result.dobMatch,
+        panAadhaarSeeding: result.aadhaarSeedingStatus,
+        panVerifiedAt: new Date(),
+        panRawData: result.raw as object,
+        currentStep: Math.max(kyc.currentStep, 2),
+      },
+    });
+
+    if (!result.valid) {
+      throw new BadRequestException('PAN is not valid. Please check and try again.');
+    }
+    if (result.nameMatch === false) {
+      throw new BadRequestException('The name does not match PAN records');
+    }
+    if (result.dobMatch === false) {
+      throw new BadRequestException('The date of birth does not match PAN records');
+    }
+
+    return {
+      message: 'PAN verified successfully',
+      currentStep: 2,
+      fullName: result.fullName,
+      category: result.category,
+    };
+  }
+
+  // ============================================
+  // Step 3: Aadhaar — request OTP
+  // ============================================
+  async aadhaarRequestOtp(userId: string, dto: AadhaarRequestOtpDto) {
+    const kyc = await this.getOrCreateKyc(userId);
+
+    if (!kyc.panVerifiedAt) {
+      throw new BadRequestException('Please verify your PAN first');
+    }
+
+    const result = await this.sandbox.aadhaarRequestOtp(dto.aadhaarNumber, PAN_AADHAAR_REASON);
+
+    await this.prisma.client.kyc.update({
+      where: { id: kyc.id },
+      data: {
+        aadhaarLast4: dto.aadhaarNumber.slice(-4),
+        aadhaarRefId: result.referenceId,
+        aadhaarOtpSentAt: new Date(),
+        currentStep: Math.max(kyc.currentStep, 3),
+      },
+    });
+
+    return {
+      message: result.message,
+      currentStep: 3,
+    };
+  }
+
+  // ============================================
+  // Step 4: Aadhaar — verify OTP, pull data, run PAN↔Aadhaar link check
+  // ============================================
+  async aadhaarVerifyOtp(userId: string, dto: AadhaarVerifyOtpDto) {
+    const kyc = await this.getOrCreateKyc(userId);
+
+    if (!kyc.aadhaarRefId) {
+      throw new BadRequestException('Please request an OTP first');
+    }
+
+    const result = await this.sandbox.aadhaarVerifyOtp(kyc.aadhaarRefId, dto.otp);
+
+    // Save Aadhaar photo if present — decode base64 and write JPEG
+    let photoPath: string | null = null;
+    if (result.photoBase64) {
+      try {
+        photoPath = `aadhaar-${kyc.id}-${Date.now()}.jpg`;
+        await fs.mkdir(KYC_UPLOADS_DIR, { recursive: true });
+        // Strip data URI prefix if present
+        const b64 = result.photoBase64.replace(/^data:image\/[a-z]+;base64,/, '');
+        await fs.writeFile(join(KYC_UPLOADS_DIR, photoPath), Buffer.from(b64, 'base64'));
+      } catch (err) {
+        this.logger.error(`Failed to save Aadhaar photo: ${(err as Error).message}`);
+        photoPath = null;
+      }
+    }
+
+    // Parse Aadhaar DOB (format varies — YYYY-MM-DD or DD-MM-YYYY from Sandbox)
+    let aadhaarDob: Date | null = null;
+    if (result.dateOfBirth) {
+      const s = result.dateOfBirth.trim();
+      let d: Date | null = null;
+      if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+        d = new Date(s);
+      } else if (/^\d{2}[/-]\d{2}[/-]\d{4}$/.test(s)) {
+        const [dd, mm, yyyy] = s.split(/[/-]/);
+        d = new Date(`${yyyy}-${mm}-${dd}`);
+      }
+      if (d && !isNaN(d.getTime())) aadhaarDob = d;
+    }
+
+    // Derive address from Aadhaar (prefill for the next step — user can edit)
+    const addr = result.address || {};
+    const streetParts = [addr.house, addr.street].filter(Boolean).join(', ');
+    const city = addr.vtc || addr.subdistrict || addr.district || null;
+    const region = addr.state || null;
+    // Sandbox sometimes returns pincode as a number — coerce to string for Prisma.
+    const postalCode = addr.pincode != null ? String(addr.pincode) : null;
+
+    // Strip photo from rawData before storing (photo is already on disk)
+    const rawDataForStorage =
+      result.raw && typeof result.raw === 'object'
+        ? stripPhotoFromResponse(result.raw)
+        : result.raw;
+
+    await this.prisma.client.kyc.update({
+      where: { id: kyc.id },
+      data: {
+        aadhaarRefId: null, // invalidate after successful verify
+        aadhaarVerifiedAt: new Date(),
+        aadhaarName: result.name,
+        aadhaarDob,
+        aadhaarYob: result.yearOfBirth,
+        aadhaarGender: result.gender,
+        aadhaarCareOf: result.careOf,
+        aadhaarPhotoPath: photoPath,
+        aadhaarRawData: rawDataForStorage as object,
+        // Prefill address (user can override on the next step)
+        street1: streetParts || kyc.street1,
+        city: city || kyc.city,
+        region: region || kyc.region,
+        postalCode: postalCode || kyc.postalCode,
+        country: 'IN',
+        currentStep: Math.max(kyc.currentStep, 4),
+      },
+    });
+
+    // Run PAN ↔ Aadhaar link check in the background — don't fail the flow if it errors
+    if (kyc.pan && kyc.aadhaarLast4) {
+      const aadhaarFromRefFull = (result.raw as { data?: { aadhaar_number?: string } })?.data?.aadhaar_number;
+      const aadhaarNum = aadhaarFromRefFull || null;
+      if (aadhaarNum) {
+        const link = await this.sandbox.panAadhaarLink(kyc.pan, aadhaarNum, PAN_AADHAAR_REASON);
+        await this.prisma.client.kyc.update({
+          where: { id: kyc.id },
+          data: {
+            panAadhaarLinked: link.linked,
+            panAadhaarLinkedAt: new Date(),
+          },
+        });
+      }
+    }
+
+    return {
+      message: 'Aadhaar verified',
+      currentStep: 4,
+    };
+  }
+
+  // ============================================
+  // Step 5: Address confirmation
+  // ============================================
+  async confirmAddress(userId: string, dto: AddressConfirmDto) {
+    const kyc = await this.getOrCreateKyc(userId);
+
+    if (!kyc.aadhaarVerifiedAt) {
+      throw new BadRequestException('Please complete Aadhaar verification first');
+    }
+
+    // Geographic restriction check
+    const stateCheck = await this.restrictions.isStateAllowed(dto.country, dto.region);
+
+    await this.prisma.client.kyc.update({
+      where: { id: kyc.id },
+      data: {
+        street1: dto.street1,
+        street2: dto.street2 || null,
+        city: dto.city,
+        region: dto.region,
+        postalCode: dto.postalCode,
+        country: dto.country,
+        currentStep: Math.max(kyc.currentStep, 5),
+      },
+    });
+
+    if (!stateCheck.allowed) {
+      const reason = stateCheck.reason || `We're not available in ${dto.region} yet`;
+      await this.restrictions.logRejection(kyc.id, userId, {
+        rejectionType: 'RESTRICTED_STATE',
+        userProvidedCountry: dto.country,
+        userProvidedState: dto.region,
+        reason,
+      });
+      await this.rejectKyc(kyc.id, userId, reason);
+      throw new BadRequestException(`${reason}. Your information has been saved.`);
+    }
+
+    return { message: 'Address confirmed', currentStep: 5 };
+  }
+
+  // ============================================
+  // Step 6: Selfie upload — triggers auto-decision
+  // ============================================
+  async uploadSelfie(userId: string, file: Express.Multer.File) {
+    const kyc = await this.getOrCreateKyc(userId);
+
+    if (!file) throw new BadRequestException('No selfie file uploaded');
+
+    if (!kyc.street1 || !kyc.city || !kyc.region || !kyc.postalCode || !kyc.country) {
+      throw new BadRequestException('Please confirm your address first');
+    }
+
+    await this.prisma.client.kyc.update({
+      where: { id: kyc.id },
+      data: {
+        selfiePath: file.filename,
+        selfieUploadedAt: new Date(),
+        currentStep: Math.max(kyc.currentStep, 6),
+      },
+    });
+
+    // Auto-decide
+    return this.runAutoDecision(userId);
+  }
+
+  // ============================================
+  // Auto-decision
+  // ============================================
+  async runAutoDecision(userId: string) {
+    const kyc = await this.getOrCreateKyc(userId);
+
+    // Gate: all steps complete
+    if (!kyc.panVerifiedAt) return this.reject(kyc.id, userId, 'PAN_INVALID', 'PAN was not verified');
+    if (!kyc.aadhaarVerifiedAt) return this.reject(kyc.id, userId, 'AADHAAR_FAIL', 'Aadhaar was not verified');
+    if (!kyc.selfiePath) throw new BadRequestException('Selfie required');
+    if (!kyc.street1 || !kyc.region) throw new BadRequestException('Address required');
+
+    // 1. PAN explicit match signals
+    if (kyc.panNameMatch === false) {
+      return this.reject(kyc.id, userId, 'PAN_NAME_MISMATCH', 'Name on PAN does not match records');
+    }
+    if (kyc.panDobMatch === false) {
+      return this.reject(kyc.id, userId, 'PAN_INVALID', 'Date of birth does not match PAN records');
+    }
+
+    // 2. Cross-check PAN name vs Aadhaar name
+    if (!namesMatch(kyc.panName, kyc.aadhaarName)) {
+      return this.reject(
+        kyc.id,
+        userId,
+        'NAME_MISMATCH',
+        'Name on PAN and Aadhaar do not match. Please ensure both documents belong to you.',
+      );
+    }
+
+    // 3. Regional restrictions (already checked in address step, but verify once more)
+    if (kyc.country && kyc.region) {
+      const stateCheck = await this.restrictions.isStateAllowed(kyc.country, kyc.region);
+      if (!stateCheck.allowed) {
+        return this.reject(kyc.id, userId, 'RESTRICTED_STATE', stateCheck.reason || 'Region not supported');
+      }
+    }
+
+    // All checks pass → approve
+    return this.approve(kyc.id, userId);
+  }
+
+  private async approve(kycId: string, userId: string) {
+    const now = new Date();
+    await this.prisma.client.kyc.update({
+      where: { id: kycId },
+      data: {
+        status: 'APPROVED',
+        autoDecidedAt: now,
+        rejectionReason: null,
+        currentStep: 7,
+      },
+    });
+    await this.prisma.client.user.update({
+      where: { id: userId },
+      data: { kycStatus: 'APPROVED' },
+    });
+    this.logger.log(`KYC auto-approved for user ${userId}`);
+    return { status: 'APPROVED' as const, currentStep: 7 };
+  }
+
+  private async reject(kycId: string, userId: string, type: KycRejectionType, reason: string) {
+    const now = new Date();
+    await this.prisma.client.kyc.update({
+      where: { id: kycId },
+      data: {
+        status: 'REJECTED',
+        rejectionReason: reason,
+        autoDecidedAt: now,
+        currentStep: 7,
+      },
+    });
+    await this.prisma.client.user.update({
+      where: { id: userId },
+      data: { kycStatus: 'REJECTED' },
+    });
+    await this.restrictions.logRejection(kycId, userId, {
+      rejectionType: type,
+      reason,
+    });
+    this.logger.log(`KYC auto-rejected for user ${userId}: ${type} — ${reason}`);
+    return { status: 'REJECTED' as const, reason, currentStep: 7 };
+  }
+
+  // External (used when address step rejects directly)
+  private async rejectKyc(kycId: string, userId: string, reason: string) {
+    await this.prisma.client.kyc.update({
+      where: { id: kycId },
+      data: { status: 'REJECTED', rejectionReason: reason, autoDecidedAt: new Date(), currentStep: 7 },
+    });
+    await this.prisma.client.user.update({
+      where: { id: userId },
+      data: { kycStatus: 'REJECTED' },
+    });
+  }
+
+  // ============================================
+  // Retry flow (user wants to start over after REJECTED)
+  // ============================================
+  async resetForRetry(userId: string) {
+    const kyc = await this.getOrCreateKyc(userId);
+    if (kyc.status !== 'REJECTED') {
+      throw new BadRequestException('Only rejected KYC submissions can be reset');
+    }
+
+    // Delete stored files
+    const deletions: Promise<void>[] = [];
+    if (kyc.aadhaarPhotoPath) {
+      deletions.push(fs.unlink(join(KYC_UPLOADS_DIR, kyc.aadhaarPhotoPath)).catch(() => undefined));
+    }
+    if (kyc.selfiePath) {
+      deletions.push(fs.unlink(join(KYC_UPLOADS_DIR, kyc.selfiePath)).catch(() => undefined));
+    }
+    await Promise.all(deletions);
+
+    await this.prisma.client.kyc.update({
+      where: { id: kyc.id },
+      data: {
+        consentedAt: null,
+        pan: null,
+        panName: null,
+        panDob: null,
+        panStatus: null,
+        panNameMatch: null,
+        panDobMatch: null,
+        panAadhaarSeeding: null,
+        panVerifiedAt: null,
+        panRawData: undefined,
+        aadhaarLast4: null,
+        aadhaarRefId: null,
+        aadhaarOtpSentAt: null,
+        aadhaarVerifiedAt: null,
+        aadhaarName: null,
+        aadhaarDob: null,
+        aadhaarYob: null,
+        aadhaarGender: null,
+        aadhaarCareOf: null,
+        aadhaarPhotoPath: null,
+        aadhaarRawData: undefined,
+        street1: null,
+        street2: null,
+        city: null,
+        region: null,
+        postalCode: null,
+        country: null,
+        selfiePath: null,
+        selfieUploadedAt: null,
+        panAadhaarLinked: null,
+        panAadhaarLinkedAt: null,
+        status: 'PENDING',
+        rejectionReason: null,
+        autoDecidedAt: null,
+        currentStep: 0,
+      },
+    });
+
+    await this.prisma.client.user.update({
+      where: { id: userId },
+      data: { kycStatus: 'PENDING' },
+    });
+
+    return { message: 'KYC reset — you can start again', currentStep: 0 };
+  }
+}
+
+// Sandbox returns Aadhaar photo as base64 in the response. We save it to disk so we
+// don't persist a giant blob in Postgres. Strip it before storing raw for audit.
+function stripPhotoFromResponse(raw: unknown): unknown {
+  if (raw && typeof raw === 'object') {
+    const clone: Record<string, unknown> = { ...(raw as Record<string, unknown>) };
+    const data = clone.data;
+    if (data && typeof data === 'object') {
+      const d = { ...(data as Record<string, unknown>) };
+      if ('photo' in d) d.photo = '[stripped]';
+      clone.data = d;
+    }
+    return clone;
+  }
+  return raw;
 }
