@@ -238,18 +238,31 @@ export class SandboxKycService {
    * Sandbox logical-failure responses into `SandboxProviderError` carrying the
    * transaction_id so support / users can quote it.
    */
+  /**
+   * POST to Sandbox. Only retries on **network-level failures** (fetch threw —
+   * the request never landed). Does NOT retry on 5xx responses, because the
+   * server received the request and may have already mutated state — retrying
+   * is dangerous on non-idempotent endpoints (UIDAI marks the OTP as consumed
+   * even when their gateway returns 500, so a retry hits "ref-id expired").
+   *
+   * Cloudflare/Render add another wrinkle: a 502/504 from their edge can mean
+   * the upstream did process the request but the response was lost. We treat
+   * that as a hard failure and surface it to the user — better to ask them to
+   * retry than to silently double-submit.
+   */
   private async post<T = unknown>(path: string, body: unknown): Promise<T> {
     const token = await this.getAccessToken();
     const url = `${this.baseUrl}${path}`;
 
-    let lastErr: Error | null = null;
+    let lastNetworkErr: Error | null = null;
     for (
       let attempt = 0;
       attempt < SandboxKycService.RETRY_ATTEMPTS;
       attempt++
     ) {
+      let res: Response;
       try {
-        const res = await fetch(url, {
+        res = await fetch(url, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -259,62 +272,51 @@ export class SandboxKycService {
           },
           body: JSON.stringify(body),
         });
-
-        const text = await res.text();
-        let parsed: unknown;
-        try {
-          parsed = text ? JSON.parse(text) : {};
-        } catch {
-          parsed = { raw: text };
-        }
-
-        if (res.status >= 500) {
-          // 5xx: retryable. Don't surface the response to caller yet.
-          this.logger.warn(
-            `Sandbox ${path} attempt ${attempt + 1} got ${res.status} — retrying`,
-          );
-          lastErr = new Error(`Sandbox ${res.status}`);
-          await this.sleep(
-            SandboxKycService.RETRY_BASE_DELAY_MS * Math.pow(2, attempt),
-          );
-          continue;
-        }
-
-        if (!res.ok) {
-          const txnId = extractTransactionId(parsed);
-          const providerMsg =
-            extractProviderMessage(parsed) ||
-            `KYC provider error (HTTP ${res.status})`;
-          const userMsg = mapProviderMessage(providerMsg, res.status);
-          this.logger.error(
-            `Sandbox ${path} failed: ${res.status} txn=${txnId ?? '-'} body=${text}`,
-          );
-          throw new SandboxProviderError(
-            userMsg,
-            providerMsg,
-            txnId,
-            res.status,
-          );
-        }
-
-        return parsed as T;
       } catch (err) {
-        // Re-raise our own provider errors; everything else is treated as transient
-        if (err instanceof SandboxProviderError) throw err;
-        lastErr = err as Error;
+        // Network-level failure (DNS, TCP reset, TLS, timeout). The request
+        // never reached Sandbox, so retry is safe.
+        lastNetworkErr = err as Error;
         const isLastAttempt = attempt === SandboxKycService.RETRY_ATTEMPTS - 1;
         if (isLastAttempt) break;
         this.logger.warn(
-          `Sandbox ${path} attempt ${attempt + 1} threw ${lastErr.message} — retrying`,
+          `Sandbox ${path} network error on attempt ${attempt + 1}: ${lastNetworkErr.message} — retrying`,
         );
         await this.sleep(
           SandboxKycService.RETRY_BASE_DELAY_MS * Math.pow(2, attempt),
         );
+        continue;
       }
+
+      const text = await res.text();
+      let parsed: unknown;
+      try {
+        parsed = text ? JSON.parse(text) : {};
+      } catch {
+        parsed = { raw: text };
+      }
+
+      if (!res.ok) {
+        const txnId = extractTransactionId(parsed);
+        const providerMsg =
+          extractProviderMessage(parsed) ||
+          `KYC provider error (HTTP ${res.status})`;
+        const userMsg = mapProviderMessage(providerMsg, res.status);
+        this.logger.error(
+          `Sandbox ${path} failed: ${res.status} txn=${txnId ?? '-'} body=${text}`,
+        );
+        throw new SandboxProviderError(
+          userMsg,
+          providerMsg,
+          txnId,
+          res.status,
+        );
+      }
+
+      return parsed as T;
     }
 
     throw new InternalServerErrorException(
-      `KYC provider unreachable: ${lastErr?.message || 'unknown'}`,
+      `KYC provider unreachable: ${lastNetworkErr?.message || 'unknown'}`,
     );
   }
 
@@ -324,6 +326,12 @@ export class SandboxKycService {
 
   /**
    * Step 1 of Aadhaar OKYC: request OTP to registered mobile.
+   *
+   * Sandbox sometimes returns HTTP 200 with a *logical* failure (e.g. invalid
+   * Aadhaar, mobile not linked at UIDAI, sandbox quota exhausted) and a body
+   * shape that omits `reference_id`. Surface the provider's message + status +
+   * txn id instead of a generic "no reference_id" error so the user sees the
+   * real reason and support has the txn id to debug.
    */
   async aadhaarRequestOtp(
     aadhaarNumber: string,
@@ -337,15 +345,28 @@ export class SandboxKycService {
     };
 
     const data = await this.post<{
-      data?: { reference_id?: number | string; message?: string };
+      code?: number | string;
+      message?: string;
+      data?: {
+        reference_id?: number | string;
+        message?: string;
+        status?: string;
+      };
       transaction_id?: string;
     }>('/kyc/aadhaar/okyc/otp', body);
 
     const referenceId = data?.data?.reference_id;
     if (referenceId === undefined || referenceId === null) {
-      throw new InternalServerErrorException(
-        'Aadhaar OTP request returned no reference_id',
+      const txnId = extractTransactionId(data);
+      const providerMsg =
+        data?.data?.message ||
+        data?.message ||
+        `Sandbox returned no reference_id (status=${data?.data?.status ?? 'unknown'})`;
+      const userMsg = mapProviderMessage(providerMsg, 400);
+      this.logger.error(
+        `Sandbox /kyc/aadhaar/okyc/otp returned no reference_id. txn=${txnId ?? '-'} body=${JSON.stringify(data)}`,
       );
+      throw new SandboxProviderError(userMsg, providerMsg, txnId, 400);
     }
 
     return {
