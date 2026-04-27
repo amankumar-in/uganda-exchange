@@ -44,10 +44,10 @@ const footerLinks = {
   legal: {
     title: "Legal",
     links: [
-      { label: "Privacy Policy", href: "/privacy" },
       { label: "Terms of Service", href: "/terms" },
-      { label: "Disclaimer", href: "/disclaimer" },
-      { label: "AML Policy", href: "/aml" },
+      { label: "Privacy Policy", href: "/privacy" },
+      { label: "Refund Policy", href: "/refund" },
+      { label: "Cancellation Policy", href: "/cancellation" },
     ],
   },
 };
@@ -174,14 +174,17 @@ export default function Footer() {
             © {new Date().getFullYear()} InTuition Exchange. All rights reserved.
           </Text>
           <Space size="middle">
-            <Link href="/privacy" style={{ color: token.colorTextSecondary, fontSize: token.fontSize, textDecoration: "none" }}>
-              Privacy
-            </Link>
             <Link href="/terms" style={{ color: token.colorTextSecondary, fontSize: token.fontSize, textDecoration: "none" }}>
               Terms
             </Link>
-            <Link href="/cookies" style={{ color: token.colorTextSecondary, fontSize: token.fontSize, textDecoration: "none" }}>
-              Cookies
+            <Link href="/privacy" style={{ color: token.colorTextSecondary, fontSize: token.fontSize, textDecoration: "none" }}>
+              Privacy
+            </Link>
+            <Link href="/refund" style={{ color: token.colorTextSecondary, fontSize: token.fontSize, textDecoration: "none" }}>
+              Refund
+            </Link>
+            <Link href="/cancellation" style={{ color: token.colorTextSecondary, fontSize: token.fontSize, textDecoration: "none" }}>
+              Cancellation
             </Link>
           </Space>
         </div>
