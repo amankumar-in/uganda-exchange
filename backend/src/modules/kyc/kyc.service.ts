@@ -856,48 +856,11 @@ export class KycService {
       }
     }
 
-    // PAN ↔ Aadhaar linkage. Two signals:
-    //   1. panAadhaarLinked — from /kyc/pan-aadhaar/status (post-Aadhaar check).
-    //      null = check failed/pending → manual review (NOT silent approve).
-    //   2. panAadhaarSeeding — from /kyc/pan/verify (returned alongside PAN data).
-    //      "linked" / "linked_to_aadhaar" → positive signal.
-    //      "not_linked" → reject.
-    //      anything else → fall through to (1).
-    const seeding = (kyc.panAadhaarSeeding || '').toString().toLowerCase();
-    if (seeding.includes('not') && seeding.includes('linked')) {
-      return this.transitionStatus(
-        kyc.id,
-        userId,
-        'REJECTED',
-        'Your PAN is not linked to your Aadhaar at NSDL. Please link them on the income tax portal and retry.',
-        'AUTO_REJECT_PAN_AADHAAR_NOT_LINKED',
-        'PAN_INVALID',
-      );
-    }
-    const seedingPositive =
-      seeding.includes('linked') && !seeding.includes('not');
-
-    if (kyc.panAadhaarLinked === false) {
-      return this.transitionStatus(
-        kyc.id,
-        userId,
-        'REJECTED',
-        'Your PAN and Aadhaar do not appear linked. Please link them at NSDL and retry.',
-        'AUTO_REJECT_PAN_AADHAAR_NOT_LINKED',
-        'PAN_INVALID',
-      );
-    }
-    if (kyc.panAadhaarLinked !== true && !seedingPositive) {
-      // Unknown linkage — neither check returned a positive signal. Don't auto-approve;
-      // route to manual review so a human can sign off.
-      return this.transitionStatus(
-        kyc.id,
-        userId,
-        'IN_REVIEW',
-        'Awaiting manual review — we could not automatically confirm your PAN-Aadhaar linkage.',
-        'MANUAL_REVIEW_PAN_AADHAAR_UNKNOWN',
-      );
-    }
+    // PAN ↔ Aadhaar linkage signals (`panAadhaarLinked` + `panAadhaarSeeding`)
+    // are stored for audit + admin visibility but are intentionally NOT used
+    // in the auto-decision. Sandbox's link-status endpoint is unreliable and
+    // gating on it created false manual-review routes. The strict name match
+    // + DOB cross-check above are the load-bearing fraud gates.
 
     // All gates pass → approve.
     return this.transitionStatus(
