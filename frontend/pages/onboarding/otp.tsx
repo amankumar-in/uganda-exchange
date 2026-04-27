@@ -1,14 +1,24 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
-import { Button, Skeleton, message } from 'antd';
-import { ArrowLeftOutlined, ArrowRightOutlined } from '@ant-design/icons';
+import { Button, Skeleton, message, Modal } from 'antd';
+import { ArrowLeftOutlined, ArrowRightOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { motion } from 'motion/react';
 import OnboardingLayout from '@/components/onboarding/OnboardingLayout';
 import { useAuth } from '@/context/AuthContext';
 import { useOnboardingStyles } from '@/hooks/useOnboardingStyles';
 import { fontWeights } from '@/theme/themeConfig';
-import { getKycStatus, verifyAadhaarOtp, requestAadhaarOtp, ApiError } from '@/services/api/onboarding';
+import {
+  getKycStatus,
+  verifyAadhaarOtp,
+  clearAadhaarRefId,
+  ApiError,
+} from '@/services/api/onboarding';
+
+// 30s cooldown between resend attempts. Scoped against the actual OTP-sent
+// timestamp, so a user landing here hours after a stale OTP doesn't see the
+// 30s wait — that wait is only meaningful right after an OTP was just sent.
+const RESEND_COOLDOWN_S = 30;
 
 export default function OtpPage() {
   const router = useRouter();
@@ -17,10 +27,10 @@ export default function OtpPage() {
 
   const [pageLoading, setPageLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [resending, setResending] = useState(false);
   const [aadhaarLast4, setAadhaarLast4] = useState<string | null>(null);
   const [resendCountdown, setResendCountdown] = useState(0);
   const [digits, setDigits] = useState<string[]>(['', '', '', '', '', '']);
+  const [restarting, setRestarting] = useState(false);
   const inputsRef = useRef<Array<HTMLInputElement | null>>([]);
 
   useEffect(() => {
@@ -37,7 +47,16 @@ export default function OtpPage() {
         if (status.hasAadhaar) { router.replace('/onboarding/address'); return; }
         if (!status.hasAadhaarRefId) { router.replace('/onboarding/aadhaar'); return; }
         setAadhaarLast4(status.aadhaarLast4);
-        setResendCountdown(30); // 30-sec initial cooldown
+
+        // Compute cooldown based on REAL otpSentAt timestamp from backend.
+        // Previously this was an unconditional 30s on mount, which forced
+        // a wait even when the OTP was hours old.
+        if (status.aadhaarOtpSentAt) {
+          const sentAt = new Date(status.aadhaarOtpSentAt).getTime();
+          const elapsed = Math.floor((Date.now() - sentAt) / 1000);
+          const remaining = Math.max(0, RESEND_COOLDOWN_S - elapsed);
+          setResendCountdown(remaining);
+        }
       } catch {
         // stay
       } finally {
@@ -90,7 +109,6 @@ export default function OtpPage() {
       router.push('/onboarding/address');
     } catch (err) {
       message.error((err as ApiError).message || 'OTP verification failed');
-      // clear OTP on failure
       setDigits(['', '', '', '', '', '']);
       inputsRef.current[0]?.focus();
     } finally {
@@ -98,12 +116,47 @@ export default function OtpPage() {
     }
   };
 
-  const handleResend = async () => {
-    // We don't have the full Aadhaar here to re-request.
-    // Send user back to aadhaar page to re-enter (keeps flow simple and secure).
-    message.info('Please re-enter your Aadhaar number to resend OTP');
-    router.push('/onboarding/aadhaar');
-  };
+  // Real resend: clear the (likely stale) ref-id on the backend, then send
+  // the user back to the Aadhaar page to type the number and request a fresh
+  // OTP. We can't re-request directly because we only hold the last 4 digits
+  // here — UIDAI requires the full number. The button used to be a placebo
+  // that just navigated; now it actually frees the user's wedged session first.
+  const handleResend = useCallback(async () => {
+    try {
+      await clearAadhaarRefId();
+      router.push('/onboarding/aadhaar');
+    } catch (err) {
+      message.error((err as ApiError).message || 'Could not start a new OTP. Please try again.');
+    }
+  }, [router]);
+
+  const handleStuckRestart = useCallback(() => {
+    Modal.confirm({
+      title: 'Start over?',
+      icon: <ExclamationCircleOutlined />,
+      content: (
+        <div>
+          <p>
+            This clears your current Aadhaar OTP session so you can request a fresh one. Your PAN and
+            consent are kept — only the OTP step resets.
+          </p>
+        </div>
+      ),
+      okText: 'Yes, request a new OTP',
+      cancelText: 'Cancel',
+      onOk: async () => {
+        setRestarting(true);
+        try {
+          await clearAadhaarRefId();
+          router.push('/onboarding/aadhaar');
+        } catch (err) {
+          message.error((err as ApiError).message || 'Could not reset');
+        } finally {
+          setRestarting(false);
+        }
+      },
+    });
+  }, [router]);
 
   if (pageLoading) {
     return (
@@ -173,7 +226,7 @@ export default function OtpPage() {
               {resendCountdown > 0 ? (
                 <>Didn&apos;t get it? Resend in {resendCountdown}s</>
               ) : (
-                <Button type="link" loading={resending} onClick={handleResend} style={{ color: s.palette.indigo.light, padding: 0 }}>
+                <Button type="link" onClick={handleResend} style={{ color: s.palette.indigo.light, padding: 0 }}>
                   Resend OTP
                 </Button>
               )}
@@ -187,6 +240,18 @@ export default function OtpPage() {
                 Verify <ArrowRightOutlined />
               </Button>
             </div>
+
+            {/* Issue 8: a user-visible escape for "I'm stuck on this page". Previously
+                the only restart path was on /status, and only when status === REJECTED. */}
+            <Button
+              type="link"
+              size="small"
+              onClick={handleStuckRestart}
+              loading={restarting}
+              style={{ color: s.palette.text.secondary, fontSize: s.token.fontSizeSM }}
+            >
+              Stuck? Start a new OTP session
+            </Button>
           </div>
         </motion.div>
       </OnboardingLayout>

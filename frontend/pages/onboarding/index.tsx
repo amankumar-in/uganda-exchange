@@ -11,7 +11,15 @@ import { fontWeights } from '@/theme/themeConfig';
 import { useOnboardingStyles } from '@/hooks/useOnboardingStyles';
 import { getKycStatus, saveConsent, ApiError } from '@/services/api/onboarding';
 
-// Map currentStep → onboarding route (source of truth for resume-flow redirects)
+// Map currentStep → onboarding route. This is the SINGLE source of truth for
+// resume-flow redirects — per-page bounce-back guards have been removed so they
+// can no longer create dead-ends (e.g. previously, if hasPan was true the PAN
+// page bounced to /aadhaar even when the user wanted to fix a typo). The smart
+// router here decides where to land based on backend state.
+//
+// Indices align with backend `currentStep`:
+//   0 intro/consent · 1 PAN · 2 Aadhaar · 3 OTP · 4 address · 5 selfie · 6+ status
+// Step 6 and 7 both land on /status — that's the terminal page, not a bug.
 const STEP_ROUTES = [
   '/onboarding',
   '/onboarding/pan',

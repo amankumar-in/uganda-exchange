@@ -82,12 +82,17 @@ export const AU_STATES = [
   { code: 'WA', name: 'Western Australia' },
 ];
 
-export const REFERENCE_STATES: Record<string, Array<{ code: string; name: string }>> = {
+export const REFERENCE_STATES: Record<
+  string,
+  Array<{ code: string; name: string }>
+> = {
   US: US_STATES,
   CA: CA_PROVINCES,
   AU: AU_STATES,
 };
 
-export function getReferenceStates(countryCode: string): Array<{ code: string; name: string }> {
+export function getReferenceStates(
+  countryCode: string,
+): Array<{ code: string; name: string }> {
   return REFERENCE_STATES[countryCode.toUpperCase()] || [];
 }

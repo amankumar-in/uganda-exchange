@@ -76,4 +76,10 @@ export class AuthController {
   async logout() {
     return { message: 'Logged out successfully' };
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('account/learner-welcome/seen')
+  async markLearnerWelcomeSeen(@Request() req) {
+    return this.authService.markLearnerWelcomeSeen(req.user.id);
+  }
 }

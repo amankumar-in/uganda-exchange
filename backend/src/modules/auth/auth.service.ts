@@ -240,6 +240,7 @@ export class AuthService {
         emailVerified: true,
         phoneVerified: true,
         createdAt: true,
+        learnerWelcomeSeenAt: true,
         kyc: {
           select: {
             aadhaarName: true,
@@ -261,6 +262,19 @@ export class AuthService {
       lastName,
       kyc: undefined, // Remove nested kyc object
     };
+  }
+
+  /**
+   * Mark the learner-mode WelcomeModal as seen for this user. Idempotent: only
+   * writes if the flag is currently null, so re-clicks don't keep updating
+   * the timestamp.
+   */
+  async markLearnerWelcomeSeen(userId: string) {
+    await this.prisma.client.user.updateMany({
+      where: { id: userId, learnerWelcomeSeenAt: null },
+      data: { learnerWelcomeSeenAt: new Date() },
+    });
+    return { ok: true };
   }
 
   /**

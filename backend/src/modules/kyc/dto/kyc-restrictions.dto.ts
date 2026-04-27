@@ -1,4 +1,13 @@
-import { IsString, IsBoolean, IsOptional, Length, MinLength, MaxLength, IsArray, ValidateNested } from 'class-validator';
+import {
+  IsString,
+  IsBoolean,
+  IsOptional,
+  Length,
+  MinLength,
+  MaxLength,
+  IsArray,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateCountryDto {

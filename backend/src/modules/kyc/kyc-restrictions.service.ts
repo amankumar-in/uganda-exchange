@@ -1,4 +1,9 @@
-import { Injectable, Logger, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
 import { getReferenceStates } from './data/reference-states';
 import {
@@ -106,7 +111,9 @@ export class KycRestrictionsService {
       data: {
         ...(dto.countryName && { countryName: dto.countryName }),
         ...(dto.isActive !== undefined && { isActive: dto.isActive }),
-        ...(dto.allowAllStates !== undefined && { allowAllStates: dto.allowAllStates }),
+        ...(dto.allowAllStates !== undefined && {
+          allowAllStates: dto.allowAllStates,
+        }),
       },
       include: {
         allowedStates: true,
@@ -167,8 +174,8 @@ export class KycRestrictionsService {
             stateName: state.stateName,
             isActive: state.isActive ?? true,
           },
-        })
-      )
+        }),
+      ),
     );
 
     return createdStates;
@@ -212,7 +219,11 @@ export class KycRestrictionsService {
     return this.updateState(stateId, { isActive });
   }
 
-  async bulkToggleStates(countryCode: string, stateCodes: string[], isActive: boolean) {
+  async bulkToggleStates(
+    countryCode: string,
+    stateCodes: string[],
+    isActive: boolean,
+  ) {
     const country = await this.getCountryByCode(countryCode);
     const upperCodes = stateCodes.map((c) => c.toUpperCase());
 
@@ -264,7 +275,7 @@ export class KycRestrictionsService {
 
   async isStateAllowed(
     countryCode: string,
-    stateCode: string
+    stateCode: string,
   ): Promise<{ allowed: boolean; reason?: string }> {
     const code = countryCode.toUpperCase();
     const country = await this.prisma.client.allowedCountry.findUnique({
@@ -294,15 +305,21 @@ export class KycRestrictionsService {
 
     // Check specific state
     const state = country.allowedStates.find(
-      (s) => s.stateCode.toUpperCase() === stateCode.toUpperCase()
+      (s) => s.stateCode.toUpperCase() === stateCode.toUpperCase(),
     );
 
     if (!state) {
-      return { allowed: false, reason: `State ${stateCode} is not in the allowed list for ${code}` };
+      return {
+        allowed: false,
+        reason: `State ${stateCode} is not in the allowed list for ${code}`,
+      };
     }
 
     if (!state.isActive) {
-      return { allowed: false, reason: `State ${stateCode} is disabled for ${code}` };
+      return {
+        allowed: false,
+        reason: `State ${stateCode} is disabled for ${code}`,
+      };
     }
 
     return { allowed: true };
@@ -312,9 +329,13 @@ export class KycRestrictionsService {
   // REJECTION LOGGING
   // ============================================
 
-  async logRejection(kycId: string, userId: string, data: CreateRejectionLogDto) {
+  async logRejection(
+    kycId: string,
+    userId: string,
+    data: CreateRejectionLogDto,
+  ) {
     this.logger.warn(
-      `KYC rejected: user=${userId}, type=${data.rejectionType}, reason=${data.reason}`
+      `KYC rejected: user=${userId}, type=${data.rejectionType}, reason=${data.reason}`,
     );
 
     return this.prisma.client.kycRejectionLog.create({

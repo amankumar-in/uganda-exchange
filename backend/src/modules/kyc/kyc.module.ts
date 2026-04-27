@@ -9,7 +9,12 @@ import { PrismaService } from '../../prisma.service';
 @Module({
   imports: [ConfigModule],
   controllers: [KycController],
-  providers: [KycService, SandboxKycService, KycRestrictionsService, PrismaService],
+  providers: [
+    KycService,
+    SandboxKycService,
+    KycRestrictionsService,
+    PrismaService,
+  ],
   exports: [KycService, KycRestrictionsService],
 })
 export class KycModule {}

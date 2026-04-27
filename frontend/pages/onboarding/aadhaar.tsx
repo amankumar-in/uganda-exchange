@@ -32,7 +32,11 @@ export default function AadhaarPage() {
         if (!status.hasConsent) { router.replace('/onboarding'); return; }
         if (!status.hasPan) { router.replace('/onboarding/pan'); return; }
         if (status.hasAadhaar) { router.replace('/onboarding/address'); return; }
-        if (status.hasAadhaarRefId) { router.replace('/onboarding/otp'); return; }
+        // Deliberately NOT auto-bouncing on hasAadhaarRefId. Backend now
+        // expires ref-ids after 12 minutes so getKycStatus already reflects
+        // reality; if a fresh ref-id exists the user can navigate to /otp
+        // themselves. Bouncing here was the original cause of the "stuck on
+        // OTP page with a dead ref-id" trap.
       } catch {
         // show form
       } finally {

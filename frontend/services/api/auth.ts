@@ -40,6 +40,10 @@ export interface User {
   role: UserRole;
   firstName: string | null;
   lastName: string | null;
+  // Account-scoped flag for the learner-mode WelcomeModal — null = never
+  // dismissed, ISO string = dismissed at that timestamp. Replaces the prior
+  // localStorage flag so dismissing on one device persists everywhere.
+  learnerWelcomeSeenAt: string | null;
 }
 
 export interface LoginResponse {
@@ -196,6 +200,16 @@ export async function logoutUser(): Promise<ApiResponse> {
 export async function getCurrentUser(): Promise<User> {
   return apiCall<User>('/account/me', {
     method: 'GET',
+  });
+}
+
+/**
+ * Mark the learner-mode WelcomeModal as dismissed on the server. Idempotent
+ * server-side; safe to call multiple times.
+ */
+export async function markLearnerWelcomeSeen(): Promise<{ ok: boolean }> {
+  return apiCall<{ ok: boolean }>('/account/learner-welcome/seen', {
+    method: 'POST',
   });
 }
 

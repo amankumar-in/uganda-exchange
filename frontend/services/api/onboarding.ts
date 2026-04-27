@@ -9,7 +9,7 @@ const API_BASE_URL = getApiBaseUrl();
 // TYPES
 // ============================================
 
-export type KycDecisionStatus = 'PENDING' | 'SUBMITTED' | 'APPROVED' | 'REJECTED';
+export type KycDecisionStatus = 'PENDING' | 'SUBMITTED' | 'IN_REVIEW' | 'APPROVED' | 'REJECTED' | 'EXPIRED';
 
 export interface KycStatus {
   currentStep: number;
@@ -18,11 +18,17 @@ export interface KycStatus {
   hasPan: boolean;
   hasAadhaar: boolean;
   hasAadhaarRefId: boolean;
+  // ISO timestamp the most recent OTP was actually sent. The OTP page uses this
+  // to compute the resend cooldown only against fresh OTPs — eliminates the
+  // 30s wait when a stale OTP from yesterday is what's keeping `hasAadhaarRefId`
+  // true.
+  aadhaarOtpSentAt: string | null;
   hasAddress: boolean;
   hasSelfie: boolean;
   rejectionReason: string | null;
   aadhaarLast4: string | null;
   panMasked: string | null;
+  lastSandboxTxnId: string | null;
 }
 
 export interface KycDetails {
@@ -182,6 +188,13 @@ export function requestAadhaarOtp(aadhaarNumber: string): Promise<StepResponse> 
     method: 'POST',
     body: JSON.stringify({ aadhaarNumber }),
   });
+}
+
+// Surgical clear of an expired/stuck Aadhaar ref-id. Does NOT wipe consent,
+// PAN, address — only the in-flight OTP session, so the user can request a
+// fresh OTP without restarting the whole onboarding.
+export function clearAadhaarRefId(): Promise<StepResponse> {
+  return apiCall<StepResponse>('/onboarding/aadhaar/refid/clear', { method: 'POST' });
 }
 
 export function verifyAadhaarOtp(otp: string): Promise<StepResponse> {

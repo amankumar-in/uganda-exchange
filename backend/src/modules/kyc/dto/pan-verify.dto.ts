@@ -1,4 +1,10 @@
-import { IsString, Matches, MinLength, MaxLength, IsDateString } from 'class-validator';
+import {
+  IsString,
+  Matches,
+  MinLength,
+  MaxLength,
+  IsDateString,
+} from 'class-validator';
 
 export class PanVerifyDto {
   @IsString()

@@ -25,6 +25,10 @@ model User {
   kycStatus     KycStatus @default(PENDING)
   role          UserRole  @default(USER)
   appMode       AppMode   @default(LEARNER) // Current trading mode preference
+  // Set when the learner-mode WelcomeModal is dismissed. Account-scoped (not
+  // device-scoped via localStorage) so the modal doesn't reappear when the
+  // user signs in from a different device or browser.
+  learnerWelcomeSeenAt DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -75,8 +79,10 @@ model User {
 enum KycStatus {
   PENDING
   SUBMITTED
+  IN_REVIEW   // Admin pause — auto-decide hit a soft fail (e.g. PAN-Aadhaar link unknown), needs manual sign-off
   APPROVED
   REJECTED
+  EXPIRED     // Periodic re-KYC due (compliance refresh window elapsed)
 }
 
 enum UserRole {
@@ -117,10 +123,14 @@ model Kyc {
   aadhaarLast4      String?   // Only last 4 stored for display (compliance)
   // Salted SHA-256 of the full 12-digit Aadhaar; @unique so same Aadhaar
   // can't be used across accounts. Full number itself is never stored.
-  aadhaarHash       String?   @unique
-  aadhaarRefId      String?   // reference_id from OTP-gen; cleared after OTP verify
-  aadhaarOtpSentAt  DateTime?
-  aadhaarVerifiedAt DateTime?
+  // Written ONLY after successful OTP verification — not on OTP request — so
+  // a user who mistypes their Aadhaar can't pollute the unique-namespace and
+  // lock the real Aadhaar-holder out.
+  aadhaarHash            String?   @unique
+  aadhaarRefId           String?   // reference_id from OTP-gen; cleared after OTP verify or TTL
+  aadhaarRefIdExpiresAt  DateTime? // Sandbox/UIDAI ref ids expire ~10-30 min — we treat anything past this as gone
+  aadhaarOtpSentAt       DateTime?
+  aadhaarVerifiedAt      DateTime?
   aadhaarName       String?   // Name as per Aadhaar (UIDAI-authoritative)
   aadhaarDob        DateTime?
   aadhaarYob        String?   // Year of birth (when DOB not available)
@@ -150,6 +160,10 @@ model Kyc {
   rejectionReason String?
   autoDecidedAt   DateTime?
 
+  // Last Sandbox transaction id (their support requires this to debug). Updated on
+  // every Sandbox call so we can surface it in error messages and logs.
+  lastSandboxTxnId String?
+
   // Onboarding Progress
   // 0: intro, 1: consented, 2: pan verified, 3: aadhaar# submitted (OTP sent),
   // 4: aadhaar verified, 5: address confirmed, 6: selfie uploaded, 7: done
@@ -163,7 +177,42 @@ model Kyc {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // History snapshots — every submission creates a row so a regulator can see
+  // what was submitted and when, even after the user retries.
+  submissions KycSubmission[]
+
+  @@index([status])
   @@map("kyc")
+}
+
+// Append-only snapshot of every KYC submission. Reset/retry preserves history;
+// the live `Kyc` row reflects only the most recent attempt, while this table
+// answers "what did this user submit on date X" for audit / regulator review.
+model KycSubmission {
+  id     String @id @default(uuid())
+  kycId  String
+  kyc    Kyc    @relation(fields: [kycId], references: [id], onDelete: Cascade)
+  userId String
+
+  // Snapshot fields (copied from Kyc at submission time — never mutated after)
+  pan              String?
+  panName          String?
+  panStatus        String?
+  panNameMatch     Boolean?
+  panDobMatch      Boolean?
+  aadhaarLast4     String?
+  aadhaarName      String?
+  aadhaarDob       DateTime?
+  panAadhaarLinked Boolean?
+  status           KycStatus
+  rejectionReason  String?
+  decisionType     String?  // AUTO_APPROVE, AUTO_REJECT, MANUAL_REVIEW, etc.
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([kycId])
+  @@map("kyc_submissions")
 }
 
 // ============================================

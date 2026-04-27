@@ -23,6 +23,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useExchange } from '@/context/ExchangeContext';
 import { useThemeMode } from '@/context/ThemeContext';
 import { getWatchlist, toggleWatchlist } from '@/services/api/watchlist';
+import { markLearnerWelcomeSeen } from '@/services/api/auth';
 import type { NextPageWithLayout } from '../_app';
 
 const { useToken } = theme;
@@ -278,7 +279,7 @@ TokenRow.displayName = 'TokenRow';
 const DashboardPage: NextPageWithLayout = () => {
   const router = useRouter();
   const { token } = useToken();
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, refreshUser } = useAuth();
   const {
     pairs,
     isLoadingPairs,
@@ -344,28 +345,31 @@ const DashboardPage: NextPageWithLayout = () => {
     }
   }, [pageLoading, user]);
 
-  // Show welcome modal for first-time learner mode users
+  // Show welcome modal for first-time learner mode users. Gated on the
+  // server-side `learnerWelcomeSeenAt` flag (User row), not localStorage —
+  // dismissing on one device persists across phone/web/incognito/clear-data.
   useEffect(() => {
     if (!pageLoading && user && isLearnerMode && balances.length > 0 && pairs.length > 0) {
-      // Check localStorage for first-time flag
-      const welcomeShownKey = `learnerWelcomeShown_${user.id}`;
-      const hasSeenWelcome = localStorage.getItem(welcomeShownKey);
-      
-      if (!hasSeenWelcome) {
-        // Show welcome modal
+      if (!user.learnerWelcomeSeenAt) {
         setShowWelcomeModal(true);
       }
     }
   }, [pageLoading, user, isLearnerMode, balances.length, pairs.length]);
 
   const handleWelcomeModalClose = useCallback(() => {
-    if (user) {
-      // Mark as seen in localStorage
-      const welcomeShownKey = `learnerWelcomeShown_${user.id}`;
-      localStorage.setItem(welcomeShownKey, 'true');
-    }
     setShowWelcomeModal(false);
-  }, [user]);
+    // Fire-and-forget the server write + user refresh. We don't block the
+    // close animation on the round-trip; if the call fails the modal will
+    // simply show again next page load (acceptable degradation).
+    void (async () => {
+      try {
+        await markLearnerWelcomeSeen();
+        await refreshUser();
+      } catch {
+        // Non-fatal — leave the local UI closed; backend will retry on next dismiss.
+      }
+    })();
+  }, [refreshUser]);
 
   // Calculate total portfolio value - memoized
   const portfolioData = useMemo(() => {

@@ -52,10 +52,11 @@ export default function PanPage() {
           router.replace('/onboarding');
           return;
         }
-        if (status.hasPan) {
-          router.replace('/onboarding/aadhaar');
-          return;
-        }
+        // Deliberately NOT auto-bouncing on hasPan. The user may have arrived
+        // here to correct a previously verified PAN (e.g. wrong DOB combo).
+        // The smart router at /onboarding handles resume-flow; this page just
+        // serves the form and re-runs the verify endpoint, which will overwrite
+        // the existing values atomically.
       } catch {
         // show form anyway
       } finally {

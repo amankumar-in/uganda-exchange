@@ -41,7 +41,10 @@ export default function SelfiePage() {
         if (status.status === 'APPROVED') { router.replace('/overview'); return; }
         if (status.status === 'REJECTED') { router.replace('/onboarding/status'); return; }
         if (!status.hasAddress) { router.replace('/onboarding/address'); return; }
-        if (status.hasSelfie) { router.replace('/onboarding/status'); return; }
+        // Deliberately NOT auto-bouncing on hasSelfie. The user may have just
+        // landed in a transient PENDING state and want to retake the photo
+        // before we reach a terminal decision. Re-uploading overwrites the
+        // selfie row — backend handles cleanup.
       } catch {
         // proceed
       } finally {
