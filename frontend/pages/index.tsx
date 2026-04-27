@@ -30,10 +30,10 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>InTuition Exchange - The Campus For College Coins</title>
+        <title>InTuition Exchange — Buy Crypto in INR & Trade College Coins</title>
         <meta
           name="description"
-          content="Trade university-issued College Coins for tuition, living expenses, or liquidity. Swap between TUIT and major cryptocurrencies with instant settlement."
+          content="Buy crypto in INR, mine TUIT, and pay for tuition with college coins. InTuition Exchange — India's home for digital assets and campus money. Instant INR deposits via Razorpay."
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />

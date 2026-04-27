@@ -746,7 +746,7 @@ const CollegeCoinsPage: NextPageWithLayout = () => {
   if (pageLoading) {
     return (
       <>
-        <Head><title>College Coins - InTuition Exchange</title></Head>
+        <Head><title>College Coins — Buy, Trade & Spend on Campus | InTuition Exchange</title></Head>
         <Skeleton active paragraph={{ rows: 12 }} />
       </>
     );
@@ -803,8 +803,11 @@ const CollegeCoinsPage: NextPageWithLayout = () => {
   return (
     <>
       <Head>
-        <title>College Coins - InTuition Exchange</title>
-        <meta name="description" content="Mine college coins on InTuition Exchange" />
+        <title>College Coins — Buy, Trade & Spend on Campus | InTuition Exchange</title>
+        <meta
+          name="description"
+          content="Discover, mine, and trade university-issued college coins on InTuition Exchange. Earn TUIT, swap with crypto, and pay for tuition, housing, and campus services in INR."
+        />
       </Head>
 
       <style jsx global>{`

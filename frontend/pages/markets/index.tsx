@@ -563,7 +563,7 @@ export default function MarketsPage() {
   if (pageLoading) {
     return (
       <>
-        <Head><title>Markets - InTuition Exchange</title></Head>
+        <Head><title>Crypto Markets — Live INR Prices | InTuition Exchange</title></Head>
         {isAuthenticated ? (
           <DashboardLayout activeKey="markets">
             <Skeleton active paragraph={{ rows: 12 }} />
@@ -852,8 +852,11 @@ export default function MarketsPage() {
   return (
     <>
       <Head>
-        <title>Markets - InTuition Exchange</title>
-        <meta name="description" content="Explore crypto markets on InTuition Exchange" />
+        <title>Crypto Markets — Live INR Prices | InTuition Exchange</title>
+        <meta
+          name="description"
+          content="Live INR prices for Bitcoin, Ethereum, and 300+ crypto assets. Buy, sell, and trade crypto and college coins on InTuition Exchange — India's home for digital assets."
+        />
       </Head>
 
       {isAuthenticated ? (

@@ -191,7 +191,7 @@ const CollegeCoinDetailPage: NextPageWithLayout = () => {
   if (pageLoading || !tokenData) {
     return (
       <>
-        <Head><title>College Coin - InTuition Exchange</title></Head>
+        <Head><title>College Coin — Buy & Trade on InTuition Exchange</title></Head>
         <Skeleton active paragraph={{ rows: 12 }} />
       </>
     );
@@ -219,7 +219,11 @@ const CollegeCoinDetailPage: NextPageWithLayout = () => {
   return (
     <>
       <Head>
-        <title>{symbol} - College Coins - InTuition Exchange</title>
+        <title>{`Buy ${symbol} College Coin in INR — InTuition Exchange`}</title>
+        <meta
+          name="description"
+          content={`Buy and trade ${symbol} on InTuition Exchange. Earn ${symbol} through mining, swap with crypto, and pay for campus services. India's college-coin marketplace.`}
+        />
       </Head>
 
       <div style={{ maxWidth: 1200, margin: '0 auto' }}>
