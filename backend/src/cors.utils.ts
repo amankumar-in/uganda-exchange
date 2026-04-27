@@ -6,6 +6,7 @@
  */
 const HARDCODED_FRONTEND_ORIGINS = [
   'https://intuitionexchange.com',
+  'https://intuitionex.in',
   'https://intuition-ind-frontend.onrender.com',
 ];
 
