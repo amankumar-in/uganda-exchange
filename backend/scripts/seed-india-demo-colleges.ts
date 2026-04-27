@@ -31,7 +31,7 @@ const COLLEGES: Seed[] = [
   { ticker: 'BIST', name: 'Bharat Institute of Science & Tech',  peggedToAsset: 'SOL',  peggedPercentage: 1.0,   description: 'Fictional Indian STEM institute coin — learner mode only.' },
   { ticker: 'SIIM', name: 'Sample Indian Institute of Mgmt',     peggedToAsset: 'BTC',  peggedPercentage: 0.005, description: 'Fictional Indian business school coin — learner mode only.' },
   { ticker: 'NICT', name: 'National Inst. of Commerce & Tech',   peggedToAsset: 'SOL',  peggedPercentage: 0.5,   description: 'Fictional Indian commerce-tech institute coin — learner mode only.' },
-  { ticker: 'MRIT', name: 'Modern Rural Institute of Tech',      peggedToAsset: 'MATIC', peggedPercentage: 10,    description: 'Fictional Indian rural tech institute coin — learner mode only.' },
+  { ticker: 'MRIT', name: 'Modern Rural Institute of Tech',      peggedToAsset: 'POL',   peggedPercentage: 10,    description: 'Fictional Indian rural tech institute coin — learner mode only.' },
   { ticker: 'HCU',  name: 'Heritage College of Uplands',         peggedToAsset: 'ADA',  peggedPercentage: 5,     description: 'Fictional Indian heritage college coin — learner mode only.' },
   { ticker: 'GEST', name: 'Ganga Estuary School of Technology',  peggedToAsset: 'DOT',  peggedPercentage: 2,     description: 'Fictional Indian technology school coin — learner mode only.' },
   { ticker: 'TIDC', name: 'Tech Innovation Delta College',       peggedToAsset: 'AVAX', peggedPercentage: 1,     description: 'Fictional Indian innovation college coin — learner mode only.' },
