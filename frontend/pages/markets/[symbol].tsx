@@ -193,7 +193,7 @@ export default function TokenDetailsPage() {
   }, [pairs, symbol]);
 
 
-  const livePrice = collegeCoinData?.currentPrice || pairData?.price || tokenData?.market_data?.current_price?.usd || 0;
+  const livePrice = collegeCoinData?.currentPrice || pairData?.price || tokenData?.market_data?.current_price?.inr || 0;
   const liveChange = pairData?.change || tokenData?.market_data?.price_change_percentage_24h || 0;
 
   // Check if user is authenticated (for conditional layout)
@@ -285,22 +285,22 @@ export default function TokenDetailsPage() {
                     repos_url: cgData?.links?.repos_url || { github: [], bitbucket: [] },
                   },
                   market_data: {
-                    current_price: { usd: token.currentPrice || cgData?.market_data?.current_price?.usd || 0 },
+                    current_price: { inr: token.currentPrice || cgData?.market_data?.current_price?.inr || 0 },
                     price_change_percentage_24h: token.change24h || cgData?.market_data?.price_change_percentage_24h || 0,
-                    market_cap: { usd: cgData?.market_data?.market_cap?.usd || 0 },
-                    fully_diluted_valuation: { usd: cgData?.market_data?.fully_diluted_valuation?.usd || 0 },
-                    total_volume: { usd: cgData?.market_data?.total_volume?.usd || 0 },
-                    high_24h: { usd: cgData?.market_data?.high_24h?.usd || 0 },
-                    low_24h: { usd: cgData?.market_data?.low_24h?.usd || 0 },
+                    market_cap: { inr: cgData?.market_data?.market_cap?.inr || 0 },
+                    fully_diluted_valuation: { inr: cgData?.market_data?.fully_diluted_valuation?.inr || 0 },
+                    total_volume: { inr: cgData?.market_data?.total_volume?.inr || 0 },
+                    high_24h: { inr: cgData?.market_data?.high_24h?.inr || 0 },
+                    low_24h: { inr: cgData?.market_data?.low_24h?.inr || 0 },
                     circulating_supply: cgData?.market_data?.circulating_supply || 0,
                     total_supply: cgData?.market_data?.total_supply || 0,
                     max_supply: cgData?.market_data?.max_supply || 0,
-                    ath: { usd: cgData?.market_data?.ath?.usd || 0 },
-                    ath_date: { usd: cgData?.market_data?.ath_date?.usd || '' },
-                    ath_change_percentage: { usd: cgData?.market_data?.ath_change_percentage?.usd || 0 },
-                    atl: { usd: cgData?.market_data?.atl?.usd || 0 },
-                    atl_date: { usd: cgData?.market_data?.atl_date?.usd || '' },
-                    atl_change_percentage: { usd: cgData?.market_data?.atl_change_percentage?.usd || 0 },
+                    ath: { inr: cgData?.market_data?.ath?.inr || 0 },
+                    ath_date: { inr: cgData?.market_data?.ath_date?.inr || '' },
+                    ath_change_percentage: { inr: cgData?.market_data?.ath_change_percentage?.inr || 0 },
+                    atl: { inr: cgData?.market_data?.atl?.inr || 0 },
+                    atl_date: { inr: cgData?.market_data?.atl_date?.inr || '' },
+                    atl_change_percentage: { inr: cgData?.market_data?.atl_change_percentage?.inr || 0 },
                   },
                   categories: cgData?.categories || [],
                   genesis_date: cgData?.genesis_date || null,
@@ -839,25 +839,25 @@ export default function TokenDetailsPage() {
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <span style={{ color: themeToken.colorTextSecondary }}>24h High</span>
                           <span style={{ color: themeToken.colorText, fontWeight: fontWeights.medium }}>
-                            <PriceFormatter price={((referenceTokenData.market_data.high_24h.usd || 0) * (collegeCoinData.peggedPercentage / 100))} />
+                            <PriceFormatter price={((referenceTokenData.market_data.high_24h.inr || 0) * (collegeCoinData.peggedPercentage / 100))} />
                           </span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <span style={{ color: themeToken.colorTextSecondary }}>24h Low</span>
                           <span style={{ color: themeToken.colorText, fontWeight: fontWeights.medium }}>
-                            <PriceFormatter price={((referenceTokenData.market_data.low_24h.usd || 0) * (collegeCoinData.peggedPercentage / 100))} />
+                            <PriceFormatter price={((referenceTokenData.market_data.low_24h.inr || 0) * (collegeCoinData.peggedPercentage / 100))} />
                           </span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <span style={{ color: '#16C47F', fontWeight: fontWeights.semibold }}>ATH (scaled)</span>
                           <span style={{ color: themeToken.colorText, fontWeight: fontWeights.medium }}>
-                            <PriceFormatter price={((referenceTokenData.market_data.ath.usd || 0) * (collegeCoinData.peggedPercentage / 100))} />
+                            <PriceFormatter price={((referenceTokenData.market_data.ath.inr || 0) * (collegeCoinData.peggedPercentage / 100))} />
                           </span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <span style={{ color: '#fc6f03', fontWeight: fontWeights.semibold }}>ATL (scaled)</span>
                           <span style={{ color: themeToken.colorText, fontWeight: fontWeights.medium }}>
-                            <PriceFormatter price={((referenceTokenData.market_data.atl.usd || 0) * (collegeCoinData.peggedPercentage / 100))} />
+                            <PriceFormatter price={((referenceTokenData.market_data.atl.inr || 0) * (collegeCoinData.peggedPercentage / 100))} />
                           </span>
                         </div>
                       </div>
@@ -1057,7 +1057,7 @@ export default function TokenDetailsPage() {
                         </span>
                       </div>
                       <div style={{ marginTop: themeToken.marginXS, opacity: 0.8, fontSize: themeToken.fontSizeSM }}>
-                        H: <PriceFormatter price={tokenData.market_data.high_24h.usd} /> · L: <PriceFormatter price={tokenData.market_data.low_24h.usd} />
+                        H: <PriceFormatter price={tokenData.market_data.high_24h.inr} /> · L: <PriceFormatter price={tokenData.market_data.low_24h.inr} />
                       </div>
                     </div>
                   </div>
@@ -1141,15 +1141,15 @@ export default function TokenDetailsPage() {
                       
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 80 }}>
                         <KeyStat
-                          label={tokenData.market_data.market_cap.usd > 0 ? "Market Cap" : "FDV"}
-                          value={formatLargeNumber(tokenData.market_data.market_cap.usd || tokenData.market_data.fully_diluted_valuation.usd)}
+                          label={tokenData.market_data.market_cap.inr > 0 ? "Market Cap" : "FDV"}
+                          value={formatLargeNumber(tokenData.market_data.market_cap.inr || tokenData.market_data.fully_diluted_valuation.inr)}
                           color="#11998e"
                         />
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 80 }}>
                         <KeyStat
                           label="24h Volume"
-                          value={formatLargeNumber(tokenData.market_data.total_volume.usd)}
+                          value={formatLargeNumber(tokenData.market_data.total_volume.inr)}
                           color="#4facfe"
                         />
                       </div>
@@ -1188,8 +1188,8 @@ export default function TokenDetailsPage() {
                     }}>
                       <div style={{ flex: 1 }}>
                         <KeyStat
-                          label={tokenData.market_data.market_cap.usd > 0 ? "Market Cap" : "FDV"}
-                          value={formatLargeNumber(tokenData.market_data.market_cap.usd || tokenData.market_data.fully_diluted_valuation.usd)}
+                          label={tokenData.market_data.market_cap.inr > 0 ? "Market Cap" : "FDV"}
+                          value={formatLargeNumber(tokenData.market_data.market_cap.inr || tokenData.market_data.fully_diluted_valuation.inr)}
                           color="#11998e"
                         />
                       </div>
@@ -1197,7 +1197,7 @@ export default function TokenDetailsPage() {
                       <div style={{ flex: 1 }}>
                         <KeyStat
                           label="24h Volume"
-                          value={formatLargeNumber(tokenData.market_data.total_volume.usd)}
+                          value={formatLargeNumber(tokenData.market_data.total_volume.inr)}
                           color="#4facfe"
                         />
                       </div>
@@ -1293,28 +1293,28 @@ export default function TokenDetailsPage() {
                           <div>
                             <span style={{ color: '#16C47F', fontWeight: fontWeights.semibold }}>ATH</span>
                             <div style={{ fontSize: themeToken.fontSizeSM, color: themeToken.colorTextTertiary }}>
-                              {formatDate(tokenData.market_data.ath_date.usd)}
+                              {formatDate(tokenData.market_data.ath_date.inr)}
                             </div>
                           </div>
                           <div style={{ textAlign: 'right' }}>
                             <div style={{ fontWeight: fontWeights.semibold, color: themeToken.colorText }}>
-                              <PriceFormatter price={tokenData.market_data.ath.usd} />
+                              <PriceFormatter price={tokenData.market_data.ath.inr} />
                             </div>
-                            <PriceChangeBadge value={tokenData.market_data.ath_change_percentage.usd} size="small" />
+                            <PriceChangeBadge value={tokenData.market_data.ath_change_percentage.inr} size="small" />
                           </div>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <div>
                             <span style={{ color: '#fc6f03', fontWeight: fontWeights.semibold }}>ATL</span>
                             <div style={{ fontSize: themeToken.fontSizeSM, color: themeToken.colorTextTertiary }}>
-                              {formatDate(tokenData.market_data.atl_date.usd)}
+                              {formatDate(tokenData.market_data.atl_date.inr)}
                             </div>
                           </div>
                           <div style={{ textAlign: 'right' }}>
                             <div style={{ fontWeight: fontWeights.semibold, color: themeToken.colorText }}>
-                              <PriceFormatter price={tokenData.market_data.atl.usd} />
+                              <PriceFormatter price={tokenData.market_data.atl.inr} />
                             </div>
-                            <PriceChangeBadge value={tokenData.market_data.atl_change_percentage.usd} size="small" />
+                            <PriceChangeBadge value={tokenData.market_data.atl_change_percentage.inr} size="small" />
                           </div>
                         </div>
                       </div>
@@ -1482,28 +1482,28 @@ export default function TokenDetailsPage() {
                         <div>
                           <span style={{ color: '#16C47F', fontWeight: fontWeights.semibold }}>ATH</span>
                           <div style={{ fontSize: themeToken.fontSizeSM, color: themeToken.colorTextTertiary }}>
-                            {formatDate(tokenData.market_data.ath_date.usd)}
+                            {formatDate(tokenData.market_data.ath_date.inr)}
                           </div>
                         </div>
                         <div style={{ textAlign: 'right' }}>
                           <div style={{ fontWeight: fontWeights.semibold, color: themeToken.colorText }}>
-                            <PriceFormatter price={tokenData.market_data.ath.usd} />
+                            <PriceFormatter price={tokenData.market_data.ath.inr} />
                           </div>
-                          <PriceChangeBadge value={tokenData.market_data.ath_change_percentage.usd} size="small" />
+                          <PriceChangeBadge value={tokenData.market_data.ath_change_percentage.inr} size="small" />
                         </div>
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div>
                           <span style={{ color: '#fc6f03', fontWeight: fontWeights.semibold }}>ATL</span>
                           <div style={{ fontSize: themeToken.fontSizeSM, color: themeToken.colorTextTertiary }}>
-                            {formatDate(tokenData.market_data.atl_date.usd)}
+                            {formatDate(tokenData.market_data.atl_date.inr)}
                           </div>
                         </div>
                         <div style={{ textAlign: 'right' }}>
                           <div style={{ fontWeight: fontWeights.semibold, color: themeToken.colorText }}>
-                            <PriceFormatter price={tokenData.market_data.atl.usd} />
+                            <PriceFormatter price={tokenData.market_data.atl.inr} />
                           </div>
-                          <PriceChangeBadge value={tokenData.market_data.atl_change_percentage.usd} size="small" />
+                          <PriceChangeBadge value={tokenData.market_data.atl_change_percentage.inr} size="small" />
                         </div>
                       </div>
                     </div>
