@@ -259,7 +259,7 @@ export const TokenForm: React.FC<TokenFormProps> = ({
           >
              <InputNumber 
                style={{ width: '100%' }} 
-               prefix="₹" 
+               prefix="UGX " 
                min={0} 
                precision={8}
              />
@@ -347,7 +347,7 @@ export const TokenForm: React.FC<TokenFormProps> = ({
               </div>
 
               <Form.Item name="allowTradeInr" valuePropName="checked" style={{ marginBottom: 8 }}>
-                <Checkbox>INR Pair (TOKEN-INR)</Checkbox>
+                <Checkbox>INR Pair (TOKEN-UGX)</Checkbox>
               </Form.Item>
               <Form.Item name="allowTradeUsdt" valuePropName="checked" style={{ marginBottom: 8 }}>
                 <Checkbox>USDT Pair (TOKEN-USDT)</Checkbox>
@@ -445,7 +445,7 @@ export const TokenForm: React.FC<TokenFormProps> = ({
                 label="Minimum Transaction Amount (INR)"
                 tooltip="Users cannot trade less than this INR value per transaction"
               >
-                <InputNumber style={{ width: '100%' }} prefix="₹" min={0} placeholder="0" />
+                <InputNumber style={{ width: '100%' }} prefix="UGX " min={0} placeholder="0" />
               </Form.Item>
             </Col>
             <Col span={12}>
@@ -454,7 +454,7 @@ export const TokenForm: React.FC<TokenFormProps> = ({
                 label="Maximum Transaction Amount (INR)"
                 tooltip="Users cannot trade more than this INR value per transaction"
               >
-                <InputNumber style={{ width: '100%' }} prefix="₹" min={0} placeholder="0" />
+                <InputNumber style={{ width: '100%' }} prefix="UGX " min={0} placeholder="0" />
               </Form.Item>
             </Col>
           </Row>

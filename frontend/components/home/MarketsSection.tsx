@@ -16,14 +16,14 @@ const { useToken } = theme;
 const { useBreakpoint } = Grid;
 
 const formatVolume = (vol: number) => {
-  if (vol >= 1e9) return `₹${(vol / 1e9).toFixed(1)}B`;
-  if (vol >= 1e6) return `₹${(vol / 1e6).toFixed(1)}M`;
-  if (vol >= 1e3) return `₹${(vol / 1e3).toFixed(0)}K`;
-  return `₹${vol.toFixed(0)}`;
+  if (vol >= 1e9) return `UGX ${(vol / 1e9).toFixed(1)}B`;
+  if (vol >= 1e6) return `UGX ${(vol / 1e6).toFixed(1)}M`;
+  if (vol >= 1e3) return `UGX ${(vol / 1e3).toFixed(0)}K`;
+  return `UGX ${vol.toFixed(0)}`;
 };
 
 const formatPrice = (price: number) => {
-  return price.toLocaleString("en-IN", {
+  return price.toLocaleString("en-UG", {
     minimumFractionDigits: 2,
     maximumFractionDigits: price < 1 ? 4 : 2,
   });
@@ -41,7 +41,7 @@ export default function MarketsSection() {
   // Get top 10 USD pairs sorted by volume (using _usdVolume from context)
   const topTokens = useMemo(() => {
     const usdPairs = pairs
-      .filter((p) => p.quote === "INR")
+      .filter((p) => p.quote === "UGX")
       .sort((a, b) => (b._usdVolume || 0) - (a._usdVolume || 0))
       .slice(0, 10);
     return usdPairs;

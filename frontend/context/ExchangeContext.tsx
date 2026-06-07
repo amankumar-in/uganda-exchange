@@ -210,7 +210,7 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [pairs, setPairs] = useState<TradingPair[]>([]);
   const [collegeCoins, setCollegeCoins] = useState<DemoCollegeCoin[]>([]);
   const [isLoadingPairs, setIsLoadingPairs] = useState(true);
-  const [selectedPair, setSelectedPair] = useState('BTC-INR');
+  const [selectedPair, setSelectedPair] = useState('BTC-UGX');
   const [isConnected, setIsConnected] = useState(false);
   
   const [candles, setCandles] = useState<CoinbaseCandle[]>([]);
@@ -274,7 +274,7 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       const activeTokens = customTokens.filter((t: any) => t.isActive);
 
-      // Index tokens by symbol for non-INR pair price conversion
+      // Index tokens by symbol for non-UGX pair price conversion
       const tokenInrPrice = new Map<string, number>();
       activeTokens.forEach((t: any) => {
         const p = t.currentPrice || Number(t.manualPrice) || 0;
@@ -286,7 +286,7 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const tokenPairs: TradingPair[] = [];
 
       activeTokens.forEach((token: any) => {
-        const inrPrice = token.currentPrice || Number(token.manualPrice) || 0;
+        const ugxPrice = token.currentPrice || Number(token.manualPrice) || 0;
         const icon = token.iconUrl || getIconUrl(token.symbol);
         const permissions = {
           allowBuy: token.allowBuy ?? true,
@@ -296,7 +296,7 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           maxTransactionAmount: Number(token.maxTransactionAmount) || 0,
         };
 
-        const inrVolume = Number(token.volume24h) || 0;
+        const ugxVolume = Number(token.volume24h) || 0;
         const pushPair = (quote: string, price: number, volume: number) => {
           const symbol = `${token.symbol}-${quote}`;
           const baseInfo = {
@@ -309,7 +309,7 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             change: token.change24h || 0,
             volume: formatVolume(volume.toString()),
             _rawVolume24h: price > 0 ? volume / price : 0,
-            _usdVolume: inrVolume, // always the INR-denominated volume for sorting
+            _usdVolume: ugxVolume, // always the UGX-denominated volume for sorting
             isCustomToken: token.isNative || false,
             coingeckoId: token.coingeckoId,
             permissions,
@@ -317,29 +317,29 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         };
 
         if (token.allowTradeInr) {
-          pushPair('INR', inrPrice, inrVolume);
+          pushPair('UGX', ugxPrice, ugxVolume);
         }
         if (token.allowTradeUsdt && token.symbol !== 'USDT') {
           const usdtInr = getInrPrice('USDT');
-          pushPair('USDT', usdtInr > 0 ? inrPrice / usdtInr : 0, usdtInr > 0 ? inrVolume / usdtInr : 0);
+          pushPair('USDT', usdtInr > 0 ? ugxPrice / usdtInr : 0, usdtInr > 0 ? ugxVolume / usdtInr : 0);
         }
         if (token.allowTradeEth && token.symbol !== 'ETH') {
           const ethInr = getInrPrice('ETH');
-          pushPair('ETH', ethInr > 0 ? inrPrice / ethInr : 0, ethInr > 0 ? inrVolume / ethInr : 0);
+          pushPair('ETH', ethInr > 0 ? ugxPrice / ethInr : 0, ethInr > 0 ? ugxVolume / ethInr : 0);
         }
         if (token.allowTradeTuit && token.symbol !== 'TUIT') {
           const tuitInr = getInrPrice('TUIT');
-          pushPair('TUIT', tuitInr > 0 ? inrPrice / tuitInr : 0, tuitInr > 0 ? inrVolume / tuitInr : 0);
+          pushPair('TUIT', tuitInr > 0 ? ugxPrice / tuitInr : 0, tuitInr > 0 ? ugxVolume / tuitInr : 0);
         }
       });
 
-      // Demo college coins — learner mode virtual pairs, INR-quoted
+      // Demo college coins — learner mode virtual pairs, UGX-quoted
       const collegePairs: TradingPair[] = collegeData.coins.map((coin: DemoCollegeCoin) => {
         const refInrPrice = getInrPrice(coin.peggedToAsset);
         return {
-          symbol: `${coin.ticker}-INR`, name: coin.name, price: coin.currentPrice || 0,
+          symbol: `${coin.ticker}-UGX`, name: coin.name, price: coin.currentPrice || 0,
           change: 0, volume: '0',
-          quote: 'INR', baseCurrency: coin.ticker, quoteCurrency: 'INR',
+          quote: 'UGX', baseCurrency: coin.ticker, quoteCurrency: 'UGX',
           iconUrl: resolveUploadUrl(coin.iconUrl) || `https://ui-avatars.com/api/?name=${coin.ticker}&size=64&background=667eea&color=ffffff&bold=true`,
           isDemoCollegeCoin: true, peggedToAsset: coin.peggedToAsset, peggedPercentage: coin.peggedPercentage,
           _rawVolume24h: 0, _usdVolume: 0,
@@ -388,9 +388,9 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           };
         }
         
-        // College coin update — pegged to reference token's INR price
+        // College coin update — pegged to reference token's UGX price
         if (pair.isDemoCollegeCoin && pair.peggedToAsset && pair.peggedPercentage) {
-          const refUpdate = pricesData[`${pair.peggedToAsset}-INR`];
+          const refUpdate = pricesData[`${pair.peggedToAsset}-UGX`];
           if (refUpdate) {
             const refPrice = parseFloat(refUpdate.price);
             const newPrice = refPrice * (pair.peggedPercentage / 100);
@@ -529,7 +529,7 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         default: start = now - 60 * 60 * 100;
       }
       
-      // Every chart is driven by CoinGecko OHLC (INR-denominated) plus optional
+      // Every chart is driven by CoinGecko OHLC (UGX-denominated) plus optional
       // cross-rate conversion for USDT/ETH-quoted pairs and peg for demo college coins.
       const [baseAsset, quoteAsset] = selectedPair.split('-');
       let conversionRate = 1;
@@ -541,16 +541,16 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const isDemoCollegeCoin = currentPair?.isDemoCollegeCoin === true;
       let coingeckoId = currentPair?.coingeckoId;
       if (isDemoCollegeCoin && currentPair?.peggedToAsset) {
-        const refPair = currentPairs.find(p => p.baseCurrency === currentPair.peggedToAsset && p.quote === 'INR');
+        const refPair = currentPairs.find(p => p.baseCurrency === currentPair.peggedToAsset && p.quote === 'UGX');
         coingeckoId = refPair?.coingeckoId;
         conversionRate = (currentPair.peggedPercentage || 0) / 100;
-      } else if (quoteAsset !== 'INR') {
-        // Non-INR quote — chart reference is always base-INR price, divide by quote-INR price
-        const baseInrPair = currentPairs.find(p => p.baseCurrency === baseAsset && p.quote === 'INR');
-        const quoteInrPair = currentPairs.find(p => p.baseCurrency === quoteAsset && p.quote === 'INR');
-        coingeckoId = baseInrPair?.coingeckoId;
-        if (quoteInrPair && quoteInrPair.price > 0) {
-          conversionRate = 1 / quoteInrPair.price;
+      } else if (quoteAsset !== 'UGX') {
+        // Non-UGX quote — chart reference is always base-UGX price, divide by quote-UGX price
+        const baseUgxPair = currentPairs.find(p => p.baseCurrency === baseAsset && p.quote === 'UGX');
+        const quoteUgxPair = currentPairs.find(p => p.baseCurrency === quoteAsset && p.quote === 'UGX');
+        coingeckoId = baseUgxPair?.coingeckoId;
+        if (quoteUgxPair && quoteUgxPair.price > 0) {
+          conversionRate = 1 / quoteUgxPair.price;
         }
       }
 
@@ -785,8 +785,8 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             // Build crypto prices from current pairs
             const cryptoPrices: Record<string, number> = {};
             pairsRef.current.forEach(pair => {
-              if (pair.symbol.endsWith('-INR')) {
-                const asset = pair.symbol.replace('-INR', '');
+              if (pair.symbol.endsWith('-UGX')) {
+                const asset = pair.symbol.replace('-UGX', '');
                 cryptoPrices[asset] = pair.price;
               }
             });
@@ -845,8 +845,8 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       
       // ============ INVESTOR MODE (Real Trading) ============
       // All pairs route straight to the backend — no synthetic USD routing.
-      // orders.service.ts handles INR/USDT/ETH/TUIT quotes internally using
-      // token-table INR prices for cross-rate calculation.
+      // orders.service.ts handles UGX/USDT/ETH/TUIT quotes internally using
+      // token-table UGX prices for cross-rate calculation.
       const orderAmount = side === 'BUY' ? total : amount;
       const result = await placeOrder(tradingPair, side, orderAmount);
       if (!result.success) return { success: false };
@@ -873,14 +873,14 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   // Track if we've done the initial auto-select (to avoid overriding URL navigation)
   const hasAutoSelectedRef = useRef(false);
   
-  // Default pair selection — prefer BTC-INR, fall back to first available pair.
+  // Default pair selection — prefer BTC-UGX, fall back to first available pair.
   // No automatic college-coin routing; users pick via the Colleges tab in learner mode.
   useEffect(() => {
     if (!isLoadingPairs && pairs.length > 0 && !hasAutoSelectedRef.current) {
       const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
       const urlPair = urlParams?.get('pair');
       if (!urlPair && !pairs.some(p => p.symbol === selectedPair)) {
-        const preferred = pairs.find(p => p.symbol === 'BTC-INR') || pairs[0];
+        const preferred = pairs.find(p => p.symbol === 'BTC-UGX') || pairs[0];
         if (preferred) setSelectedPair(preferred.symbol);
       }
       hasAutoSelectedRef.current = true;
@@ -907,7 +907,7 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (appMode === 'investor' && pairs.length > 0) {
       const currentPair = pairs.find(p => p.symbol === selectedPair);
       if (currentPair?.isDemoCollegeCoin) {
-        setSelectedPair('BTC-INR');
+        setSelectedPair('BTC-UGX');
       }
     }
   }, [appMode, pairs, selectedPair]);

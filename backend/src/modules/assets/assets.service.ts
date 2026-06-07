@@ -63,7 +63,7 @@ export class AssetsService {
     // Add USD Balance from FiatBalance table
     if (fiatBalance) {
       balances.push({
-        asset: 'INR',
+        asset: 'UGX',
         balance: parseFloat(fiatBalance.balance.toString()),
         availableBalance: parseFloat(fiatBalance.availableBalance.toString()),
         lockedBalance: parseFloat(fiatBalance.lockedBalance.toString()),
@@ -73,7 +73,7 @@ export class AssetsService {
     // Add crypto balances, excluding USD if mistakenly present there
     balances.push(
       ...cryptoBalances
-        .filter((b) => b.asset !== 'INR')
+        .filter((b) => b.asset !== 'UGX')
         .map((b) => ({
           asset: b.asset,
           balance: parseFloat(b.balance.toString()),
@@ -92,7 +92,7 @@ export class AssetsService {
     userId: string,
     asset: string,
   ): Promise<BalanceResponse | null> {
-    if (asset === 'INR') {
+    if (asset === 'UGX') {
       const fiatBalance = await this.prisma.client.fiatBalance.findUnique({
         where: { userId },
       });
@@ -100,7 +100,7 @@ export class AssetsService {
       if (!fiatBalance) return null;
 
       return {
-        asset: 'INR',
+        asset: 'UGX',
         balance: parseFloat(fiatBalance.balance.toString()),
         availableBalance: parseFloat(fiatBalance.availableBalance.toString()),
         lockedBalance: parseFloat(fiatBalance.lockedBalance.toString()),
@@ -135,14 +135,14 @@ export class AssetsService {
     userId: string,
     asset: string,
   ): Promise<BalanceResponse> {
-    if (asset === 'INR') {
+    if (asset === 'UGX') {
       const balance = await this.prisma.client.fiatBalance.findUnique({
         where: { userId },
       });
 
       if (balance) {
         return {
-          asset: 'INR',
+          asset: 'UGX',
           balance: parseFloat(balance.balance.toString()),
           availableBalance: parseFloat(balance.availableBalance.toString()),
           lockedBalance: parseFloat(balance.lockedBalance.toString()),
@@ -150,7 +150,7 @@ export class AssetsService {
       }
       
       return {
-        asset: 'INR',
+        asset: 'UGX',
         balance: 0,
         availableBalance: 0,
         lockedBalance: 0,
@@ -194,12 +194,12 @@ export class AssetsService {
     asset: string,
     amount: number, // Positive to add, negative to subtract
   ): Promise<void> {
-    if (asset === 'INR') {
+    if (asset === 'UGX') {
       await this.prisma.client.fiatBalance.upsert({
         where: { userId },
         create: {
           userId,
-          currency: 'INR',
+          currency: 'UGX',
           balance: amount,
           availableBalance: amount,
           lockedBalance: 0,
@@ -253,7 +253,7 @@ export class AssetsService {
       );
     }
 
-    if (asset === 'INR') {
+    if (asset === 'UGX') {
       await this.prisma.client.fiatBalance.update({
         where: { userId },
         data: {
@@ -290,7 +290,7 @@ export class AssetsService {
     asset: string,
     amount: number,
   ): Promise<void> {
-    if (asset === 'INR') {
+    if (asset === 'UGX') {
       await this.prisma.client.fiatBalance.update({
         where: { userId },
         data: {
@@ -348,11 +348,11 @@ export class AssetsService {
     // Get current balances
     const balances = await this.getUserBalances(userId);
     
-    const cashBalance = balances.find(b => b.asset === 'INR')?.balance || 0;
+    const cashBalance = balances.find(b => b.asset === 'UGX')?.balance || 0;
     
     let cryptoValue = 0;
     for (const balance of balances) {
-      if (balance.asset !== 'INR' && cryptoPrices[balance.asset]) {
+      if (balance.asset !== 'UGX' && cryptoPrices[balance.asset]) {
         cryptoValue += balance.balance * cryptoPrices[balance.asset];
       }
     }

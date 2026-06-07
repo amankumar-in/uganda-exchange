@@ -1,12 +1,12 @@
 /**
  * One-time seed: pulls Coinbase's public product catalog, resolves a CoinGecko ID
- * for each base currency, and upserts into the tokens table with India defaults
+ * for each base currency, and upserts into the tokens table with uganda defaults
  * (allowTradeInr=true, all trading enabled, isActive=true).
  *
  * Safe to re-run — upserts by symbol, doesn't touch rows that already exist
  * unless they're missing a coingeckoId.
  *
- * Run: npx ts-node scripts/seed-india-tokens.ts
+ * Run: npx ts-node scripts/seed-uganda-tokens.ts
  */
 
 import 'dotenv/config';

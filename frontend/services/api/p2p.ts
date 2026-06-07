@@ -12,7 +12,7 @@ const API_BASE_URL = getApiBaseUrl();
 
 export type PaymentMethodType =
   | 'BANK_TRANSFER'
-  | 'UPI'
+  | 'MOBILE_MONEY'
   | 'PAYPAL'
   | 'VENMO'
   | 'ZELLE'
@@ -451,7 +451,7 @@ export async function expireUnpaidTrades(): Promise<{ message: string; expiredCo
 
 export const PAYMENT_METHOD_LABELS: Record<PaymentMethodType, string> = {
   BANK_TRANSFER: 'Bank Transfer',
-  UPI: 'UPI',
+  MOBILE_MONEY: 'MOBILE_MONEY',
   PAYPAL: 'PayPal',
   VENMO: 'Venmo',
   ZELLE: 'Zelle',
@@ -493,10 +493,9 @@ export function getPaymentMethodFields(type: PaymentMethodType): { key: string; 
         { key: 'routingNumber', label: 'Routing Number', required: false },
         { key: 'swiftCode', label: 'SWIFT/BIC Code', required: false },
       ];
-    case 'UPI':
+    case 'MOBILE_MONEY':
       return [
-        { key: 'upiId', label: 'UPI ID', required: true },
-        { key: 'name', label: 'Name', required: true },
+        { key: 'mobileNumber', label: 'Mobile Number', required: true },
       ];
     case 'PAYPAL':
       return [

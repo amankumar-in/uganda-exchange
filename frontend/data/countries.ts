@@ -26,7 +26,7 @@ export const countries: CountryData[] = allCountries.map((country: ICountry) => 
 // Get country options for Select component (for residence)
 // Priority countries appear first (US, UK, India, China)
 export const getCountryOptions = () => {
-  const priorityCodes = ['US', 'GB', 'IN', 'CN'];
+  const priorityCodes = ['UG', 'US', 'GB', 'CN'];
   
   return [...countries]
     .sort((a, b) => {
@@ -53,8 +53,7 @@ export const getCountryOptions = () => {
 // Get phone code options for Select component
 export const getPhoneCodeOptions = () => {
   // Show all countries with their phone codes (no deduplication)
-  // Priority countries appear first (US, CA, UK, etc.)
-  const priorityCodes = ['US', 'CA', 'GB', 'AU', 'IN'];
+  const priorityCodes = ['UG', 'US', 'CA', 'GB', 'AU'];
   
   return countries
     .filter((c) => c.phoneCode && c.phoneCode.length > 0)

@@ -1,124 +1,45 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Modal, Form, InputNumber, Button, message, theme, Typography, Space } from 'antd';
 import { LockOutlined, BankOutlined } from '@ant-design/icons';
 import { motion } from 'motion/react';
 import { fontWeights } from '@/theme/themeConfig';
-import { createDepositOrder, verifyDepositPayment } from '@/services/api/fiat';
+import { createDepositOrder } from '@/services/api/fiat';
 
 const { useToken } = theme;
-const { Text, Title } = Typography;
+const { Text } = Typography;
 
-const RAZORPAY_SCRIPT_URL = 'https://checkout.razorpay.com/v1/checkout.js';
-const MIN_DEPOSIT = 100;
-const MAX_DEPOSIT = 1_000_000;
-
-// Module-level promise so we load the SDK once per page
-let razorpayScriptPromise: Promise<boolean> | null = null;
-
-function loadRazorpayScript(): Promise<boolean> {
-  if (typeof window === 'undefined') return Promise.resolve(false);
-  if ((window as any).Razorpay) return Promise.resolve(true);
-  if (razorpayScriptPromise) return razorpayScriptPromise;
-
-  razorpayScriptPromise = new Promise<boolean>((resolve) => {
-    const script = document.createElement('script');
-    script.src = RAZORPAY_SCRIPT_URL;
-    script.async = true;
-    script.onload = () => resolve(true);
-    script.onerror = () => {
-      razorpayScriptPromise = null;
-      resolve(false);
-    };
-    document.body.appendChild(script);
-  });
-  return razorpayScriptPromise;
-}
+const MIN_DEPOSIT = 500;
+const MAX_DEPOSIT = 5_000_000;
 
 interface DepositModalProps {
   visible: boolean;
   onClose: () => void;
-  onSuccess: (amount: number) => void;
+  onSuccess?: (amount: number) => void;
 }
 
-export default function DepositModal({ visible, onClose, onSuccess }: DepositModalProps) {
+export default function DepositModal({ visible, onClose }: DepositModalProps) {
   const { token } = useToken();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
 
-  // Pre-load Razorpay SDK so the button feels instant
-  useEffect(() => {
-    if (visible) {
-      loadRazorpayScript();
-    }
-  }, [visible]);
-
   const handleSubmit = async (values: { amount: number }) => {
     const amount = Number(values.amount);
     if (!amount || amount < MIN_DEPOSIT) {
-      message.error(`Minimum deposit is ₹${MIN_DEPOSIT}`);
+      message.error(`Minimum deposit is UGX ${MIN_DEPOSIT.toLocaleString('en-UG')}`);
       return;
     }
 
     setLoading(true);
     try {
-      const ready = await loadRazorpayScript();
-      if (!ready || !(window as any).Razorpay) {
-        message.error('Unable to load payment gateway. Check your connection and try again.');
-        setLoading(false);
-        return;
-      }
-
       const order = await createDepositOrder(amount);
-
-      const options: any = {
-        key: order.keyId,
-        amount: order.amount,
-        currency: order.currency,
-        name: 'InTuition Exchange',
-        description: `Deposit ₹${amount.toLocaleString('en-IN')}`,
-        order_id: order.razorpayOrderId,
-        handler: async (response: {
-          razorpay_order_id: string;
-          razorpay_payment_id: string;
-          razorpay_signature: string;
-        }) => {
-          try {
-            const result = await verifyDepositPayment({
-              orderId: order.orderId,
-              razorpayOrderId: response.razorpay_order_id,
-              razorpayPaymentId: response.razorpay_payment_id,
-              razorpaySignature: response.razorpay_signature,
-            });
-            if (result.success) {
-              message.success(`₹${amount.toLocaleString('en-IN')} credited to your balance`);
-              form.resetFields();
-              onSuccess(amount);
-              onClose();
-            } else {
-              message.error('Payment verification failed. Contact support if you were charged.');
-            }
-          } catch (e: any) {
-            message.error(e?.message || 'Payment verification failed');
-          } finally {
-            setLoading(false);
-          }
-        },
-        modal: {
-          ondismiss: () => {
-            setLoading(false);
-          },
-        },
-        theme: { color: '#0d7377' },
-      };
-
-      const rzp = new (window as any).Razorpay(options);
-      rzp.on('payment.failed', (resp: any) => {
-        setLoading(false);
-        message.error(resp?.error?.description || 'Payment failed');
-      });
-      rzp.open();
+      if (order.redirectUrl) {
+        // Redirect the user to Pesapal
+        window.location.href = order.redirectUrl;
+      } else {
+        throw new Error('No redirect URL provided from payment gateway.');
+      }
     } catch (e: any) {
       setLoading(false);
       message.error(e?.message || 'Failed to start deposit');
@@ -150,14 +71,14 @@ export default function DepositModal({ visible, onClose, onSuccess }: DepositMod
         transition={{ duration: 0.2 }}
       >
         <Text type="secondary" style={{ display: 'block', marginBottom: token.marginLG }}>
-          Deposit INR into your account via UPI, card, or netbanking through Razorpay.
+          Deposit UGX into your account securely via Pesapal (Mobile Money or Card).
         </Text>
 
         <Form
           form={form}
           layout="vertical"
           onFinish={handleSubmit}
-          initialValues={{ amount: 500 }}
+          initialValues={{ amount: 10000 }}
         >
           <Form.Item
             name="amount"
@@ -168,10 +89,10 @@ export default function DepositModal({ visible, onClose, onSuccess }: DepositMod
                 validator: (_, value) => {
                   const n = Number(value);
                   if (!Number.isFinite(n)) return Promise.reject(new Error('Enter a valid amount'));
-                  if (n < MIN_DEPOSIT) return Promise.reject(new Error(`Minimum deposit is ₹${MIN_DEPOSIT}`));
+                  if (n < MIN_DEPOSIT) return Promise.reject(new Error(`Minimum deposit is UGX ${MIN_DEPOSIT.toLocaleString('en-UG')}`));
                   if (n > MAX_DEPOSIT) {
                     return Promise.reject(
-                      new Error(`Maximum deposit is ₹${MAX_DEPOSIT.toLocaleString('en-IN')}`),
+                      new Error(`Maximum deposit is UGX ${MAX_DEPOSIT.toLocaleString('en-UG')}`),
                     );
                   }
                   return Promise.resolve();
@@ -180,28 +101,28 @@ export default function DepositModal({ visible, onClose, onSuccess }: DepositMod
             ]}
           >
             <InputNumber
-              prefix="₹"
+              prefix="UGX "
               size="large"
               style={{ width: '100%' }}
-              placeholder="500"
+              placeholder="10000"
               min={MIN_DEPOSIT}
               max={MAX_DEPOSIT}
-              step={100}
-              precision={2}
+              step={1000}
+              precision={0}
               autoFocus
               disabled={loading}
             />
           </Form.Item>
 
           <div style={{ display: 'flex', gap: token.marginSM, marginBottom: token.marginMD }}>
-            {[500, 1000, 5000, 10000].map(preset => (
+            {[10000, 50000, 100000, 500000].map(preset => (
               <Button
                 key={preset}
                 size="small"
                 onClick={() => form.setFieldsValue({ amount: preset })}
                 disabled={loading}
               >
-                ₹{preset.toLocaleString('en-IN')}
+                UGX {preset.toLocaleString('en-UG')}
               </Button>
             ))}
           </div>
@@ -214,7 +135,7 @@ export default function DepositModal({ visible, onClose, onSuccess }: DepositMod
             loading={loading}
             style={{ height: 48, fontWeight: fontWeights.semibold }}
           >
-            Pay with Razorpay
+            Proceed to Payment
           </Button>
 
           <div
@@ -229,7 +150,7 @@ export default function DepositModal({ visible, onClose, onSuccess }: DepositMod
             }}
           >
             <LockOutlined />
-            Secured by Razorpay. Your bank/card details never reach our servers.
+            Secured by Pesapal.
           </div>
         </Form>
       </motion.div>

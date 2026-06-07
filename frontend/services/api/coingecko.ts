@@ -250,11 +250,11 @@ export async function getSimplePrices(
  * Format large numbers for display
  */
 export function formatLargeNumber(num: number): string {
-  if (num >= 1e12) return `₹${(num / 1e12).toFixed(2)}T`;
-  if (num >= 1e9) return `₹${(num / 1e9).toFixed(2)}B`;
-  if (num >= 1e6) return `₹${(num / 1e6).toFixed(2)}M`;
-  if (num >= 1e3) return `₹${(num / 1e3).toFixed(2)}K`;
-  return `₹${num.toFixed(2)}`;
+  if (num >= 1e12) return `UGX ${(num / 1e12).toFixed(2)}T`;
+  if (num >= 1e9) return `UGX ${(num / 1e9).toFixed(2)}B`;
+  if (num >= 1e6) return `UGX ${(num / 1e6).toFixed(2)}M`;
+  if (num >= 1e3) return `UGX ${(num / 1e3).toFixed(2)}K`;
+  return `UGX ${num.toFixed(2)}`;
 }
 
 /**
@@ -280,10 +280,10 @@ export function formatPercentage(num: number): string {
  * Format price with appropriate decimals
  */
 export function formatPrice(price: number): string {
-  if (price >= 1000) return `₹${price.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  if (price >= 1) return `₹${price.toFixed(2)}`;
-  if (price >= 0.01) return `₹${price.toFixed(4)}`;
-  if (price >= 0.0001) return `₹${price.toFixed(6)}`;
-  return `₹${price.toFixed(8)}`;
+  if (price >= 1000) return `UGX ${price.toLocaleString('en-UG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  if (price >= 1) return `UGX ${price.toFixed(2)}`;
+  if (price >= 0.01) return `UGX ${price.toFixed(4)}`;
+  if (price >= 0.0001) return `UGX ${price.toFixed(6)}`;
+  return `UGX ${price.toFixed(8)}`;
 }
 

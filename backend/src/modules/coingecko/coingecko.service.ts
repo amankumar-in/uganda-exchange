@@ -325,7 +325,7 @@ export class CoinGeckoService {
       // 1. Try Market Chart first (High resolution: 5m for 1d, 1h for 1-90d)
       try {
         const chartRes = await fetch(
-          `${COINGECKO_API_URL}/coins/${id}/market_chart?vs_currency=inr&days=${d}`,
+          `${COINGECKO_API_URL}/coins/${id}/market_chart?vs_currency=ugx&days=${d}`,
           { headers: this.getHeaders() }
         );
         if (chartRes.ok) {
@@ -342,7 +342,7 @@ export class CoinGeckoService {
       // 2. Fallback: Standard OHLC Endpoint (Fixed resolutions: 30m, 4h, 4d)
       try {
         const ohlcRes = await fetch(
-          `${COINGECKO_API_URL}/coins/${id}/ohlc?vs_currency=inr&days=${d}`,
+          `${COINGECKO_API_URL}/coins/${id}/ohlc?vs_currency=ugx&days=${d}`,
           { headers: this.getHeaders() }
         );
         if (ohlcRes.ok) {

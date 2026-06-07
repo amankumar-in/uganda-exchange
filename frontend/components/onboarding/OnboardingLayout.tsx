@@ -208,7 +208,7 @@ const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
                   }}>
                     InTuition
                   </span>
-                  <span style={{ fontSize: token.fontSizeSM - 1, color: 'rgba(255,255,255,0.6)', lineHeight: 1, marginTop: -2 }}>India</span>
+                  <span style={{ fontSize: token.fontSizeSM - 1, color: 'rgba(255,255,255,0.6)', lineHeight: 1, marginTop: -2 }}>Uganda</span>
                 </div>
               )}
             </Link>

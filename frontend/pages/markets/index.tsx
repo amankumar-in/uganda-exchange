@@ -484,7 +484,7 @@ export default function MarketsPage() {
   }, [pageLoading, isAuthenticated]);
 
   // Filter to USD pairs, separating college coins
-  const usdPairs = useMemo(() => pairs.filter((p) => p.quote === 'INR' && !(p as TradingPairExtended).isDemoCollegeCoin), [pairs]);
+  const usdPairs = useMemo(() => pairs.filter((p) => p.quote === 'UGX' && !(p as TradingPairExtended).isDemoCollegeCoin), [pairs]);
   const collegePairs = useMemo(() => pairs.filter((p) => (p as TradingPairExtended).isDemoCollegeCoin === true), [pairs]);
 
   const filteredPairs = useMemo(() => {
@@ -548,10 +548,10 @@ export default function MarketsPage() {
   }, [router]);
 
   const formatVolume = (vol: number) => {
-    if (vol >= 1e9) return `₹${(vol / 1e9).toFixed(1)}B`;
-    if (vol >= 1e6) return `₹${(vol / 1e6).toFixed(1)}M`;
-    if (vol >= 1e3) return `₹${(vol / 1e3).toFixed(0)}K`;
-    return `₹${vol.toFixed(0)}`;
+    if (vol >= 1e9) return `UGX ${(vol / 1e9).toFixed(1)}B`;
+    if (vol >= 1e6) return `UGX ${(vol / 1e6).toFixed(1)}M`;
+    if (vol >= 1e3) return `UGX ${(vol / 1e3).toFixed(0)}K`;
+    return `UGX ${vol.toFixed(0)}`;
   };
 
   // Show nothing while auth is loading to prevent layout flash
@@ -852,10 +852,10 @@ export default function MarketsPage() {
   return (
     <>
       <Head>
-        <title>Crypto Markets — Live INR Prices | InTuition Exchange</title>
+        <title>Crypto Markets — Live UGX Prices | InTuition Exchange</title>
         <meta
           name="description"
-          content="Live INR prices for Bitcoin, Ethereum, and 300+ crypto assets. Buy, sell, and trade crypto and college coins on InTuition Exchange — India's home for digital assets."
+          content="Live UGX prices for Bitcoin, Ethereum, and 300+ crypto assets. Buy, sell, and trade crypto and college coins on General Exchange — Uganda's home for digital assets."
         />
       </Head>
 

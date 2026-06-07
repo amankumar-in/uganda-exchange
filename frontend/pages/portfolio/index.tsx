@@ -69,7 +69,7 @@ const MiningBalanceRow = ({
   useEffect(() => {
     if (!coin.isMining || !coin.sessionStartTime) {
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
-      if (totalRef.current) totalRef.current.textContent = coin.walletBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+      if (totalRef.current) totalRef.current.textContent = coin.walletBalance.toLocaleString('en-UG', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
       return;
     }
 
@@ -79,7 +79,7 @@ const MiningBalanceRow = ({
     const tick = () => {
       const elapsed = (Date.now() - startMs) / (1000 * 60 * 60);
       const earned = Math.max(0, elapsed * rate);
-      if (totalRef.current) totalRef.current.textContent = (coin.walletBalance + earned).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+      if (totalRef.current) totalRef.current.textContent = (coin.walletBalance + earned).toLocaleString('en-UG', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
       if (earningsRef.current) earningsRef.current.textContent = ` +${earned.toFixed(4)}`;
       animationRef.current = requestAnimationFrame(tick);
     };
@@ -190,11 +190,11 @@ const MiningBalanceRow = ({
         }}>
           {coin.isMining ? (
             <>
-              <span>{coin.walletBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              <span>{coin.walletBalance.toLocaleString('en-UG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
               <span ref={earningsRef} style={{ color: token.colorSuccess }} />
             </>
           ) : (
-            <span>Wallet: {coin.walletBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            <span>Wallet: {coin.walletBalance.toLocaleString('en-UG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
           )}
         </div>
       </div>
@@ -310,8 +310,8 @@ const WalletPage: NextPageWithLayout = () => {
           // Build crypto prices from current pairs
           const cryptoPrices: Record<string, number> = {};
           pairs.forEach(pair => {
-            if (pair.symbol.endsWith('-INR')) {
-              const asset = pair.symbol.replace('-INR', '');
+            if (pair.symbol.endsWith('-UGX')) {
+              const asset = pair.symbol.replace('-UGX', '');
               cryptoPrices[asset] = pair.price;
             }
           });
@@ -335,23 +335,23 @@ const WalletPage: NextPageWithLayout = () => {
 
   // Separate INR and crypto assets — use viewBalances for display
   const usdBalance = useMemo(() => {
-    const inr = viewBalances.find((b) => b.asset === 'INR');
+    const inr = viewBalances.find((b) => b.asset === 'UGX');
     return inr ? {
-      symbol: 'INR',
-      name: 'Indian Rupee',
-      balance: inr.balance.toLocaleString('en-IN', {
+      symbol: 'UGX',
+      name: 'Ugandan Shilling',
+      balance: inr.balance.toLocaleString('en-UG', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       }),
-      availableBalance: inr.availableBalance.toLocaleString('en-IN', {
+      availableBalance: inr.availableBalance.toLocaleString('en-UG', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       }),
-      lockedBalance: inr.lockedBalance.toLocaleString('en-IN', {
+      lockedBalance: inr.lockedBalance.toLocaleString('en-UG', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       }),
-      value: `₹${inr.balance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      value: `UGX ${inr.balance.toLocaleString('en-UG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
       change: 0,
       color: '#4CAF50',
       iconUrl: undefined,
@@ -374,7 +374,7 @@ const WalletPage: NextPageWithLayout = () => {
     // Create a map of existing balances
     const balanceMap = new Map(
       viewBalances
-        .filter((b) => b.asset !== 'INR')
+        .filter((b) => b.asset !== 'UGX')
         .map((b) => [b.asset, b])
     );
 
@@ -389,7 +389,7 @@ const WalletPage: NextPageWithLayout = () => {
 
       // Find price from pairs (look for USD pairs)
       const usdPair = pairs.find(
-        (p) => p.baseCurrency === asset && p.quote === 'INR',
+        (p) => p.baseCurrency === asset && p.quote === 'UGX',
       );
       const price = usdPair?.price || 0;
       const usdValue = balance.balance * price;
@@ -407,21 +407,21 @@ const WalletPage: NextPageWithLayout = () => {
       return {
         symbol: asset,
         name,
-        balance: balance.balance.toLocaleString('en-IN', {
+        balance: balance.balance.toLocaleString('en-UG', {
           minimumFractionDigits: 2,
           maximumFractionDigits: 8,
         }),
-        availableBalance: balance.availableBalance.toLocaleString('en-IN', {
+        availableBalance: balance.availableBalance.toLocaleString('en-UG', {
           minimumFractionDigits: 2,
           maximumFractionDigits: 8,
         }),
-        lockedBalance: balance.lockedBalance.toLocaleString('en-IN', {
+        lockedBalance: balance.lockedBalance.toLocaleString('en-UG', {
           minimumFractionDigits: 2,
           maximumFractionDigits: 8,
         }),
         value: usdValue > 0
-          ? `₹${usdValue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-          : '₹0.00',
+          ? `UGX ${usdValue.toLocaleString('en-UG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+          : 'UGX 0.00',
         change: usdPair?.change || 0,
         color,
         iconUrl,
@@ -430,11 +430,11 @@ const WalletPage: NextPageWithLayout = () => {
 
     // Add any other assets the user has (not in required list)
     const otherAssets = viewBalances
-      .filter((b) => b.asset !== 'INR' && !REQUIRED_ASSETS.includes(b.asset))
+      .filter((b) => b.asset !== 'UGX' && !REQUIRED_ASSETS.includes(b.asset))
       .map((balance) => {
         // Check both regular pairs and college coin pairs
         const usdPair = pairs.find(
-          (p) => p.baseCurrency === balance.asset && (p.quote === 'INR' || p.isDemoCollegeCoin),
+          (p) => p.baseCurrency === balance.asset && (p.quote === 'UGX' || p.isDemoCollegeCoin),
         );
         const price = usdPair?.price || 0;
         const usdValue = balance.balance * price;
@@ -445,21 +445,21 @@ const WalletPage: NextPageWithLayout = () => {
         return {
           symbol: balance.asset,
           name: usdPair?.name || balance.asset,
-          balance: balance.balance.toLocaleString('en-IN', {
+          balance: balance.balance.toLocaleString('en-UG', {
             minimumFractionDigits: 0,
             maximumFractionDigits: 8,
           }),
-          availableBalance: balance.availableBalance.toLocaleString('en-IN', {
+          availableBalance: balance.availableBalance.toLocaleString('en-UG', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 8,
           }),
-          lockedBalance: balance.lockedBalance.toLocaleString('en-IN', {
+          lockedBalance: balance.lockedBalance.toLocaleString('en-UG', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 8,
           }),
           value: usdValue > 0 
-            ? `₹${usdValue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-            : '₹0.00',
+            ? `UGX ${usdValue.toLocaleString('en-UG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+            : 'UGX 0.00',
           change: usdPair?.change || 0,
           color: token.colorPrimary,
           iconUrl,
@@ -508,7 +508,7 @@ const WalletPage: NextPageWithLayout = () => {
 
   const cryptoBalance = useMemo(() => {
     return assetsWithValues
-      .filter((a) => a.symbol !== 'INR')
+      .filter((a) => a.symbol !== 'UGX')
       .reduce((sum, asset) => {
         const value = parseFloat(asset.value.replace(/[^0-9.-]/g, '')) || 0;
         return sum + value;
@@ -516,7 +516,7 @@ const WalletPage: NextPageWithLayout = () => {
   }, [assetsWithValues]);
 
   const fiatBalance = useMemo(() => {
-    const usdAsset = assetsWithValues.find((a) => a.symbol === 'INR');
+    const usdAsset = assetsWithValues.find((a) => a.symbol === 'UGX');
     return usdAsset ? parseFloat(usdAsset.value.replace(/[^0-9.-]/g, '')) || 0 : 0;
   }, [assetsWithValues]);
 
@@ -601,19 +601,19 @@ const WalletPage: NextPageWithLayout = () => {
       title: 'Amount',
       dataIndex: 'filledAmount',
       key: 'filledAmount',
-      render: (amount: number, record: any) => `${amount.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 8 })} ${record.asset}`,
+      render: (amount: number, record: any) => `${amount.toLocaleString('en-UG', { minimumFractionDigits: 0, maximumFractionDigits: 8 })} ${record.asset}`,
     },
     {
       title: 'Price',
       dataIndex: 'price',
       key: 'price',
-      render: (price: number, record: any) => `₹${price.toFixed(2)}`,
+      render: (price: number, record: any) => `UGX ${price.toFixed(2)}`,
     },
     {
       title: 'Total',
       dataIndex: 'totalValue',
       key: 'totalValue',
-      render: (value: number) => `₹${value.toFixed(2)}`,
+      render: (value: number) => `UGX ${value.toFixed(2)}`,
     },
     {
       title: 'Status',
@@ -694,8 +694,8 @@ const WalletPage: NextPageWithLayout = () => {
                   <div style={{ width: '100%', height: '100%', display: 'flex' }}>
                     <StatCard
                       title="Total Balance"
-                      value={`₹${totalBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-                      subtitle={`Crypto: ₹${cryptoBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} • Cash: ₹${fiatBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                      value={`UGX ${totalBalance.toLocaleString('en-UG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                      subtitle={`Crypto: UGX ${cryptoBalance.toLocaleString('en-UG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} • Cash: UGX ${fiatBalance.toLocaleString('en-UG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                       icon={<WalletOutlined />}
                       gradient="linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)"
                       showDepositButton={false}
@@ -706,8 +706,8 @@ const WalletPage: NextPageWithLayout = () => {
                   <div style={{ width: '100%', height: '100%', display: 'flex' }}>
                     <StatCard
                       title="Crypto Balance"
-                      value={`₹${cryptoBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-                      subtitle={`${assetsWithValues.filter((a) => a.symbol !== 'INR').length} assets • Cash: ₹${fiatBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                      value={`UGX ${cryptoBalance.toLocaleString('en-UG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                      subtitle={`${assetsWithValues.filter((a) => a.symbol !== 'UGX').length} assets • Cash: UGX ${fiatBalance.toLocaleString('en-UG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                       icon={<SwapOutlined />}
                       color={token.colorSuccess}
                     />
@@ -721,7 +721,7 @@ const WalletPage: NextPageWithLayout = () => {
                   <div style={{ width: '100%', height: '100%', display: 'flex' }}>
                     <StatCard
                       title="Total Balance"
-                      value={`₹${totalBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                      value={`UGX ${totalBalance.toLocaleString('en-UG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                       icon={<WalletOutlined />}
                       gradient="linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)"
                       showDepositButton={false}
@@ -732,8 +732,8 @@ const WalletPage: NextPageWithLayout = () => {
                   <div style={{ width: '100%', height: '100%', display: 'flex' }}>
                     <StatCard
                       title="Crypto Balance"
-                      value={`₹${cryptoBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-                      subtitle={`${assetsWithValues.filter((a) => a.symbol !== 'INR').length} assets`}
+                      value={`UGX ${cryptoBalance.toLocaleString('en-UG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                      subtitle={`${assetsWithValues.filter((a) => a.symbol !== 'UGX').length} assets`}
                       icon={<SwapOutlined />}
                       color={token.colorSuccess}
                     />
@@ -743,7 +743,7 @@ const WalletPage: NextPageWithLayout = () => {
                   <div style={{ width: '100%', height: '100%', display: 'flex' }}>
                     <StatCard
                       title="Cash Balance"
-                      value={`₹${fiatBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                      value={`UGX ${fiatBalance.toLocaleString('en-UG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                       subtitle={viewMode === 'investor' ? (
                         <span
                           onClick={handleSyncBalance}
@@ -756,7 +756,7 @@ const WalletPage: NextPageWithLayout = () => {
                           <SyncOutlined spin={syncLoading} style={{ marginRight: 4 }} />
                           {syncLoading ? 'Updating...' : 'Update Balance'}
                         </span>
-                      ) : 'INR'}
+                      ) : 'UGX'}
                       icon={<PlusOutlined />}
                       color={token.colorWarning}
                     />
@@ -871,7 +871,7 @@ const WalletPage: NextPageWithLayout = () => {
                     color={asset.color}
                     iconUrl={asset.iconUrl}
                     onTrade={() => {
-                      router.push(`/trade?pair=${asset.symbol}-INR`);
+                      router.push(`/trade?pair=${asset.symbol}-UGX`);
                     }}
                   />
                 </motion.div>

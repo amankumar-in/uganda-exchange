@@ -10,7 +10,7 @@ import {
 
 export enum PaymentMethodType {
   BANK_TRANSFER = 'BANK_TRANSFER',
-  UPI = 'UPI',
+  MOBILE_MONEY = 'MOBILE_MONEY',
   PAYPAL = 'PAYPAL',
   VENMO = 'VENMO',
   ZELLE = 'ZELLE',

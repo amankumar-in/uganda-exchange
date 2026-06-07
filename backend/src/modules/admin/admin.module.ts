@@ -5,10 +5,10 @@ import { PrismaService } from '../../prisma.service';
 import { DemoCollegeCoinsModule } from '../demo-college-coins/demo-college-coins.module';
 import { AuthModule } from '../auth/auth.module';
 import { LearnerModule } from '../learner/learner.module';
-import { KycModule } from '../kyc/kyc.module';
+
 
 @Module({
-  imports: [DemoCollegeCoinsModule, AuthModule, forwardRef(() => LearnerModule), KycModule],
+  imports: [DemoCollegeCoinsModule, AuthModule, forwardRef(() => LearnerModule)],
   controllers: [AdminController],
   providers: [AdminService, PrismaService],
   exports: [AdminService],

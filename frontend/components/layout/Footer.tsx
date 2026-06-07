@@ -136,7 +136,7 @@ export default function Footer() {
                   <Title level={4} style={{ margin: 0, color: token.colorText }}>
                     InTuition Exchange
                   </Title>
-                  <Text style={{ fontSize: token.fontSizeSM - 1, color: token.colorTextSecondary, lineHeight: 1, marginTop: -2 }}>India</Text>
+                  <Text style={{ fontSize: token.fontSizeSM - 1, color: token.colorTextSecondary, lineHeight: 1, marginTop: -2 }}>Uganda</Text>
                 </div>
               </Link>
               <Text style={{ color: token.colorTextSecondary, display: "block", lineHeight: token.lineHeightLG }}>

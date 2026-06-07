@@ -84,11 +84,11 @@ function ExchangePageContent() {
 
   // Format USD volume for display
   const formatVolume = (volume: number): string => {
-    if (isNaN(volume) || volume <= 0) return '₹0';
-    if (volume >= 1e9) return `₹${(volume / 1e9).toFixed(1)}B`;
-    if (volume >= 1e6) return `₹${(volume / 1e6).toFixed(1)}M`;
-    if (volume >= 1e3) return `₹${(volume / 1e3).toFixed(1)}K`;
-    return `₹${volume.toFixed(0)}`;
+    if (isNaN(volume) || volume <= 0) return 'UGX 0';
+    if (volume >= 1e9) return `UGX ${(volume / 1e9).toFixed(1)}B`;
+    if (volume >= 1e6) return `UGX ${(volume / 1e6).toFixed(1)}M`;
+    if (volume >= 1e3) return `UGX ${(volume / 1e3).toFixed(1)}K`;
+    return `UGX ${volume.toFixed(0)}`;
   };
 
   const formattedUsdVolume = formatVolume(currentUsdVolume);
@@ -117,7 +117,7 @@ function ExchangePageContent() {
         isFirstRenderRef.current = false;
       } else if (isFirstRenderRef.current) {
         // First render with no query param (direct visit) - pick first available pair
-        const preferred = pairs.find(p => p.symbol === 'BTC-INR') || pairs[0];
+        const preferred = pairs.find(p => p.symbol === 'BTC-UGX') || pairs[0];
         if (preferred) {
           setSelectedPair(preferred.symbol);
         }
@@ -178,7 +178,7 @@ function ExchangePageContent() {
         // If order is already completed, show success toast
         if (result.order.status === 'COMPLETED' && result.order.filledAmount > 0) {
           message.success(
-            `${side} order completed! Filled ${result.order.filledAmount.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 8 })} ${baseAsset} at ₹${result.order.price.toFixed(2)}`,
+            `${side} order completed! Filled ${result.order.filledAmount.toLocaleString('en-UG', { minimumFractionDigits: 0, maximumFractionDigits: 8 })} ${baseAsset} at UGX ${result.order.price.toFixed(2)}`,
             5
           );
         } else if (result.order.status === 'PENDING') {
@@ -239,7 +239,7 @@ function ExchangePageContent() {
             if (updatedOrder.status === 'COMPLETED' && updatedOrder.filledAmount > 0) {
               const [baseAsset] = selectedPair.split('-');
               message.success(
-                `${updatedOrder.side} order completed! Filled ${updatedOrder.filledAmount.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 8 })} ${baseAsset} at ₹${updatedOrder.price.toFixed(2)}`,
+                `${updatedOrder.side} order completed! Filled ${updatedOrder.filledAmount.toLocaleString('en-UG', { minimumFractionDigits: 0, maximumFractionDigits: 8 })} ${baseAsset} at UGX ${updatedOrder.price.toFixed(2)}`,
                 5
               );
             } else if (updatedOrder.status === 'FAILED') {
@@ -732,7 +732,7 @@ function OrderHistory({ orders, isLoading }: { orders: any[]; isLoading: boolean
               </span>
             </div>
             <div style={{ flex: 1, textAlign: 'right', color: token.colorText, fontWeight: fontWeights.semibold }}>
-              ₹{order.totalValue.toFixed(2)}
+              UGX {order.totalValue.toFixed(2)}
             </div>
             <div style={{ 
               flex: 1, 
@@ -740,7 +740,7 @@ function OrderHistory({ orders, isLoading }: { orders: any[]; isLoading: boolean
               color: token.colorTextTertiary,
               fontSize: token.fontSize,
             }}>
-              {new Date(order.createdAt).toLocaleTimeString('en-IN', { 
+              {new Date(order.createdAt).toLocaleTimeString('en-UG', { 
                 hour: '2-digit', 
                 minute: '2-digit',
                 second: '2-digit',
@@ -831,7 +831,7 @@ function TradeHistoryCompact({ trades, isLoading }: { trades: any[]; isLoading: 
               color: trade.side === 'BUY' ? '#52c41a' : '#ff4d4f',
               fontWeight: fontWeights.bold,
             }}>
-              {parseFloat(trade.price).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {parseFloat(trade.price).toLocaleString('en-UG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
             <span style={{ 
               flex: 1, 
@@ -979,7 +979,7 @@ function OrderBookCompact({ orderBook, isLoading }: { orderBook: any; isLoading:
                       zIndex: 1,
                       fontWeight: fontWeights.bold,
                     }}>
-                      {parseFloat(bid.price).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      {parseFloat(bid.price).toLocaleString('en-UG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </span>
                     <span style={{ 
                       flex: 1, 
@@ -1020,7 +1020,7 @@ function OrderBookCompact({ orderBook, isLoading }: { orderBook: any; isLoading:
                       zIndex: 1,
                       fontWeight: fontWeights.bold,
                     }}>
-                      {parseFloat(ask.price).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      {parseFloat(ask.price).toLocaleString('en-UG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </span>
                     <span style={{ 
                       flex: 1, 

@@ -103,11 +103,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
   // Helper to format volume
   const formatVolume = (volume: number): string => {
-    if (isNaN(volume) || volume <= 0) return '₹0';
-    if (volume >= 1e9) return `₹${(volume / 1e9).toFixed(1)}B`;
-    if (volume >= 1e6) return `₹${(volume / 1e6).toFixed(1)}M`;
-    if (volume >= 1e3) return `₹${(volume / 1e3).toFixed(1)}K`;
-    return `₹${volume.toFixed(0)}`;
+    if (isNaN(volume) || volume <= 0) return 'UGX 0';
+    if (volume >= 1e9) return `UGX ${(volume / 1e9).toFixed(1)}B`;
+    if (volume >= 1e6) return `UGX ${(volume / 1e6).toFixed(1)}M`;
+    if (volume >= 1e3) return `UGX ${(volume / 1e3).toFixed(1)}K`;
+    return `UGX ${volume.toFixed(0)}`;
   };
 
   // If we are on the trade page, construct the live data object
@@ -826,7 +826,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             />
             <div style={{ display: 'flex', flexDirection: 'column', opacity: sidebarCollapsed && !isMobile ? 0 : 1, width: sidebarCollapsed && !isMobile ? 0 : 'auto', overflow: 'hidden', transition: 'all 0.3s ease' }}>
               <span style={logoTextStyle}>InTuition</span>
-              <span style={{ fontSize: token.fontSizeSM - 1, color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.4)', lineHeight: 1, marginTop: -2, whiteSpace: 'nowrap' }}>India</span>
+              <span style={{ fontSize: token.fontSizeSM - 1, color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.4)', lineHeight: 1, marginTop: -2, whiteSpace: 'nowrap' }}>Uganda</span>
             </div>
           </Link>
           {isMobile && (
@@ -991,7 +991,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                       {exchangeData.pair}
                     </span>
                     <span style={{ fontSize: token.fontSizeHeading4, fontWeight: fontWeights.bold, color: token.colorText }}>
-                      ₹{exchangeData.price.toLocaleString('en-IN', {
+                      UGX {exchangeData.price.toLocaleString('en-UG', {
                         maximumFractionDigits: exchangeData.price < 0.001 ? 8 : (exchangeData.price < 1 ? 6 : 2),
                         minimumFractionDigits: 2
                       })}
@@ -1041,7 +1041,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                     🎓 Learner Mode
                   </div>
                   <div style={{ fontSize: token.fontSizeSM, color: token.colorTextSecondary, lineHeight: 1.5, marginBottom: token.marginMD }}>
-                    You&apos;re practising with ₹1,00,000 virtual balance. Trades are simulated — no real money
+                    You&apos;re practising with UGX 1,00,000 virtual balance. Trades are simulated — no real money
                     moves. Switch to Investor Mode to start trading with your own funds.
                   </div>
                   <Button

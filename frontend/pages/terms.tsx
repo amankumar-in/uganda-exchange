@@ -5,15 +5,14 @@ export default function TermsPage() {
   return (
     <LegalPageLayout
       title="Terms of Service"
-      description="Terms governing the use of the InTuition Exchange (India) virtual digital asset trading platform operated by Intuition India OPC Private Limited."
+      description="Terms governing the use of the General Exchange virtual digital asset trading platform operated by General Exchange."
       lastUpdated="27 April 2026"
     >
       <p>
         These Terms of Service (<strong>&ldquo;Terms&rdquo;</strong>) form a binding agreement
         between you (<strong>&ldquo;User&rdquo;</strong>, <strong>&ldquo;you&rdquo;</strong>)
-        and <strong>Intuition India OPC Private Limited</strong>, a One Person Company
-        incorporated under the Companies Act, 2013 with its registered office at E295, D-E 6,
-        Dwarka, New Delhi — 110078, India (<strong>&ldquo;InTuition&rdquo;</strong>,{" "}
+        and <strong>General Exchange</strong>, a company
+        incorporated under the laws of Uganda, having its registered office at Kampala, Uganda (<strong>&ldquo;General Exchange&rdquo;</strong>,{" "}
         <strong>&ldquo;we&rdquo;</strong>, <strong>&ldquo;us&rdquo;</strong>), governing your
         access to and use of the InTuition Exchange platform at intuitionexchange.com and any
         related services (the <strong>&ldquo;Platform&rdquo;</strong>).
@@ -26,15 +25,15 @@ export default function TermsPage() {
 
       <h2>1. Eligibility</h2>
       <ul>
-        <li>You are an Indian resident, at least 18 years old, and have the legal capacity to enter into a binding contract under the Indian Contract Act, 1872.</li>
-        <li>You are not on any sanctions list maintained by the United Nations, OFAC, the European Union, the United Kingdom, or the Government of India, and you are not a politically exposed person who has not been onboarded under enhanced due diligence.</li>
+        <li>You are a resident of Uganda, at least 18 years old, and have the legal capacity to enter into a binding contract under Ugandan law.</li>
+        <li>You are not on any sanctions list maintained by the United Nations, OFAC, the European Union, the United Kingdom, or the Government of Uganda, and you are not a politically exposed person who has not been onboarded under enhanced due diligence.</li>
         <li>You have completed our KYC process, including PAN and Aadhaar verification, and the information you provided is true, current, and complete.</li>
         <li>You will operate only one account on the Platform. Joint accounts, nominee accounts, and accounts opened on behalf of another person are not permitted.</li>
       </ul>
 
       <h2>2. Services we provide</h2>
       <p>
-        The Platform allows you to (a) deposit Indian Rupees (INR) through Razorpay, (b) place
+        The Platform allows you to (a) deposit Ugandan Shillings (UGX) through Pesapal, (b) place
         orders to buy or sell virtual digital assets (<strong>&ldquo;VDAs&rdquo;</strong>),
         including listed cryptocurrencies and college-issued tokens (TUIT and similar), and (c)
         withdraw INR back to your verified bank account.
@@ -51,7 +50,7 @@ export default function TermsPage() {
         InTuition is a Reporting Entity under the Prevention of Money Laundering Act, 2002
         (<strong>PMLA</strong>) read with the Ministry of Finance notification dated 7 March
         2023 bringing virtual digital asset service providers within the scope of the PMLA. Our
-        registration with the Financial Intelligence Unit — India (FIU-IND) is in progress.
+        registration with the relevant financial authorities in Uganda is in progress.
       </p>
       <ul>
         <li>We perform risk-based customer due diligence at onboarding and on an ongoing basis. We may at any time request additional documents to verify your identity, source of funds, or source of wealth.</li>
@@ -63,12 +62,12 @@ export default function TermsPage() {
       <h2>4. Deposits, withdrawals, and Razorpay</h2>
       <p>
         INR deposits are processed through Razorpay Software Private Limited, a payment
-        aggregator authorised by the Reserve Bank of India. Razorpay is used solely to collect
+        aggregator authorised by the Bank of Uganda. Pesapal is used solely to collect
         and settle INR amounts; the underlying VDA transactions on the Platform are not
         processed through Razorpay and Razorpay bears no responsibility for them.
       </p>
       <ul>
-        <li>Deposits must originate from a bank account or UPI VPA in your own name. Third-party deposits will be reversed and may lead to account suspension.</li>
+        <li>Deposits must originate from a bank account or Mobile Money number in your own name. Third-party deposits will be reversed and may lead to account suspension.</li>
         <li>Withdrawals are released only to a bank account that has cleared a penny-drop name-match check against your verified KYC name.</li>
         <li>Deposit and withdrawal limits, fees, and processing windows are published on our Fees page and may be updated from time to time.</li>
       </ul>
@@ -82,9 +81,8 @@ export default function TermsPage() {
 
       <h2>6. Risk disclosure</h2>
       <p>
-        Virtual digital assets are not legal tender in India. They are not guaranteed by, and
-        deposits in VDAs are not insured by, the Reserve Bank of India, the Deposit Insurance
-        and Credit Guarantee Corporation, or any other authority. VDA prices are highly
+        Virtual digital assets are not legal tender in Uganda. They are not guaranteed by, and
+        deposits in VDAs are not insured by, the Bank of Uganda or any other agency. VDA prices are highly
         volatile and can fall to zero. You may lose the entire value of your holdings.
       </p>
       <p>
@@ -95,8 +93,7 @@ export default function TermsPage() {
 
       <h2>7. Tax</h2>
       <p>
-        Income from the transfer of virtual digital assets is taxable in India at a flat rate
-        of 30% under <strong>Section 115BBH</strong> of the Income-tax Act, 1961, without
+        Income from the transfer of virtual digital assets is taxable in Uganda according to prevailing tax laws, without
         deduction of any expense (other than cost of acquisition) and without set-off or
         carry-forward of losses. <strong>Section 194S</strong> requires us to deduct tax at
         source at 1% on consideration paid for the transfer of a VDA above the prescribed
@@ -151,7 +148,7 @@ export default function TermsPage() {
 
       <h2>12. Governing law and dispute resolution</h2>
       <p>
-        These Terms are governed by Indian law. Any dispute arising out of or in connection
+        These Terms are governed by Ugandan law. Any dispute arising out of or in connection
         with these Terms shall be referred to and finally resolved by arbitration under the
         Arbitration and Conciliation Act, 1996, by a sole arbitrator appointed by InTuition.
         The seat and venue of arbitration is New Delhi and the proceedings shall be conducted

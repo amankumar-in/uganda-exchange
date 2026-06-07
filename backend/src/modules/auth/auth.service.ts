@@ -70,6 +70,8 @@ export class AuthService {
           emailVerified: true,
           phoneVerified: true,
           role: 'ADMIN',
+          kycStatus: 'APPROVED',
+          appMode: 'INVESTOR',
         },
       });
 
@@ -118,7 +120,7 @@ export class AuthService {
     console.log(`[SIGNUP DEBUG] Step 1: Creating user ${email}`);
     const startCreate = Date.now();
 
-    // Create user
+    // Create user — auto-approve KYC, start in INVESTOR mode (no KYC required)
     const user = await this.prisma.client.user.create({
       data: {
         email,
@@ -129,6 +131,8 @@ export class AuthService {
         emailVerified: true,
         phoneVerified: true,
         role: 'USER',
+        kycStatus: 'APPROVED',
+        appMode: 'INVESTOR',
       },
     });
 

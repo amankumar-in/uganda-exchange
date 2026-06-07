@@ -82,7 +82,7 @@ export class OrdersService {
 
       // Check trading pair permissions
       const pairChecks: Record<string, boolean | null> = {
-        'INR': baseToken.allowTradeInr,
+        'UGX': baseToken.allowTradeInr,
         'USDT': baseToken.allowTradeUsdt,
         'ETH': baseToken.allowTradeEth,
         'TUIT': baseToken.allowTradeTuit,
@@ -95,18 +95,18 @@ export class OrdersService {
       const tokenPrice = baseToken.currentPrice || Number(baseToken.manualPrice) || 0;
       let inrValueForLimits: number;
 
-      if (side === 'BUY' && quote === 'INR') {
+      if (side === 'BUY' && quote === 'UGX') {
         inrValueForLimits = amount;
       } else if (side === 'SELL') {
         inrValueForLimits = amount * tokenPrice;
       } else {
-        // BUY with non-INR quote - convert to INR
+        // BUY with non-UGX quote - convert to UGX
         const quoteCustom = await this.tokensService.findBySymbol(quote);
-        let quoteInrPrice = 1;
+        let quoteUgxPrice = 1;
         if (quoteCustom) {
-          quoteInrPrice = quoteCustom.currentPrice || Number(quoteCustom.manualPrice) || 1;
+          quoteUgxPrice = quoteCustom.currentPrice || Number(quoteCustom.manualPrice) || 1;
         }
-        inrValueForLimits = amount * quoteInrPrice;
+        inrValueForLimits = amount * quoteUgxPrice;
       }
 
       const minAmount = Number(baseToken.minTransactionAmount) || 0;
@@ -177,21 +177,21 @@ export class OrdersService {
 
     try {
       // Step 3: All trades settle internally against our ledger using token-table prices.
-      // Look up INR reference price for both base and quote, then compute cross-rate.
+      // Look up UGX reference price for both base and quote, then compute cross-rate.
       const baseToken = await this.tokensService.findBySymbol(asset);
       const quoteToken = await this.tokensService.findBySymbol(quote);
 
       const baseInrPrice = baseToken?.currentPrice || Number(baseToken?.manualPrice) || 0;
-      const quoteInrPrice = quote === 'INR'
+      const quoteUgxPrice = quote === 'UGX'
         ? 1
         : (quoteToken?.currentPrice || Number(quoteToken?.manualPrice) || 0);
 
-      if (baseInrPrice <= 0 || quoteInrPrice <= 0) {
+      if (baseInrPrice <= 0 || quoteUgxPrice <= 0) {
         throw new BadRequestException(`Price not available for ${baseInrPrice <= 0 ? asset : quote}.`);
       }
 
       // Price of base asset expressed in quote currency
-      const currentPrice = baseInrPrice / quoteInrPrice;
+      const currentPrice = baseInrPrice / quoteUgxPrice;
 
       let platformFee: number;
       let userPerceivedValue: number;
@@ -349,7 +349,7 @@ export class OrdersService {
   }
 
   /**
-   * Get quote for a trade (estimate based on token-table INR prices)
+   * Get quote for a trade (estimate based on token-table UGX prices)
    */
   async getQuote(
     productId: string,
@@ -367,15 +367,15 @@ export class OrdersService {
     const quoteToken = await this.tokensService.findBySymbol(quote);
 
     const baseInrPrice = baseToken?.currentPrice || Number(baseToken?.manualPrice) || 0;
-    const quoteInrPrice = quote === 'INR'
+    const quoteUgxPrice = quote === 'UGX'
       ? 1
       : (quoteToken?.currentPrice || Number(quoteToken?.manualPrice) || 0);
 
-    if (baseInrPrice <= 0 || quoteInrPrice <= 0) {
+    if (baseInrPrice <= 0 || quoteUgxPrice <= 0) {
       throw new BadRequestException(`Price not available for quote calculation`);
     }
 
-    const currentPrice = baseInrPrice / quoteInrPrice;
+    const currentPrice = baseInrPrice / quoteUgxPrice;
 
     if (side === 'BUY') {
       const platformFee = amount * (this.PLATFORM_FEE_PERCENT / 100);

@@ -32,7 +32,7 @@ interface PairSelectorProps {
 }
 
 // Investor mode shows all currencies
-const INVESTOR_CURRENCIES = ['INR', 'USDT', 'ETH', 'TUIT'];
+const INVESTOR_CURRENCIES = ['UGX', 'USDT', 'ETH', 'TUIT'];
 // Learner mode shows Popular first, then Colleges
 const LEARNER_CURRENCIES = ['Popular', 'Colleges'];
 
@@ -52,10 +52,10 @@ const PairSelector: React.FC<PairSelectorProps> = ({
   const isDark = mode === 'dark';
   const [search, setSearch] = useState('');
   const [drawerOpen, setDrawerOpen] = useState(false);
-  // Default to 'Popular' in learner mode, 'INR' in investor mode
+  // Default to 'Popular' in learner mode, 'UGX' in investor mode
   const isLearnerMode = user?.appMode === 'LEARNER';
   const router = useRouter();
-  const [activeQuote, setActiveQuote] = useState(isLearnerMode ? 'Popular' : 'INR');
+  const [activeQuote, setActiveQuote] = useState(isLearnerMode ? 'Popular' : 'UGX');
   const [hoveredPair, setHoveredPair] = useState<string | null>(null);
   const selectedItemRef = useRef<HTMLDivElement>(null);
   
@@ -124,7 +124,7 @@ const PairSelector: React.FC<PairSelectorProps> = ({
       if (isLearnerMode) {
         if (activeQuote === 'Popular') {
           // Show INR pairs that are NOT college coins
-          matchesQuote = pair.quote === 'INR' && !pair.isDemoCollegeCoin;
+          matchesQuote = pair.quote === 'UGX' && !pair.isDemoCollegeCoin;
         } else if (activeQuote === 'Colleges') {
           // Show only college coins
           matchesQuote = pair.isDemoCollegeCoin === true;
@@ -142,7 +142,7 @@ const PairSelector: React.FC<PairSelectorProps> = ({
   }, [pairs, activeQuote, search, isLearnerMode]);
 
   // Scroll the selected pair into view whenever it changes — covers direct loads
-  // where the default (BTC-INR) is set programmatically without a URL query.
+  // where the default (BTC-UGX) is set programmatically without a URL query.
   useEffect(() => {
     if (!selectedItemRef.current) return;
 
@@ -188,7 +188,7 @@ const PairSelector: React.FC<PairSelectorProps> = ({
     if (isNaN(price)) return '0.00';
     
     if (quote === 'ETH') return price.toFixed(6);
-    if (price >= 1000) return price.toLocaleString('en-IN', { maximumFractionDigits: 2 });
+    if (price >= 1000) return price.toLocaleString('en-UG', { maximumFractionDigits: 2 });
     if (price >= 1) return price.toFixed(2);
     if (price < 0.001) return price.toFixed(8);
     return price.toFixed(6);

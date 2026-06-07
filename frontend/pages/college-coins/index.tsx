@@ -130,7 +130,7 @@ const CollegeCoinCard = ({
     if (!isMining || !sessionStart || !sessionRate) {
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
       if (yieldRef.current) yieldRef.current.textContent = '+0.0000';
-      if (totalRef.current) totalRef.current.textContent = balance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+      if (totalRef.current) totalRef.current.textContent = balance.toLocaleString('en-UG', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
       if (breakdownRef.current) breakdownRef.current.textContent = '';
       return;
     }
@@ -141,7 +141,7 @@ const CollegeCoinCard = ({
       const elapsed = (Date.now() - startMs) / (1000 * 60 * 60);
       const earned = Math.max(0, elapsed * sessionRate);
       if (yieldRef.current) yieldRef.current.textContent = `+${earned.toFixed(4)}`;
-      if (totalRef.current) totalRef.current.textContent = (balance + earned).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+      if (totalRef.current) totalRef.current.textContent = (balance + earned).toLocaleString('en-UG', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
       if (breakdownRef.current) breakdownRef.current.textContent = `Wallet: ${balance.toFixed(2)} + Mining: ${earned.toFixed(4)}`;
       animationRef.current = requestAnimationFrame(tick);
     };

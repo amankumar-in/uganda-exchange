@@ -60,7 +60,7 @@ const FIAT_CURRENCIES = [
   { symbol: 'USD', name: 'US Dollar', icon: <DollarOutlined /> },
   { symbol: 'EUR', name: 'Euro', icon: '€' },
   { symbol: 'GBP', name: 'British Pound', icon: '£' },
-  { symbol: 'INR', name: 'Indian Rupee', icon: '₹' },
+  { symbol: 'UGX', name: 'Ugandan Shilling', icon: 'UGX ' },
 ];
 
 const P2PMarketplace: NextPageWithLayout = () => {

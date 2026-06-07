@@ -1,5 +1,5 @@
 /**
- * Fiat (INR) deposits via Razorpay.
+ * Fiat (UGX) deposits via Pesapal.
  */
 
 import { getApiBaseUrl } from './config';
@@ -7,14 +7,12 @@ const API_BASE_URL = getApiBaseUrl();
 
 export interface CreateDepositResponse {
   orderId: string;           // our internal FiatTransaction id
-  razorpayOrderId: string;   // Razorpay order id (passed to Checkout)
-  amount: number;            // paise
-  currency: string;          // "INR"
-  keyId: string;             // public key id for Checkout
+  redirectUrl: string;       // URL to redirect user for payment
 }
 
-export interface VerifyDepositResponse {
-  success: boolean;
+export interface DepositStatusResponse {
+  status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+  amount: number;
   balance: number;
 }
 
@@ -49,16 +47,8 @@ export function createDepositOrder(amount: number): Promise<CreateDepositRespons
   });
 }
 
-export function verifyDepositPayment(input: {
-  orderId: string;
-  razorpayOrderId: string;
-  razorpayPaymentId: string;
-  razorpaySignature: string;
-}): Promise<VerifyDepositResponse> {
-  return apiCall<VerifyDepositResponse>('/fiat/deposit/verify', {
-    method: 'POST',
-    body: JSON.stringify(input),
-  });
+export function getDepositStatus(orderId: string): Promise<DepositStatusResponse> {
+  return apiCall<DepositStatusResponse>(`/fiat/deposit/status/${orderId}`);
 }
 
 export async function getDeposits(): Promise<DepositRecord[]> {

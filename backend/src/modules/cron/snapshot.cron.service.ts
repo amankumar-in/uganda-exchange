@@ -47,7 +47,7 @@ export class SnapshotCronService {
 
     const prices = new Map<string, number>();
 
-    // 1. Fetch Real Crypto Prices (INR) from tokens table — maintained by PriceCacheService
+    // 1. Fetch Real Crypto Prices (UGX) from tokens table — maintained by PriceCacheService
     try {
       const tokens = await this.prisma.client.token.findMany({
         where: { isActive: true },

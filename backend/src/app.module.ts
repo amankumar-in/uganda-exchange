@@ -7,7 +7,7 @@ import { PrismaService } from './prisma.service';
 import { EmailService } from './email.service';
 import { TestController } from './test.controller';
 import { AuthModule } from './modules/auth/auth.module';
-import { KycModule } from './modules/kyc/kyc.module';
+
 import { CoinbaseModule } from './modules/coinbase/coinbase.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { AssetsModule } from './modules/assets/assets.module';
@@ -41,15 +41,14 @@ import { GlobalSettingsModule } from './modules/global-settings/global-settings.
     }]),
     // Auth module
     AuthModule,
-    // KYC / Onboarding module
-    KycModule,
+
     // Coinbase trading module
     CoinbaseModule,
     // Internal orders module
     OrdersModule,
     // Assets/Balances module
     AssetsModule,
-    // Fiat deposits (Razorpay)
+    // Fiat deposits (Pesapal UGX)
     FiatModule,
     // Watchlist module
     WatchlistModule,

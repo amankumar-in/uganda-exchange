@@ -55,8 +55,8 @@ export class LearnerService {
   private readonly PLATFORM_FEE_PERCENT = 0.5; // 0.5% platform fee (same as live)
   
   // Initial balance configuration
-  private readonly CASH_BALANCE = 100000; // ₹1,00,000 starting cash
-  private readonly COLLEGE_COIN_VALUE_EACH = 25000; // ₹25,000 worth of each college coin
+  private readonly CASH_BALANCE = 500000; // UGX 500,000 starting cash (~$130 USD)
+  private readonly COLLEGE_COIN_VALUE_EACH = 50000; // UGX 50,000 worth of each college coin
   private readonly MAX_COLLEGE_COINS = 4; // Maximum 4 college coins to give
 
   constructor(
@@ -96,7 +96,7 @@ export class LearnerService {
     await this.prisma.client.learnerFiatBalance.create({
       data: {
         userId,
-        currency: 'INR',
+        currency: 'UGX',
         balance: this.CASH_BALANCE,
         availableBalance: this.CASH_BALANCE,
         lockedBalance: 0,
@@ -148,9 +148,9 @@ export class LearnerService {
           });
 
           totalCryptoValue += this.COLLEGE_COIN_VALUE_EACH;
-          coinsGiven.push(`${coin.ticker} (${quantity.toFixed(8)} @ ₹${priceData.collegeCoinPrice.toFixed(2)})`);
+          coinsGiven.push(`${coin.ticker} (${quantity.toFixed(8)} @ UGX ${priceData.collegeCoinPrice.toFixed(2)})`);
 
-          this.logger.log(`Gave user ${userId} ₹${this.COLLEGE_COIN_VALUE_EACH} worth of ${coin.ticker}: ${quantity.toFixed(8)} coins`);
+          this.logger.log(`Gave user ${userId} UGX ${this.COLLEGE_COIN_VALUE_EACH} worth of ${coin.ticker}: ${quantity.toFixed(8)} coins`);
         } catch (error) {
           this.logger.error(`Failed to give college coin ${coin.ticker} to user ${userId}:`, error);
           // Continue with other coins
@@ -178,9 +178,9 @@ export class LearnerService {
     console.log(`[INIT DEBUG] Portfolio snapshot created for ${userId}`);
 
     if (coinsGiven.length > 0) {
-      this.logger.log(`Initialized learner account for user ${userId} with ₹${this.CASH_BALANCE} cash + ${coinsGiven.length} college coins: ${coinsGiven.join(', ')}`);
+      this.logger.log(`Initialized learner account for user ${userId} with UGX ${this.CASH_BALANCE} cash + ${coinsGiven.length} college coins: ${coinsGiven.join(', ')}`);
     } else {
-      this.logger.log(`Initialized learner account for user ${userId} with ₹${this.CASH_BALANCE} cash (no college coins available)`);
+      this.logger.log(`Initialized learner account for user ${userId} with UGX ${this.CASH_BALANCE} cash (no college coins available)`);
     }
     console.log(`[INIT DEBUG] Completed initializeLearnerAccount for ${userId} in ${Date.now() - startTime}ms`);
   }
@@ -215,11 +215,11 @@ export class LearnerService {
 
     // Get the balances to build a dynamic message
     const balances = await this.getLearnerBalances(userId);
-    const cryptoCount = balances.filter(b => b.asset !== 'INR').length;
+    const cryptoCount = balances.filter(b => b.asset !== 'UGX').length;
     
-    let message = `Learner account reset successfully. You now have ₹${this.CASH_BALANCE.toLocaleString()} in cash`;
+    let message = `Learner account reset successfully. You now have UGX ${this.CASH_BALANCE.toLocaleString()} in cash`;
     if (cryptoCount > 0) {
-      message += ` plus ₹${(this.COLLEGE_COIN_VALUE_EACH * cryptoCount).toLocaleString()} worth of ${cryptoCount} college coin${cryptoCount > 1 ? 's' : ''} to practice with.`;
+      message += ` plus UGX ${(this.COLLEGE_COIN_VALUE_EACH * cryptoCount).toLocaleString()} worth of ${cryptoCount} college coin${cryptoCount > 1 ? 's' : ''} to practice with.`;
     } else {
       message += ' to practice with.';
     }
@@ -253,10 +253,10 @@ export class LearnerService {
 
     const balances: LearnerBalanceResponse[] = [];
 
-    // Add USD balance
+    // Add UGX balance
     if (fiatBalance) {
       balances.push({
-        asset: 'INR',
+        asset: 'UGX',
         balance: parseFloat(fiatBalance.balance.toString()),
         availableBalance: parseFloat(fiatBalance.availableBalance.toString()),
         lockedBalance: parseFloat(fiatBalance.lockedBalance.toString()),
@@ -318,7 +318,7 @@ export class LearnerService {
     asset: string,
     amount: number,
   ): Promise<boolean> {
-    if (asset === 'INR') {
+    if (asset === 'UGX') {
       const fiatBalance = await this.prisma.client.learnerFiatBalance.findUnique({
         where: { userId },
       });
@@ -337,7 +337,7 @@ export class LearnerService {
     asset: string,
     amount: number, // Positive to add, negative to subtract
   ): Promise<void> {
-    if (asset === 'INR') {
+    if (asset === 'UGX') {
       await this.prisma.client.learnerFiatBalance.update({
         where: { userId },
         data: {
@@ -413,7 +413,7 @@ export class LearnerService {
       }
       executionPrice = priceData.collegeCoinPrice;
       formattedAmount = side === 'BUY'
-        ? Math.round(amount * 100) / 100   // INR: 2 decimal places
+        ? Math.round(amount * 100) / 100   // UGX: 2 decimal places
         : Math.round(amount * 1e8) / 1e8;  // base asset: 8 decimal places
       this.logger.log(`[placeLearnerTrade] Demo college coin ${asset}: price=${executionPrice}, formattedAmount=${formattedAmount}`);
     } else {
@@ -437,18 +437,18 @@ export class LearnerService {
 
     const hasBalance = await this.hasSufficientBalance(userId, requiredAsset, requiredAmount);
     if (!hasBalance) {
-      const balance = requiredAsset === 'INR'
+      const balance = requiredAsset === 'UGX'
         ? await this.prisma.client.learnerFiatBalance.findUnique({ where: { userId } })
         : await this.getOrCreateCryptoBalance(userId, requiredAsset);
       
       const available = balance
-        ? (requiredAsset === 'INR' 
+        ? (requiredAsset === 'UGX' 
             ? parseFloat((balance as any).availableBalance.toString())
             : (balance as LearnerBalanceResponse).availableBalance)
         : 0;
       
       throw new BadRequestException(
-        `Insufficient ${requiredAsset} balance. Available: ${available.toFixed(requiredAsset === 'INR' ? 2 : 8)}, Required: ${requiredAmount.toFixed(requiredAsset === 'INR' ? 2 : 8)}`
+        `Insufficient ${requiredAsset} balance. Available: ${available.toFixed(requiredAsset === 'UGX' ? 2 : 8)}, Required: ${requiredAmount.toFixed(requiredAsset === 'UGX' ? 2 : 8)}`
       );
     }
 
@@ -600,11 +600,11 @@ export class LearnerService {
     // Get current balances
     const balances = await this.getLearnerBalances(userId);
     
-    const cashBalance = balances.find(b => b.asset === 'INR')?.balance || 0;
+    const cashBalance = balances.find(b => b.asset === 'UGX')?.balance || 0;
     
     let cryptoValue = 0;
     for (const balance of balances) {
-      if (balance.asset !== 'INR' && cryptoPrices[balance.asset]) {
+      if (balance.asset !== 'UGX' && cryptoPrices[balance.asset]) {
         cryptoValue += balance.balance * cryptoPrices[balance.asset];
       }
     }
@@ -622,7 +622,7 @@ export class LearnerService {
     // Use the original invested value, or calculate based on current balances if no prior snapshot
     const investedValue = firstSnapshot 
       ? parseFloat(firstSnapshot.investedValue.toString())
-      : this.CASH_BALANCE + (balances.filter(b => b.asset !== 'INR').length * this.COLLEGE_COIN_VALUE_EACH);
+      : this.CASH_BALANCE + (balances.filter(b => b.asset !== 'UGX').length * this.COLLEGE_COIN_VALUE_EACH);
 
     // Upsert snapshot (update if exists for today, create otherwise)
     await this.prisma.client.learnerPortfolioSnapshot.upsert({

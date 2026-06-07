@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Param,
   Post,
   Query,
   Request,
@@ -12,7 +13,6 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { FiatService } from './fiat.service';
 
 @Controller('fiat')
-@UseGuards(JwtAuthGuard)
 export class FiatController {
   private readonly logger = new Logger(FiatController.name);
 
@@ -20,41 +20,51 @@ export class FiatController {
 
   /**
    * POST /fiat/deposit
-   * Create a Razorpay order for an INR deposit.
+   * Create a Pesapal payment order for a UGX deposit.
+   * Returns redirectUrl — frontend sends user there to complete payment.
    */
   @Post('deposit')
+  @UseGuards(JwtAuthGuard)
   async createDeposit(
     @Request() req: any,
     @Body() body: { amount: number },
   ) {
     const userId = req.user.userId || req.user.id || req.user.sub;
-    return this.fiatService.createDepositOrder(userId, Number(body.amount));
+    const userEmail = req.user.email;
+    return this.fiatService.createDepositOrder(userId, Number(body.amount), userEmail);
   }
 
   /**
-   * POST /fiat/deposit/verify
-   * Verify the Razorpay signature and credit the INR balance.
+   * GET /fiat/deposit/status/:orderId
+   * Poll for deposit status after returning from Pesapal callback.
    */
-  @Post('deposit/verify')
-  async verifyDeposit(
+  @Get('deposit/status/:orderId')
+  @UseGuards(JwtAuthGuard)
+  async getDepositStatus(
     @Request() req: any,
-    @Body()
-    body: {
-      orderId: string;
-      razorpayOrderId: string;
-      razorpayPaymentId: string;
-      razorpaySignature: string;
-    },
+    @Param('orderId') orderId: string,
   ) {
     const userId = req.user.userId || req.user.id || req.user.sub;
-    return this.fiatService.verifyDeposit(userId, body);
+    return this.fiatService.getDepositStatus(userId, orderId);
+  }
+
+  /**
+   * POST /fiat/ipn
+   * Public endpoint — Pesapal IPN notification handler.
+   * No JWT guard; Pesapal calls this server-to-server.
+   */
+  @Post('ipn')
+  async handleIpn(@Body() body: any) {
+    this.logger.log(`IPN received: ${JSON.stringify(body)}`);
+    return this.fiatService.handleIpn(body);
   }
 
   /**
    * GET /fiat/deposits
-   * List the authenticated user's deposit transactions.
+   * List the authenticated user's deposit history.
    */
   @Get('deposits')
+  @UseGuards(JwtAuthGuard)
   async getDeposits(@Request() req: any, @Query('limit') limit?: string) {
     const userId = req.user.userId || req.user.id || req.user.sub;
     return {

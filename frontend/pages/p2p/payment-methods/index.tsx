@@ -50,7 +50,7 @@ const { Text, Title } = Typography;
 
 const PAYMENT_TYPES: PaymentMethodType[] = [
   'BANK_TRANSFER',
-  'UPI',
+  'MOBILE_MONEY',
   'PAYPAL',
   'VENMO',
   'ZELLE',

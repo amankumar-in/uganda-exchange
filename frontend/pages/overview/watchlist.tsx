@@ -81,7 +81,7 @@ export default function WatchlistPage() {
   // In investor mode: hide college coins completely
   // In learner mode: show college coins first, then regular tokens
   const usdTokens = useMemo(() => {
-    let usdPairs = pairs.filter((pair) => pair.quote === 'INR');
+    let usdPairs = pairs.filter((pair) => pair.quote === 'UGX');
     
     // In investor mode, filter out college coins
     if (!isLearnerMode) {
@@ -435,7 +435,7 @@ export default function WatchlistPage() {
                         color: token.colorText,
                       }}
                     >
-                      ₹{tokenData.price.toLocaleString('en-IN', {
+                      UGX {tokenData.price.toLocaleString('en-UG', {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: tokenData.price < 1 ? 6 : 2,
                       })}

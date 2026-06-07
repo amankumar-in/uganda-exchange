@@ -21,7 +21,7 @@ model User {
   phoneCountry  String
   phoneVerified Boolean   @default(false)
   passwordHash  String
-  country       String    @default("IN")
+  country       String    @default("UG")
   kycStatus     KycStatus @default(PENDING)
   role          UserRole  @default(USER)
   appMode       AppMode   @default(LEARNER) // Current trading mode preference
@@ -143,9 +143,9 @@ model Kyc {
   street1    String?
   street2    String?
   city       String?
-  region     String?    // Indian state name
+  region     String?    // Ugandan district name
   postalCode String?    // pincode
-  country    String?    // "IN"
+  country    String?    // "UG"
 
   // Selfie (Step 6)
   selfiePath       String?
@@ -274,7 +274,7 @@ model FiatBalance {
   userId String @unique
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  currency         String  @default("INR")
+  currency         String  @default("UGX")
   balance          Decimal @default(0) @db.Decimal(20, 8)
   availableBalance Decimal @default(0) @db.Decimal(20, 8)
   lockedBalance    Decimal @default(0) @db.Decimal(20, 8)
@@ -486,7 +486,7 @@ model P2PPaymentMethod {
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  type        P2PPaymentMethodType // BANK_TRANSFER, UPI, PAYPAL, etc.
+  type        P2PPaymentMethodType // BANK_TRANSFER, MOBILE_MONEY, PAYPAL, etc.
   name        String               // Display name: "My Bank Account", "PayPal"
   details     Json                 // Encrypted/masked details specific to payment type
   isActive    Boolean              @default(true)
@@ -502,7 +502,7 @@ model P2PPaymentMethod {
 
 enum P2PPaymentMethodType {
   BANK_TRANSFER
-  UPI
+  MOBILE_MONEY
   PAYPAL
   VENMO
   ZELLE
@@ -839,9 +839,9 @@ model LearnerFiatBalance {
   userId String @unique
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  currency         String  @default("INR")
-  balance          Decimal @default(100000) @db.Decimal(20, 8) // Starts with ₹1,00,000
-  availableBalance Decimal @default(100000) @db.Decimal(20, 8)
+  currency         String  @default("UGX")
+  balance          Decimal @default(500000) @db.Decimal(20, 8) // Starts with UGX 500,000
+  availableBalance Decimal @default(500000) @db.Decimal(20, 8)
   lockedBalance    Decimal @default(0) @db.Decimal(20, 8)
 
   createdAt DateTime @default(now())
@@ -972,7 +972,7 @@ model Token {
   // Manual Price Fallback (if no API data found or preferred)
   manualPrice       Decimal  @default(0) @db.Decimal(20, 8)
 
-  // Live INR price, 24h change, 24h volume — written by price-cache.service every ~60s from CoinGecko
+  // Live UGX price, 24h change, 24h volume — written by price-cache.service every ~60s from CoinGecko
   currentPrice      Decimal  @default(0) @db.Decimal(20, 8)
   change24h         Float    @default(0)
   volume24h         Decimal  @default(0) @db.Decimal(24, 2)

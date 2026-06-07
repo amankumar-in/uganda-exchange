@@ -58,8 +58,8 @@ export class PriceCacheService implements OnModuleInit, OnModuleDestroy {
   }
 
   /**
-   * Poll CoinGecko for INR prices of every active token with a coingeckoId,
-   * write pair entries ({SYMBOL}-INR, -USDT, -ETH, -TUIT) into the cache.
+   * Poll CoinGecko for UGX prices of every active token with a coingeckoId,
+   * write pair entries ({SYMBOL}-UGX, -USDT, -ETH, -TUIT) into the cache.
    */
   private async refreshPrices(): Promise<boolean> {
     let hadRateLimit = false;
@@ -84,16 +84,16 @@ export class PriceCacheService implements OnModuleInit, OnModuleDestroy {
 
       // Build fresh-price maps ONLY for tokens CoinGecko actually returned this cycle.
       // Any token we didn't get data for keeps its existing value — never overwrite with zero.
-      const freshInrPrice = new Map<string, number>();
+      const freshUgxPrice = new Map<string, number>();
       const freshChange = new Map<string, number>();
       const freshVolume = new Map<string, number>();
       tokens.forEach(t => {
         if (t.coingeckoId && prices[t.coingeckoId]) {
           const data = prices[t.coingeckoId];
-          if (typeof data.inr === 'number' && data.inr > 0) {
-            freshInrPrice.set(t.symbol, data.inr);
-            freshChange.set(t.symbol, data.inr_24h_change || 0);
-            freshVolume.set(t.symbol, data.inr_24h_vol || 0);
+          if (typeof data.ugx === 'number' && data.ugx > 0) {
+            freshUgxPrice.set(t.symbol, data.ugx);
+            freshChange.set(t.symbol, data.ugx_24h_change || 0);
+            freshVolume.set(t.symbol, data.ugx_24h_vol || 0);
           }
         }
       });
@@ -101,7 +101,7 @@ export class PriceCacheService implements OnModuleInit, OnModuleDestroy {
       // Persist the fresh set to DB so /tokens reads stay correct.
       const now = new Date();
       await Promise.all(
-        Array.from(freshInrPrice.entries()).map(([symbol, price]) =>
+        Array.from(freshUgxPrice.entries()).map(([symbol, price]) =>
           this.prisma.client.token.update({
             where: { symbol },
             data: {
@@ -132,13 +132,13 @@ export class PriceCacheService implements OnModuleInit, OnModuleDestroy {
         },
       });
 
-      const inrOf = (symbol: string): number => {
+      const ugxOf = (symbol: string): number => {
         const row = dbTokens.find(t => t.symbol === symbol);
         return row ? Number(row.currentPrice) || Number(row.manualPrice) || 0 : 0;
       };
-      const usdtInr = inrOf('USDT');
-      const ethInr = inrOf('ETH');
-      const tuitInr = inrOf('TUIT');
+      const usdtUgx = ugxOf('USDT');
+      const ethUgx = ugxOf('ETH');
+      const tuitUgx = ugxOf('TUIT');
       const timestamp = Date.now();
 
       const putEntry = (productId: string, price: number, change: number, volume: number) => {
@@ -153,19 +153,19 @@ export class PriceCacheService implements OnModuleInit, OnModuleDestroy {
       };
 
       dbTokens.forEach(t => {
-        const inrPrice = Number(t.currentPrice) || Number(t.manualPrice) || 0;
+        const ugxPrice = Number(t.currentPrice) || Number(t.manualPrice) || 0;
         const change = t.change24h || 0;
-        const volInr = Number(t.volume24h) || 0;
-        if (t.allowTradeInr) putEntry(`${t.symbol}-INR`, inrPrice, change, volInr);
-        if (t.allowTradeUsdt && t.symbol !== 'USDT' && usdtInr > 0) {
+        const volUgx = Number(t.volume24h) || 0;
+        if (t.allowTradeInr) putEntry(`${t.symbol}-UGX`, ugxPrice, change, volUgx);
+        if (t.allowTradeUsdt && t.symbol !== 'USDT' && usdtUgx > 0) {
           // Express volume in the quote currency so sort-by-volume stays comparable
-          putEntry(`${t.symbol}-USDT`, inrPrice / usdtInr, change, volInr / usdtInr);
+          putEntry(`${t.symbol}-USDT`, ugxPrice / usdtUgx, change, volUgx / usdtUgx);
         }
-        if (t.allowTradeEth && t.symbol !== 'ETH' && ethInr > 0) {
-          putEntry(`${t.symbol}-ETH`, inrPrice / ethInr, change, volInr / ethInr);
+        if (t.allowTradeEth && t.symbol !== 'ETH' && ethUgx > 0) {
+          putEntry(`${t.symbol}-ETH`, ugxPrice / ethUgx, change, volUgx / ethUgx);
         }
-        if (t.allowTradeTuit && t.symbol !== 'TUIT' && tuitInr > 0) {
-          putEntry(`${t.symbol}-TUIT`, inrPrice / tuitInr, change, volInr / tuitInr);
+        if (t.allowTradeTuit && t.symbol !== 'TUIT' && tuitUgx > 0) {
+          putEntry(`${t.symbol}-TUIT`, ugxPrice / tuitUgx, change, volUgx / tuitUgx);
         }
       });
 
@@ -182,9 +182,9 @@ export class PriceCacheService implements OnModuleInit, OnModuleDestroy {
    */
   private async fetchCoinGeckoPrices(
     ids: string[],
-  ): Promise<{ prices: Record<string, { inr: number; inr_24h_change: number; inr_24h_vol: number }>; hadRateLimit: boolean }> {
+  ): Promise<{ prices: Record<string, { ugx: number; ugx_24h_change: number; ugx_24h_vol: number }>; hadRateLimit: boolean }> {
     const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
-    const merged: Record<string, { inr: number; inr_24h_change: number; inr_24h_vol: number }> = {};
+    const merged: Record<string, { ugx: number; ugx_24h_change: number; ugx_24h_vol: number }> = {};
     const headers: Record<string, string> = {};
     const apiKey = process.env.COINGECKO_API_KEY;
     if (apiKey) headers['x-cg-demo-api-key'] = apiKey;
@@ -194,7 +194,7 @@ export class PriceCacheService implements OnModuleInit, OnModuleDestroy {
       if (hadRateLimit) break; // stop after first 429 — don't compound the problem
       const chunk = ids.slice(i, i + this.BATCH_SIZE).join(',');
       try {
-        const url = `https://api.coingecko.com/api/v3/simple/price?ids=${chunk}&vs_currencies=inr&include_24hr_change=true&include_24hr_vol=true`;
+        const url = `https://api.coingecko.com/api/v3/simple/price?ids=${chunk}&vs_currencies=ugx&include_24hr_change=true&include_24hr_vol=true`;
         const res = await fetch(url, { headers });
         if (res.status === 429) {
           hadRateLimit = true;

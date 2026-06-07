@@ -56,12 +56,12 @@ export default function WelcomeModal({
   if (!mounted) return null;
 
   // Get INR balance
-  const inrBalance = balances.find((b) => b.asset === 'INR');
+  const inrBalance = balances.find((b) => b.asset === 'UGX');
   const cashAmount = inrBalance?.balance || 0;
 
   // Get college coin balances with names
   const collegeCoinsReceived = balances
-    .filter((b) => b.asset !== 'INR' && b.balance > 0)
+    .filter((b) => b.asset !== 'UGX' && b.balance > 0)
     .map((b) => {
       const pair = pairs.find(
         (p) => p.baseCurrency === b.asset && p.isDemoCollegeCoin
@@ -301,7 +301,7 @@ export default function WelcomeModal({
                         fontSize: 16,
                       }}
                     >
-                      ₹
+                      UGX 
                     </div>
                     <div>
                       <div
@@ -330,8 +330,8 @@ export default function WelcomeModal({
                       fontSize: token.fontSizeLG,
                     }}
                   >
-                    ₹
-                    {cashAmount.toLocaleString('en-IN', {
+                    UGX 
+                    {cashAmount.toLocaleString('en-UG', {
                       minimumFractionDigits: 0,
                       maximumFractionDigits: 0,
                     })}
@@ -352,8 +352,8 @@ export default function WelcomeModal({
                         marginBottom: token.marginXS,
                       }}
                     >
-                      College Coins (~₹
-                      {totalCryptoValue.toLocaleString('en-IN', {
+                      College Coins (~UGX 
+                      {totalCryptoValue.toLocaleString('en-UG', {
                         maximumFractionDigits: 0,
                       })}
                       )
@@ -408,8 +408,8 @@ export default function WelcomeModal({
                               color: token.colorTextTertiary,
                             }}
                           >
-                            ~₹
-                            {coin.value.toLocaleString('en-IN', {
+                            ~UGX 
+                            {coin.value.toLocaleString('en-UG', {
                               maximumFractionDigits: 0,
                             })}
                           </div>
@@ -440,8 +440,8 @@ export default function WelcomeModal({
                       marginBottom: 4,
                     }}
                   >
-                    Think you can turn ₹1 lakh into{' '}
-                    <span style={{ color: '#0d7377' }}>₹1 crore</span>?
+                    Think you can turn UGX 1 lakh into{' '}
+                    <span style={{ color: '#0d7377' }}>UGX 1 crore</span>?
                   </div>
                   <div
                     style={{

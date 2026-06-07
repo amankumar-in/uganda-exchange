@@ -3,15 +3,6 @@ import { PrismaService } from '../../prisma.service';
 import { UserRole, KycStatus, TransactionStatus, AppMode, TradeStatus } from '@prisma/client';
 import { LearnerService } from '../learner/learner.service';
 
-// Split a full name into (first, last). Prefers Aadhaar over PAN since UIDAI is authoritative.
-function splitFullName(primary?: string | null, fallback?: string | null): { firstName: string | null; lastName: string | null } {
-  const name = (primary || fallback || '').trim();
-  if (!name) return { firstName: null, lastName: null };
-  const parts = name.split(/\s+/);
-  if (parts.length === 1) return { firstName: parts[0], lastName: null };
-  return { firstName: parts[0], lastName: parts.slice(1).join(' ') };
-}
-
 // ============================================
 // INTERFACES
 // ============================================
@@ -34,44 +25,6 @@ export interface UserListItem {
 }
 
 export interface FullUserDetails extends UserListItem {
-  kyc: {
-    id: string;
-    consentedAt: Date | null;
-    pan: string | null;
-    panName: string | null;
-    panDob: Date | null;
-    panStatus: string | null;
-    panNameMatch: boolean | null;
-    panDobMatch: boolean | null;
-    panAadhaarSeeding: string | null;
-    panVerifiedAt: Date | null;
-    aadhaarLast4: string | null;
-    aadhaarName: string | null;
-    aadhaarDob: Date | null;
-    aadhaarYob: string | null;
-    aadhaarGender: string | null;
-    aadhaarCareOf: string | null;
-    aadhaarPhotoUrl: string | null;
-    aadhaarVerifiedAt: Date | null;
-    panAadhaarLinked: boolean | null;
-    street1: string | null;
-    street2: string | null;
-    city: string | null;
-    region: string | null;
-    postalCode: string | null;
-    country: string | null;
-    selfieUrl: string | null;
-    selfieUploadedAt: Date | null;
-    currentStep: number;
-    status: string;
-    rejectionReason: string | null;
-    autoDecidedAt: Date | null;
-    reviewNotes: string | null;
-    reviewedAt: Date | null;
-    reviewedBy: string | null;
-    createdAt: Date;
-    updatedAt: Date;
-  } | null;
   notificationPreferences: {
     emailMarketing: boolean;
     emailSecurityAlerts: boolean;
@@ -157,12 +110,6 @@ export interface UpdateUserDto {
   role?: UserRole;
 }
 
-export interface UpdateKycStatusDto {
-  status: KycStatus;
-  reviewNotes?: string;
-  reviewedBy: string;
-}
-
 export interface BalanceAdjustmentDto {
   asset: string;
   amount: number;
@@ -205,9 +152,6 @@ export class AdminService {
         { email: { contains: options.search, mode: 'insensitive' } },
         { phone: { contains: options.search } },
         { id: { contains: options.search } },
-        { kyc: { panName: { contains: options.search, mode: 'insensitive' } } },
-        { kyc: { aadhaarName: { contains: options.search, mode: 'insensitive' } } },
-        { kyc: { pan: { contains: options.search.toUpperCase() } } },
       ];
     }
 
@@ -225,21 +169,15 @@ export class AdminService {
         skip,
         take: limit,
         orderBy: { createdAt: 'desc' },
-        include: {
-          kyc: {
-            select: {
-              aadhaarName: true,
-              panName: true,
-            },
-          },
-        },
+        
       }),
       this.prisma.client.user.count({ where }),
     ]);
 
     return {
       users: users.map((user) => {
-        const { firstName, lastName } = splitFullName(user.kyc?.aadhaarName, user.kyc?.panName);
+        const firstName = null;
+        const lastName = null;
         return {
           id: user.id,
           email: user.email,
@@ -274,7 +212,6 @@ export class AdminService {
     const user = await this.prisma.client.user.findUnique({
       where: { id },
       include: {
-        kyc: true,
         notificationPreferences: true,
         bankAccounts: true,
         _count: {
@@ -292,7 +229,8 @@ export class AdminService {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
 
-    const { firstName, lastName } = splitFullName(user.kyc?.aadhaarName, user.kyc?.panName);
+    const firstName = null;
+        const lastName = null;
     return {
       id: user.id,
       email: user.email,
@@ -308,46 +246,6 @@ export class AdminService {
       updatedAt: user.updatedAt,
       firstName,
       lastName,
-      kyc: user.kyc
-        ? {
-            id: user.kyc.id,
-            consentedAt: user.kyc.consentedAt,
-            pan: user.kyc.pan,
-            panName: user.kyc.panName,
-            panDob: user.kyc.panDob,
-            panStatus: user.kyc.panStatus,
-            panNameMatch: user.kyc.panNameMatch,
-            panDobMatch: user.kyc.panDobMatch,
-            panAadhaarSeeding: user.kyc.panAadhaarSeeding,
-            panVerifiedAt: user.kyc.panVerifiedAt,
-            aadhaarLast4: user.kyc.aadhaarLast4,
-            aadhaarName: user.kyc.aadhaarName,
-            aadhaarDob: user.kyc.aadhaarDob,
-            aadhaarYob: user.kyc.aadhaarYob,
-            aadhaarGender: user.kyc.aadhaarGender,
-            aadhaarCareOf: user.kyc.aadhaarCareOf,
-            aadhaarPhotoUrl: user.kyc.aadhaarPhotoPath ? `/api/uploads/kyc/${user.kyc.aadhaarPhotoPath}` : null,
-            aadhaarVerifiedAt: user.kyc.aadhaarVerifiedAt,
-            panAadhaarLinked: user.kyc.panAadhaarLinked,
-            street1: user.kyc.street1,
-            street2: user.kyc.street2,
-            city: user.kyc.city,
-            region: user.kyc.region,
-            postalCode: user.kyc.postalCode,
-            country: user.kyc.country,
-            selfieUrl: user.kyc.selfiePath ? `/api/uploads/kyc/${user.kyc.selfiePath}` : null,
-            selfieUploadedAt: user.kyc.selfieUploadedAt,
-            currentStep: user.kyc.currentStep,
-            status: user.kyc.status,
-            rejectionReason: user.kyc.rejectionReason,
-            autoDecidedAt: user.kyc.autoDecidedAt,
-            reviewNotes: user.kyc.reviewNotes,
-            reviewedAt: user.kyc.reviewedAt,
-            reviewedBy: user.kyc.reviewedBy,
-            createdAt: user.kyc.createdAt,
-            updatedAt: user.kyc.updatedAt,
-          }
-        : null,
       notificationPreferences: user.notificationPreferences
         ? {
             emailMarketing: user.notificationPreferences.emailMarketing,
@@ -899,19 +797,13 @@ export class AdminService {
         ...(dto.appMode && { appMode: dto.appMode }),
         ...(dto.role && { role: dto.role }),
       },
-      include: {
-        kyc: {
-          select: {
-            aadhaarName: true,
-            panName: true,
-          },
-        },
-      },
+      
     });
 
     this.logger.log(`Admin ${adminId} updated user ${id}: ${JSON.stringify(dto)}`);
 
-    const { firstName, lastName } = splitFullName(updatedUser.kyc?.aadhaarName, updatedUser.kyc?.panName);
+    const firstName = null;
+    const lastName = null;
     return {
       id: updatedUser.id,
       email: updatedUser.email,
@@ -937,68 +829,7 @@ export class AdminService {
     return this.updateUser(id, { role }, 'system');
   }
 
-  // ============================================
-  // KYC MANAGEMENT
-  // ============================================
 
-  /**
-   * Update KYC status (approve/reject)
-   */
-  async updateKycStatus(
-    userId: string,
-    dto: UpdateKycStatusDto,
-  ): Promise<{ success: boolean; kyc: any }> {
-    const user = await this.prisma.client.user.findUnique({
-      where: { id: userId },
-      include: { kyc: true },
-    });
-
-    if (!user) {
-      throw new NotFoundException(`User with ID ${userId} not found`);
-    }
-
-    if (!user.kyc) {
-      throw new BadRequestException(`User ${userId} has no KYC record`);
-    }
-
-    // Validate status
-    if (!['PENDING', 'SUBMITTED', 'APPROVED', 'REJECTED'].includes(dto.status)) {
-      throw new BadRequestException('Invalid KYC status');
-    }
-
-    // Update KYC
-    const updatedKyc = await this.prisma.client.kyc.update({
-      where: { id: user.kyc.id },
-      data: {
-        status: dto.status,
-        reviewNotes: dto.reviewNotes || null,
-        reviewedAt: new Date(),
-        reviewedBy: dto.reviewedBy,
-        currentStep: dto.status === 'APPROVED' ? 4 : user.kyc.currentStep,
-      },
-    });
-
-    // Update user KYC status
-    await this.prisma.client.user.update({
-      where: { id: userId },
-      data: { kycStatus: dto.status },
-    });
-
-    this.logger.log(
-      `Admin ${dto.reviewedBy} updated KYC status for user ${userId} to ${dto.status}`,
-    );
-
-    return {
-      success: true,
-      kyc: {
-        id: updatedKyc.id,
-        status: updatedKyc.status,
-        reviewNotes: updatedKyc.reviewNotes,
-        reviewedAt: updatedKyc.reviewedAt,
-        reviewedBy: updatedKyc.reviewedBy,
-      },
-    };
-  }
 
   // ============================================
   // LEARNER ACCOUNT

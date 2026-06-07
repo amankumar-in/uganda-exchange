@@ -269,7 +269,7 @@ export class DemoCollegeCoinsService {
     const coin = await this.findByTicker(ticker);
     if (!coin) return null;
 
-    // Reference price comes from the tokens table (populated by CoinGecko in INR)
+    // Reference price comes from the tokens table (populated by CoinGecko in UGX)
     const refToken = await this.tokensService.findBySymbol(coin.peggedToAsset);
     const referencePrice = refToken?.currentPrice || Number(refToken?.manualPrice) || 0;
 

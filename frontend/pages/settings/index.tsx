@@ -526,7 +526,7 @@ const SettingsPage: NextPageWithLayout = () => {
               <div>
                 <Text style={{ fontSize: 13 }}>Reset Learner Account</Text>
                 <Text type="secondary" style={{ display: 'block', fontSize: 11 }}>
-                  Clear all trades and start fresh with ₹1,00,000
+                  Clear all trades and start fresh with UGX 1,00,000
                 </Text>
               </div>
               <Popconfirm
@@ -1039,7 +1039,7 @@ const SettingsPage: NextPageWithLayout = () => {
                 marginBottom: token.marginSM,
               }}
             >
-              ₹1,00,000
+              UGX 1,00,000
             </div>
 
             <Text type="secondary" style={{ display: 'block', marginBottom: token.marginLG }}>
@@ -1058,7 +1058,7 @@ const SettingsPage: NextPageWithLayout = () => {
               <Text style={{ fontSize: 15 }}>
                 Think you can turn it into{' '}
                 <span style={{ fontWeight: fontWeights.bold, color: token.colorPrimary }}>
-                  ₹1 crore
+                  UGX 1 crore
                 </span>
                 ?
               </Text>
@@ -1120,7 +1120,7 @@ const SettingsPage: NextPageWithLayout = () => {
                 marginBottom: token.marginSM,
               }}
             >
-              ₹1,00,000
+              UGX 1,00,000
             </div>
 
             <Text type="secondary" style={{ display: 'block', marginBottom: token.marginLG, fontSize: 15 }}>
@@ -1139,7 +1139,7 @@ const SettingsPage: NextPageWithLayout = () => {
               <Text style={{ fontSize: 16 }}>
                 Think you can turn it into{' '}
                 <span style={{ fontWeight: fontWeights.bold, color: token.colorPrimary }}>
-                  ₹1 crore
+                  UGX 1 crore
                 </span>
                 ?
               </Text>

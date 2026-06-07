@@ -7,12 +7,10 @@ export default function GrievanceBlock() {
         (E-Commerce) Rules, 2020, complaints about this platform may be addressed to:
       </p>
       <p>
-        <strong>Aman Kumar</strong>
+        <strong>Grievance Officer</strong><br />
+        Head — Uganda Region, General Exchange<br />
         <br />
-        Head — India Region, Intuition India OPC Private Limited
-        <br />
-        E295, D-E 6, Dwarka, New Delhi — 110078, India
-        <br />
+        Kampala, Uganda<br />       <br />
         Email: <a href="mailto:help@intuitionexchange.com">help@intuitionexchange.com</a>
       </p>
       <p style={{ marginBottom: 0 }}>

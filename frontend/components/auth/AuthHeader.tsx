@@ -73,7 +73,7 @@ export default function AuthHeader() {
         />
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           <span style={logoTextStyle}>InTuition</span>
-          <span style={{ fontSize: token.fontSizeSM - 1, color: token.colorTextSecondary, lineHeight: 1, marginTop: -2 }}>India</span>
+          <span style={{ fontSize: token.fontSizeSM - 1, color: token.colorTextSecondary, lineHeight: 1, marginTop: -2 }}>Uganda</span>
         </div>
       </Link>
 

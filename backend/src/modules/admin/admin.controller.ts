@@ -22,21 +22,12 @@ import { existsSync, mkdirSync, readdirSync, statSync, unlinkSync } from 'fs';
 import { Response, Request } from 'express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AdminGuard } from './admin.guard';
-import { AdminService, UpdateUserDto, UpdateKycStatusDto, BalanceAdjustmentDto } from './admin.service';
+import { AdminService, UpdateUserDto, BalanceAdjustmentDto } from './admin.service';
 import {
   DemoCollegeCoinsService,
   CreateDemoCollegeCoinDto,
   UpdateDemoCollegeCoinDto,
 } from '../demo-college-coins/demo-college-coins.service';
-import { KycRestrictionsService } from '../kyc/kyc-restrictions.service';
-import {
-  CreateCountryDto,
-  UpdateCountryDto,
-  AddStatesDto,
-  UpdateStateDto,
-  BulkToggleStatesDto,
-  ToggleActiveDto,
-} from '../kyc/dto/kyc-restrictions.dto';
 import { UserRole, KycStatus, TransactionStatus, TradeStatus } from '@prisma/client';
 import * as csv from 'csv-parse/sync';
 
@@ -105,7 +96,6 @@ export class AdminController {
   constructor(
     private readonly adminService: AdminService,
     private readonly collegeCoinsService: DemoCollegeCoinsService,
-    private readonly kycRestrictionsService: KycRestrictionsService,
   ) {}
 
   // ============================================
@@ -296,33 +286,7 @@ export class AdminController {
     };
   }
 
-  /**
-   * Update KYC status (approve/reject)
-   */
-  @Patch('users/:id/kyc')
-  async updateKycStatus(
-    @Param('id') id: string,
-    @Body() body: { status: KycStatus; reviewNotes?: string },
-    @Req() req: Request,
-  ) {
-    if (!body.status || !['PENDING', 'SUBMITTED', 'APPROVED', 'REJECTED'].includes(body.status)) {
-      throw new BadRequestException('Invalid KYC status');
-    }
-
-    const adminId = (req as any).user?.id || 'unknown';
-    const result = await this.adminService.updateKycStatus(id, {
-      status: body.status,
-      reviewNotes: body.reviewNotes,
-      reviewedBy: adminId,
-    });
-
-    return {
-      ...result,
-      success: true,
-      message: `KYC status updated to ${body.status}`,
-    };
-  }
-
+  
   /**
    * Reset learner account
    */
@@ -799,187 +763,4 @@ export class AdminController {
   }
 
   // ============================================
-  // KYC RESTRICTIONS MANAGEMENT
-  // ============================================
-
-  /**
-   * Get all allowed countries with their states
-   */
-  @Get('kyc-restrictions/countries')
-  async getAllowedCountries() {
-    const countries = await this.kycRestrictionsService.getAllCountries();
-    return {
-      success: true,
-      countries,
-    };
-  }
-
-  /**
-   * Create a new allowed country
-   */
-  @Post('kyc-restrictions/countries')
-  async createAllowedCountry(@Body() dto: CreateCountryDto) {
-    const country = await this.kycRestrictionsService.createCountry(dto);
-    return {
-      success: true,
-      country,
-      message: `Country ${dto.countryCode} added successfully`,
-    };
-  }
-
-  /**
-   * Get a specific country with its states
-   */
-  @Get('kyc-restrictions/countries/:countryCode')
-  async getCountryWithStates(@Param('countryCode') countryCode: string) {
-    const country = await this.kycRestrictionsService.getCountryByCode(countryCode);
-    return {
-      success: true,
-      country,
-    };
-  }
-
-  /**
-   * Update an allowed country
-   */
-  @Patch('kyc-restrictions/countries/:countryCode')
-  async updateAllowedCountry(
-    @Param('countryCode') countryCode: string,
-    @Body() dto: UpdateCountryDto,
-  ) {
-    const country = await this.kycRestrictionsService.updateCountry(countryCode, dto);
-    return {
-      success: true,
-      country,
-      message: `Country ${countryCode} updated successfully`,
-    };
-  }
-
-  /**
-   * Delete an allowed country (and all its states)
-   */
-  @Delete('kyc-restrictions/countries/:countryCode')
-  async deleteAllowedCountry(@Param('countryCode') countryCode: string) {
-    await this.kycRestrictionsService.deleteCountry(countryCode);
-    return {
-      success: true,
-      message: `Country ${countryCode} deleted successfully`,
-    };
-  }
-
-  /**
-   * Toggle country active status
-   */
-  @Patch('kyc-restrictions/countries/:countryCode/toggle')
-  async toggleCountry(
-    @Param('countryCode') countryCode: string,
-    @Body() dto: ToggleActiveDto,
-  ) {
-    const country = await this.kycRestrictionsService.toggleCountry(countryCode, dto.isActive);
-    return {
-      success: true,
-      country,
-      message: `Country ${countryCode} ${dto.isActive ? 'enabled' : 'disabled'}`,
-    };
-  }
-
-  /**
-   * Get states for a country
-   */
-  @Get('kyc-restrictions/countries/:countryCode/states')
-  async getStatesForCountry(@Param('countryCode') countryCode: string) {
-    const states = await this.kycRestrictionsService.getStatesForCountry(countryCode);
-    return {
-      success: true,
-      states,
-    };
-  }
-
-  /**
-   * Add states to a country
-   */
-  @Post('kyc-restrictions/countries/:countryCode/states')
-  async addStates(
-    @Param('countryCode') countryCode: string,
-    @Body() dto: AddStatesDto,
-  ) {
-    const states = await this.kycRestrictionsService.addStatesToCountry(countryCode, dto.states);
-    return {
-      success: true,
-      states,
-      message: `${states.length} state(s) added to ${countryCode}`,
-    };
-  }
-
-  /**
-   * Update a specific state
-   */
-  @Patch('kyc-restrictions/states/:stateId')
-  async updateState(
-    @Param('stateId') stateId: string,
-    @Body() dto: UpdateStateDto,
-  ) {
-    const state = await this.kycRestrictionsService.updateState(stateId, dto);
-    return {
-      success: true,
-      state,
-      message: 'State updated successfully',
-    };
-  }
-
-  /**
-   * Delete a specific state
-   */
-  @Delete('kyc-restrictions/states/:stateId')
-  async deleteState(@Param('stateId') stateId: string) {
-    await this.kycRestrictionsService.deleteState(stateId);
-    return {
-      success: true,
-      message: 'State deleted successfully',
-    };
-  }
-
-  /**
-   * Toggle state active status
-   */
-  @Patch('kyc-restrictions/states/:stateId/toggle')
-  async toggleState(
-    @Param('stateId') stateId: string,
-    @Body() dto: ToggleActiveDto,
-  ) {
-    const state = await this.kycRestrictionsService.toggleState(stateId, dto.isActive);
-    return {
-      success: true,
-      state,
-      message: `State ${dto.isActive ? 'enabled' : 'disabled'}`,
-    };
-  }
-
-  /**
-   * Bulk toggle states for a country
-   */
-  @Post('kyc-restrictions/countries/:countryCode/states/bulk-toggle')
-  async bulkToggleStates(
-    @Param('countryCode') countryCode: string,
-    @Body() dto: BulkToggleStatesDto,
-  ) {
-    await this.kycRestrictionsService.bulkToggleStates(countryCode, dto.stateCodes, dto.isActive);
-    return {
-      success: true,
-      message: `${dto.stateCodes.length} state(s) ${dto.isActive ? 'enabled' : 'disabled'}`,
-    };
-  }
-
-  /**
-   * Get reference state list for a country (pre-populated data)
-   */
-  @Get('kyc-restrictions/reference-states/:countryCode')
-  getReferenceStates(@Param('countryCode') countryCode: string) {
-    const states = this.kycRestrictionsService.getReferenceStates(countryCode);
-    return {
-      success: true,
-      states,
-    };
-  }
 }
-

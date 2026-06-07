@@ -88,7 +88,7 @@ export default function LegalPageLayout({
                   fontSize: token.fontSize,
                 }}
               >
-                Last updated: {lastUpdated} · Intuition India OPC Private Limited
+                Last updated: {lastUpdated} · General Exchange
               </Text>
             </div>
           </section>

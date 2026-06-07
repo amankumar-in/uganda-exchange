@@ -189,7 +189,7 @@ export default function AssetManagerPage() {
         const price = record.currentPrice || record.manualPrice || 0;
         return (
           <Space direction="vertical" size={0}>
-            <span>${Number(price).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 8 })}</span>
+            <span>${Number(price).toLocaleString('en-UG', { minimumFractionDigits: 2, maximumFractionDigits: 8 })}</span>
             {record.coingeckoId ? (
               <Tag color="blue" style={{ fontSize: 10, margin: 0 }}>Auto (API)</Tag>
             ) : record.contractAddress ? (
@@ -396,10 +396,10 @@ export default function AssetManagerPage() {
           <Divider titlePlacement="left">Transaction Limits</Divider>
           <Space size="large">
             <Form.Item name="defaultMinTransaction" label="Min (INR)">
-              <InputNumber prefix="₹" min={0} style={{ width: 150 }} />
+              <InputNumber prefix="UGX " min={0} style={{ width: 150 }} />
             </Form.Item>
             <Form.Item name="defaultMaxTransaction" label="Max (INR)">
-              <InputNumber prefix="₹" min={0} style={{ width: 150 }} />
+              <InputNumber prefix="UGX " min={0} style={{ width: 150 }} />
             </Form.Item>
           </Space>
 

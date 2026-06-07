@@ -56,10 +56,10 @@ const TradeForm: React.FC<TradeFormProps> = ({
   
   // Calculate INR value for transaction limit checks.
   // For INR pairs: totalNum is already in INR.
-  // For non-INR pairs (USDT, ETH, TUIT): convert via quote-INR pair price.
+  // For non-UGX pairs (USDT, ETH, TUIT): convert via quote-UGX pair price.
   const getInrValue = (): number => {
-    if (quoteAsset === 'INR') return totalNum;
-    const quoteInrPair = pairs.find(p => p.symbol === `${quoteAsset}-INR`);
+    if (quoteAsset === 'UGX') return totalNum;
+    const quoteInrPair = pairs.find(p => p.symbol === `${quoteAsset}-UGX`);
     if (quoteInrPair && quoteInrPair.price > 0) {
       return totalNum * quoteInrPair.price;
     }
@@ -89,7 +89,7 @@ const TradeForm: React.FC<TradeFormProps> = ({
       const totalValue = num * price;
       // High precision for sub-penny totals
       let decimals = 8;
-      if (quoteAsset === 'INR') {
+      if (quoteAsset === 'UGX') {
         decimals = totalValue < 0.001 ? 8 : (totalValue < 1 ? 6 : 2);
       }
       setTotal(totalValue.toFixed(decimals));
@@ -114,9 +114,9 @@ const TradeForm: React.FC<TradeFormProps> = ({
     if (price <= 0) return; // Don't calculate if price is invalid
     
     // For USD, use dynamic precision based on value size
-    const totalDecimals = quoteAsset === 'INR' ? 6 : 8; 
+    const totalDecimals = quoteAsset === 'UGX' ? 6 : 8; 
     // Use appropriate precision multiplier
-    const precisionMultiplier = quoteAsset === 'INR' ? 100 : 100000000; 
+    const precisionMultiplier = quoteAsset === 'UGX' ? 100 : 100000000; 
     
     if (isBuy) {
       // For BUY: user pays the total amount
@@ -125,7 +125,7 @@ const TradeForm: React.FC<TradeFormProps> = ({
         : quoteBalance * (percent / 100);
         
       // If USD value is > 1 use 2 decimals, otherwise 6
-      const decimals = (quoteAsset === 'INR' && maxTotal >= 1) ? 2 : totalDecimals;
+      const decimals = (quoteAsset === 'UGX' && maxTotal >= 1) ? 2 : totalDecimals;
       
       setTotal(maxTotal.toFixed(decimals));
       if (price > 0) {
@@ -139,7 +139,7 @@ const TradeForm: React.FC<TradeFormProps> = ({
       setAmount(maxAmount.toFixed(8));
       if (price > 0) {
         const totalVal = maxAmount * price;
-        const decimals = quoteAsset === 'INR' ? (totalVal < 0.001 ? 8 : (totalVal < 1 ? 6 : 2)) : 8;
+        const decimals = quoteAsset === 'UGX' ? (totalVal < 0.001 ? 8 : (totalVal < 1 ? 6 : 2)) : 8;
         setTotal(totalVal.toFixed(decimals));
       }
     }
@@ -167,7 +167,7 @@ const TradeForm: React.FC<TradeFormProps> = ({
       if (baseBalance === 0) {
         message.error(`You don't have any ${baseAsset} to sell`);
       } else {
-        message.error(`Insufficient ${baseAsset} balance. You want to sell ${amountNum.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 8 })} but only have ${baseBalance.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 8 })}`);
+        message.error(`Insufficient ${baseAsset} balance. You want to sell ${amountNum.toLocaleString('en-UG', { minimumFractionDigits: 0, maximumFractionDigits: 8 })} but only have ${baseBalance.toLocaleString('en-UG', { minimumFractionDigits: 0, maximumFractionDigits: 8 })}`);
       }
       setShowConfirm(false);
       return;
@@ -386,7 +386,7 @@ const TradeForm: React.FC<TradeFormProps> = ({
             Amount
           </span>
           <span style={{ fontSize: token.fontSizeSM, color: token.colorTextTertiary }}>
-            Avail: {baseBalance.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 8 })} {baseAsset}
+            Avail: {baseBalance.toLocaleString('en-UG', { minimumFractionDigits: 0, maximumFractionDigits: 8 })} {baseAsset}
           </span>
         </div>
         <InputWithAddon
@@ -447,9 +447,9 @@ const TradeForm: React.FC<TradeFormProps> = ({
             Total
           </span>
           <span style={{ fontSize: token.fontSizeSM, color: token.colorTextTertiary }}>
-            Avail: {quoteAsset === 'INR'
-              ? `₹${quoteBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-              : `${quoteBalance.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 8 })} ${quoteAsset}`
+            Avail: {quoteAsset === 'UGX'
+              ? `UGX ${quoteBalance.toLocaleString('en-UG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+              : `${quoteBalance.toLocaleString('en-UG', { minimumFractionDigits: 0, maximumFractionDigits: 8 })} ${quoteAsset}`
             }
           </span>
         </div>
@@ -523,7 +523,7 @@ const TradeForm: React.FC<TradeFormProps> = ({
             }}
           >
             <InfoCircleOutlined style={{ marginRight: token.marginXS }} />
-            Minimum transaction for {baseAsset} is ₹{tokenMinAmount.toFixed(2)} (current: ₹{inrValue.toFixed(2)})
+            Minimum transaction for {baseAsset} is UGX {tokenMinAmount.toFixed(2)} (current: UGX {inrValue.toFixed(2)})
           </motion.div>
         )}
       </AnimatePresence>
@@ -546,7 +546,7 @@ const TradeForm: React.FC<TradeFormProps> = ({
             }}
           >
             <InfoCircleOutlined style={{ marginRight: token.marginXS }} />
-            Maximum transaction for {baseAsset} is ₹{tokenMaxAmount.toFixed(2)} (current: ₹{inrValue.toFixed(2)})
+            Maximum transaction for {baseAsset} is UGX {tokenMaxAmount.toFixed(2)} (current: UGX {inrValue.toFixed(2)})
           </motion.div>
         )}
       </AnimatePresence>
@@ -579,7 +579,7 @@ const TradeForm: React.FC<TradeFormProps> = ({
                 : baseBalance === 0
                   ? `You don't have any ${baseAsset} to sell`
                   : amountNum > baseBalance
-                    ? `You want to sell ${amountNum.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 8 })} ${baseAsset} but only have ${baseBalance.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 8 })}`
+                    ? `You want to sell ${amountNum.toLocaleString('en-UG', { minimumFractionDigits: 0, maximumFractionDigits: 8 })} ${baseAsset} but only have ${baseBalance.toLocaleString('en-UG', { minimumFractionDigits: 0, maximumFractionDigits: 8 })}`
                     : null
               }
             </motion.div>
@@ -603,8 +603,8 @@ const TradeForm: React.FC<TradeFormProps> = ({
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
               <span>Fee (0.5%)</span>
               <span>
-                {quoteAsset === 'INR'
-                  ? `₹${fee.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: fee < 0.001 ? 8 : (fee < 1 ? 6 : 2) })}`
+                {quoteAsset === 'UGX'
+                  ? `UGX ${fee.toLocaleString('en-UG', { minimumFractionDigits: 2, maximumFractionDigits: fee < 0.001 ? 8 : (fee < 1 ? 6 : 2) })}`
                   : `${fee.toFixed(8)} ${quoteAsset}`
                 }
               </span>
@@ -614,8 +614,8 @@ const TradeForm: React.FC<TradeFormProps> = ({
               <span style={{ color: token.colorText, fontWeight: fontWeights.semibold }}>
                 {isBuy 
                   ? `${receiveAmount.toFixed(6)} ${baseAsset}`
-                  : quoteAsset === 'INR'
-                  ? `₹${receiveAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: receiveAmount < 0.001 ? 8 : (receiveAmount < 1 ? 6 : 2) })}`
+                  : quoteAsset === 'UGX'
+                  ? `UGX ${receiveAmount.toLocaleString('en-UG', { minimumFractionDigits: 2, maximumFractionDigits: receiveAmount < 0.001 ? 8 : (receiveAmount < 1 ? 6 : 2) })}`
                   : `${receiveAmount.toFixed(8)} ${quoteAsset}`
                 }
               </span>
@@ -823,9 +823,9 @@ const TradeForm: React.FC<TradeFormProps> = ({
           }}>
             <span style={{ color: token.colorTextSecondary }}>Price</span>
             <span style={{ color: token.colorText }}>
-              {quoteAsset === 'INR' 
-                ? `₹${price.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: price < 0.001 ? 8 : (price < 1 ? 6 : 2) })}`
-                : `${price.toLocaleString('en-IN', { maximumFractionDigits: 8 })} ${quoteAsset}`
+              {quoteAsset === 'UGX' 
+                ? `UGX ${price.toLocaleString('en-UG', { minimumFractionDigits: 2, maximumFractionDigits: price < 0.001 ? 8 : (price < 1 ? 6 : 2) })}`
+                : `${price.toLocaleString('en-UG', { maximumFractionDigits: 8 })} ${quoteAsset}`
               }
             </span>
           </div>
@@ -837,8 +837,8 @@ const TradeForm: React.FC<TradeFormProps> = ({
           }}>
             <span style={{ color: token.colorTextSecondary }}>Fee (0.5%)</span>
             <span style={{ color: token.colorText }}>
-              {quoteAsset === 'INR' 
-                ? `₹${fee.toFixed(2)}`
+              {quoteAsset === 'UGX' 
+                ? `UGX ${fee.toFixed(2)}`
                 : `${fee.toFixed(8)} ${quoteAsset}`
               }
             </span>
@@ -854,13 +854,13 @@ const TradeForm: React.FC<TradeFormProps> = ({
             <span style={{ color: token.colorText, fontWeight: fontWeights.bold }}>
               {isBuy ? (
                 // BUY: User pays totalNum
-                quoteAsset === 'INR' 
-                  ? `₹${totalNum.toFixed(2)}`
+                quoteAsset === 'UGX' 
+                  ? `UGX ${totalNum.toFixed(2)}`
                   : `${totalNum.toFixed(8)} ${quoteAsset}`
               ) : (
                 // SELL: User receives receiveAmount
-                quoteAsset === 'INR'
-                  ? `₹${receiveAmount.toFixed(2)}`
+                quoteAsset === 'UGX'
+                  ? `UGX ${receiveAmount.toFixed(2)}`
                   : `${receiveAmount.toFixed(8)} ${quoteAsset}`
               )}
             </span>

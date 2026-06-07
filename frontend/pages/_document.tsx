@@ -1,8 +1,8 @@
 import { Html, Head, Main, NextScript } from "next/document";
 
 export default function Document() {
-  const siteUrl = "https://intuitionexchange.com";
-  const siteName = "InTuition Exchange";
+  const siteUrl = "https://ugandanext.com";
+  const siteName = "General Exchange";
   const siteDescription = "Learn crypto trading with virtual funds. Practice buying and selling Bitcoin, Ethereum, and more in a risk-free sandbox environment.";
   const metaImage = `${siteUrl}/images/meta-image-sandbox.jpg`;
 
@@ -12,8 +12,8 @@ export default function Document() {
         {/* Primary Meta Tags */}
         <meta charSet="utf-8" />
         <meta name="description" content={siteDescription} />
-        <meta name="keywords" content="crypto trading, bitcoin, ethereum, learn trading, virtual trading, sandbox, practice trading, cryptocurrency education, InTuition Exchange" />
-        <meta name="author" content="InTuition Exchange" />
+        <meta name="keywords" content="crypto trading, bitcoin, ethereum, learn trading, virtual trading, sandbox, practice trading, cryptocurrency education, General Exchange" />
+        <meta name="author" content="General Exchange" />
         <meta name="robots" content="index, follow" />
         
         {/* Theme & App Colors */}
@@ -35,8 +35,8 @@ export default function Document() {
         {/* PWA Capabilities */}
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-title" content="InTuition" />
-        <meta name="application-name" content="InTuition Exchange" />
+        <meta name="apple-mobile-web-app-title" content="General Exchange" />
+        <meta name="application-name" content="General Exchange" />
         <meta name="format-detection" content="telephone=no" />
         
         {/* Open Graph / Facebook */}
@@ -48,7 +48,7 @@ export default function Document() {
         <meta property="og:image" content={metaImage} />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
-        <meta property="og:image:alt" content="InTuition Exchange - Learn Crypto Trading" />
+        <meta property="og:image:alt" content="General Exchange - Learn Crypto Trading" />
         <meta property="og:locale" content="en_US" />
         
         {/* Twitter */}
@@ -57,7 +57,7 @@ export default function Document() {
         <meta name="twitter:title" content={siteName} />
         <meta name="twitter:description" content={siteDescription} />
         <meta name="twitter:image" content={metaImage} />
-        <meta name="twitter:image:alt" content="InTuition Exchange - Learn Crypto Trading" />
+        <meta name="twitter:image:alt" content="General Exchange - Learn Crypto Trading" />
         
         {/* iOS Splash Screens (optional - for full PWA experience) */}
         <link 
@@ -68,10 +68,10 @@ export default function Document() {
         {/* Preconnect to external services */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link rel="preconnect" href="https://api.sandbox.intuitionexchange.com" />
+        <link rel="preconnect" href="https://api.sandbox.ugandanext.com" />
         
         {/* DNS Prefetch */}
-        <link rel="dns-prefetch" href="https://api.sandbox.intuitionexchange.com" />
+        <link rel="dns-prefetch" href="https://api.sandbox.ugandanext.com" />
       </Head>
       <body>
         <Main />

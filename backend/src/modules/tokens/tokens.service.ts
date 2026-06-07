@@ -165,7 +165,7 @@ export class TokensService {
   }
 
   /**
-   * Return all tokens with their last-known live INR price.
+   * Return all tokens with their last-known live UGX price.
    * Prices are maintained in the DB by PriceCacheService (polls CoinGecko every ~60s).
    * This method does not make any external API calls per request — reads only.
    */

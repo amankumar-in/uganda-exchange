@@ -173,13 +173,13 @@ const TransactionCard = memo(({
     const diffDays = Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
     
     if (diffDays === 0) {
-      return `Today, ${d.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' })}`;
+      return `Today, ${d.toLocaleTimeString('en-UG', { hour: 'numeric', minute: '2-digit' })}`;
     } else if (diffDays === 1) {
-      return `Yesterday, ${d.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' })}`;
+      return `Yesterday, ${d.toLocaleTimeString('en-UG', { hour: 'numeric', minute: '2-digit' })}`;
     } else if (diffDays < 7) {
-      return d.toLocaleDateString('en-IN', { weekday: 'short', hour: 'numeric', minute: '2-digit' });
+      return d.toLocaleDateString('en-UG', { weekday: 'short', hour: 'numeric', minute: '2-digit' });
     }
-    return d.toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: d.getFullYear() !== now.getFullYear() ? 'numeric' : undefined });
+    return d.toLocaleDateString('en-UG', { month: 'short', day: 'numeric', year: d.getFullYear() !== now.getFullYear() ? 'numeric' : undefined });
   };
 
   return (
@@ -309,7 +309,7 @@ const TransactionCard = memo(({
             {transaction.type === 'trade' && transaction.side === 'BUY' ? '+' : ''}
             {transaction.type === 'deposit' ? '+' : transaction.type === 'withdrawal' ? '-' : ''}
             {transaction.type === 'trade' && transaction.side === 'SELL' ? '-' : ''}
-            {transaction.amount.toLocaleString('en-IN', { 
+            {transaction.amount.toLocaleString('en-UG', { 
               minimumFractionDigits: 2, 
               maximumFractionDigits: transaction.amount < 1 ? 6 : 2,
             })} {transaction.asset}
@@ -321,7 +321,7 @@ const TransactionCard = memo(({
               marginTop: 2,
             }}
           >
-            ₹{transaction.value.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            UGX {transaction.value.toLocaleString('en-UG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
         </div>
       </div>
@@ -457,7 +457,7 @@ const TransactionRow = memo(({
             {getTypeLabel()} {transaction.asset}
           </div>
           <div style={{ fontSize: token.fontSizeSM, color: token.colorTextSecondary }}>
-            {new Date(transaction.date).toLocaleDateString('en-IN', { 
+            {new Date(transaction.date).toLocaleDateString('en-UG', { 
               month: 'short', 
               day: 'numeric',
               hour: 'numeric',
@@ -470,7 +470,7 @@ const TransactionRow = memo(({
       {/* Amount */}
       <div style={{ fontVariantNumeric: 'tabular-nums' }}>
         <div style={{ fontWeight: fontWeights.semibold, color: token.colorText }}>
-          {transaction.amount.toLocaleString('en-IN', { 
+          {transaction.amount.toLocaleString('en-UG', { 
             minimumFractionDigits: 2, 
             maximumFractionDigits: transaction.amount < 1 ? 6 : 4,
           })}
@@ -482,7 +482,7 @@ const TransactionRow = memo(({
 
       {/* Value */}
       <div style={{ fontWeight: fontWeights.semibold, color: token.colorText, fontVariantNumeric: 'tabular-nums' }}>
-        ₹{transaction.value.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+        UGX {transaction.value.toLocaleString('en-UG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
       </div>
 
       {/* Status */}
@@ -863,7 +863,7 @@ const TransactionsPage: NextPageWithLayout = () => {
 
   // Get icon URL for an asset
   const getIconUrl = useCallback((asset: string) => {
-    if (asset === 'INR') return undefined;
+    if (asset === 'UGX') return undefined;
     const pair = pairs.find(p => p.baseCurrency === asset);
     return pair?.iconUrl || `https://assets.coincap.io/assets/icons/${asset.toLowerCase()}@2x.png`;
   }, [pairs]);
@@ -963,9 +963,9 @@ const TransactionsPage: NextPageWithLayout = () => {
       } else if (d.toDateString() === yesterday.toDateString()) {
         key = 'Yesterday';
       } else if (d.getFullYear() === today.getFullYear()) {
-        key = d.toLocaleDateString('en-IN', { month: 'long', day: 'numeric' });
+        key = d.toLocaleDateString('en-UG', { month: 'long', day: 'numeric' });
       } else {
-        key = d.toLocaleDateString('en-IN', { month: 'long', day: 'numeric', year: 'numeric' });
+        key = d.toLocaleDateString('en-UG', { month: 'long', day: 'numeric', year: 'numeric' });
       }
       
       if (!groups[key]) groups[key] = [];
@@ -1309,7 +1309,7 @@ const TransactionsPage: NextPageWithLayout = () => {
                   +${filteredTransactions
                     .filter(t => t.type === 'deposit' || (t.type === 'trade' && t.side === 'BUY'))
                     .reduce((sum, t) => sum + t.value, 0)
-                    .toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    .toLocaleString('en-UG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </div>
               </div>
               <div>
@@ -1318,7 +1318,7 @@ const TransactionsPage: NextPageWithLayout = () => {
                   -${filteredTransactions
                     .filter(t => t.type === 'withdrawal' || (t.type === 'trade' && t.side === 'SELL'))
                     .reduce((sum, t) => sum + t.value, 0)
-                    .toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    .toLocaleString('en-UG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </div>
               </div>
             </div>

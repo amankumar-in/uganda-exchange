@@ -11,7 +11,7 @@
  * Do NOT hardcode localhost in individual service files — import from here.
  */
 
-const DEFAULT_BACKEND_PORT = 8001;
+const DEFAULT_BACKEND_PORT = 8000;
 
 function deriveFromWindow(suffix: string): string | null {
   if (typeof window === 'undefined') return null;

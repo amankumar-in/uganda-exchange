@@ -75,7 +75,7 @@ export default function RegisterPage() {
   const [mounted, setMounted] = useState(false);
   const [countryDrawerOpen, setCountryDrawerOpen] = useState(false);
   const [phoneCodeDrawerOpen, setPhoneCodeDrawerOpen] = useState(false);
-  const [selectedPhoneCode, setSelectedPhoneCode] = useState<string>('IN');
+  const [selectedPhoneCode, setSelectedPhoneCode] = useState<string>('UG');
 
   const isDark = mode === 'dark';
   const isMobile = mounted ? !screens.md : false;
@@ -204,7 +204,7 @@ export default function RegisterPage() {
   // Benefits for left panel
   const benefits = [
     { icon: <RocketOutlined />, title: 'Start Trading in Minutes', desc: 'Quick verification process' },
-    { icon: <GiftOutlined />, title: '₹1,00,000 Practice Balance', desc: 'Learn risk-free in Learner Mode' },
+    { icon: <GiftOutlined />, title: 'UGX 1,00,000 Practice Balance', desc: 'Learn risk-free in Learner Mode' },
     { icon: <BookOutlined />, title: 'Educational Resources', desc: 'Master crypto trading basics' },
     { icon: <SafetyCertificateOutlined />, title: 'Bank-Grade Security', desc: 'Your assets are protected' },
   ];
@@ -562,7 +562,7 @@ export default function RegisterPage() {
                     onFinish={handleFormSubmit}
                     requiredMark={false}
                     size="large"
-                    initialValues={{ phoneCountryCode: 'IN', country: 'IN' }}
+                    initialValues={{ phoneCountryCode: 'UG', country: 'UG' }}
                   >
                     {/* Country */}
                     <Form.Item

@@ -42,7 +42,7 @@ const { Text, Title } = Typography;
 const { TextArea } = Input;
 
 const CRYPTO_ASSETS = ['BTC', 'ETH', 'USDT', 'USDC'];
-const FIAT_CURRENCIES = ['USD', 'EUR', 'GBP', 'INR'];
+const FIAT_CURRENCIES = ['USD', 'EUR', 'GBP', 'UGX'];
 
 const CreateAdPage: NextPageWithLayout = () => {
   const router = useRouter();

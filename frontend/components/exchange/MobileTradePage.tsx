@@ -360,7 +360,7 @@ function TradeHistoryMobile({ trades, isLoading }: { trades: any[]; isLoading: b
             {parseFloat(trade.size).toFixed(6)}
           </span>
           <span style={{ flex: 1, textAlign: 'right', color: token.colorTextTertiary, fontSize: token.fontSizeSM }}>
-            {new Date(trade.time).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+            {new Date(trade.time).toLocaleTimeString('en-UG', { hour: '2-digit', minute: '2-digit' })}
           </span>
         </div>
       ))}
@@ -565,14 +565,14 @@ function MyOrdersMobile({ orders, isLoading }: { orders: any[]; isLoading: boole
               {order.filledAmount?.toFixed(6) || order.requestedAmount?.toFixed(6)} @ <PriceFormatter price={order.price} />
             </span>
             <span style={{ color: token.colorText, fontWeight: fontWeights.semibold }}>
-              ₹{order.totalValue?.toLocaleString('en-IN', { 
+              UGX {order.totalValue?.toLocaleString('en-UG', { 
                 minimumFractionDigits: 2, 
                 maximumFractionDigits: order.totalValue < 1 ? 6 : 2 
               })}
             </span>
           </div>
           <div style={{ fontSize: token.fontSizeSM, color: token.colorTextTertiary }}>
-            {new Date(order.createdAt).toLocaleString('en-IN', { 
+            {new Date(order.createdAt).toLocaleString('en-UG', { 
               month: 'short', 
               day: 'numeric',
               hour: '2-digit', 

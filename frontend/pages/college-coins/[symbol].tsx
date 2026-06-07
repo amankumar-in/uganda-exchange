@@ -222,7 +222,7 @@ const CollegeCoinDetailPage: NextPageWithLayout = () => {
         <title>{`Buy ${symbol} College Coin in INR — InTuition Exchange`}</title>
         <meta
           name="description"
-          content={`Buy and trade ${symbol} on InTuition Exchange. Earn ${symbol} through mining, swap with crypto, and pay for campus services. India's college-coin marketplace.`}
+          content={`Buy and trade ${symbol} on General Exchange. Earn ${symbol} through mining, swap with crypto, and pay for campus services. Uganda's college-coin marketplace.`}
         />
       </Head>
 
@@ -624,7 +624,7 @@ const CollegeCoinDetailPage: NextPageWithLayout = () => {
                         color: token.colorText,
                         fontVariantNumeric: 'tabular-nums',
                       }}>
-                        {balance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
+                        {balance.toLocaleString('en-UG', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
                       </div>
                     </div>
                   </div>

@@ -10,7 +10,7 @@ export default function CancellationPage() {
     >
       <p>
         This Cancellation Policy explains what you can cancel on the InTuition Exchange
-        platform operated by <strong>Intuition India OPC Private Limited</strong>, and what
+        platform operated by <strong>General Exchange</strong>, and what
         cannot be cancelled because of how blockchain settlement and payment-rail processing
         work. Read it together with our Refund Policy and Terms of Service.
       </p>
@@ -29,14 +29,14 @@ export default function CancellationPage() {
 
       <h2>2. INR deposits</h2>
       <ul>
-        <li>An INR deposit initiated through Razorpay cannot be cancelled by us once you have authorised the payment with your bank or UPI app. If the payment fails or times out, no charge is applied to your bank or UPI account, and no further action is needed from you.</li>
+        <li>A UGX deposit initiated through Pesapal cannot be cancelled by us once you have authorised the payment with your bank or Mobile Money provider. If the payment fails or times out, no charge is applied to your account, and no further action is needed from you.</li>
         <li>If you authorised a deposit in error and were charged, see our Refund Policy for the limited circumstances in which the deposit may be reversed.</li>
       </ul>
 
       <h2>3. INR withdrawals</h2>
       <ul>
         <li><strong>Pending</strong> — INR withdrawal requests can be cancelled by you, from the Portfolio screen, while the request is in <code>PENDING</code> status (typically the first few minutes after submission).</li>
-        <li><strong>Processing</strong> — once the request moves to <code>PROCESSING</code> and has been handed off to the bank rail (NEFT / IMPS / RTGS), it cannot be cancelled.</li>
+        <li><strong>Processing</strong> — once the request moves to <code>PROCESSING</code> and has been handed off to the payment rail (EFT / Mobile Money), it cannot be cancelled.</li>
         <li><strong>Completed</strong> — completed withdrawals cannot be cancelled. If you sent funds to a wrong-but-verified bank account, you must approach the receiving bank directly under the RBI&rsquo;s wrong-credit recovery process.</li>
       </ul>
 

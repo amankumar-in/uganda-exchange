@@ -5,11 +5,11 @@ export default function PrivacyPage() {
   return (
     <LegalPageLayout
       title="Privacy Policy"
-      description="How Intuition India OPC Private Limited collects, uses, shares, and retains personal data on the InTuition Exchange platform."
+      description="How General Exchange collects, uses, shares, and retains personal data on the platform."
       lastUpdated="27 April 2026"
     >
       <p>
-        This Privacy Policy explains how <strong>Intuition India OPC Private Limited</strong>{" "}
+        This Privacy Policy explains how <strong>General Exchange</strong>{" "}
         (<strong>&ldquo;we&rdquo;</strong>, <strong>&ldquo;us&rdquo;</strong>) processes
         personal data of users of the InTuition Exchange platform. It applies in addition to,
         and forms part of, our Terms of Service. This Policy is published in accordance with
@@ -28,11 +28,11 @@ export default function PrivacyPage() {
         <li>Permanent Account Number (PAN) and PAN-card image.</li>
         <li>Aadhaar number (last four digits stored, full number used only for OTP verification through the official UIDAI flow), name, date of birth, gender, and address as returned by Aadhaar e-KYC.</li>
         <li>Live selfie / liveness video for face match.</li>
-        <li>Verified bank account number, IFSC, and account holder name (collected through penny-drop validation).</li>
+        <li>Verified bank account number and account holder name.</li>
       </ul>
       <h3>Transaction data</h3>
       <ul>
-        <li>Deposits, withdrawals, orders, executed trades, wallet balances, on-chain transfers, payment-gateway references, TDS-deduction records.</li>
+        <li>Deposits, withdrawals, orders, executed trades, wallet balances, on-chain transfers, and payment-gateway references.</li>
       </ul>
       <h3>Device, log, and usage data</h3>
       <ul>
@@ -45,7 +45,7 @@ export default function PrivacyPage() {
         <li><strong>Account creation and login</strong> — to authenticate you and secure your account.</li>
         <li><strong>KYC and AML/CFT compliance</strong> — to verify your identity, screen against sanctions and PEP lists, conduct ongoing due diligence, and file STRs / CTRs with FIU-IND under the Prevention of Money Laundering Act, 2002.</li>
         <li><strong>Payment processing</strong> — to collect INR deposits and disburse INR withdrawals through our regulated payment partners.</li>
-        <li><strong>Tax compliance</strong> — to deduct tax at source under Section 194S of the Income-tax Act, 1961 and to issue TDS certificates.</li>
+        <li><strong>Tax compliance</strong> — to comply with local tax regulations regarding cryptocurrency trading.</li>
         <li><strong>Service operation</strong> — to execute orders, maintain wallet balances, settle trades, and provide transaction history.</li>
         <li><strong>Fraud and security</strong> — to detect and prevent unauthorised access, account takeover, market abuse, and money laundering.</li>
         <li><strong>Service communications</strong> — to send transactional emails and SMS related to your account, security, and KYC status.</li>
@@ -71,7 +71,7 @@ export default function PrivacyPage() {
         <li><strong>KYC and identity-verification providers</strong> — Sandbox.co.in (Quicko Infosoft Private Limited) for PAN, Aadhaar, and bank verification.</li>
         <li><strong>Communications providers</strong> — Twilio (SMS) and Zeptomail (email) for transactional notifications.</li>
         <li><strong>Cloud hosting and infrastructure</strong> — providers under contract that store and process data on our behalf.</li>
-        <li><strong>Regulators and law enforcement</strong> — FIU-IND, the Income-tax Department, the Reserve Bank of India, courts, and law-enforcement agencies, where disclosure is required by law or in response to a valid legal request.</li>
+        <li><strong>Regulators and law enforcement</strong> — Financial regulators, the Revenue Authority, courts, and law-enforcement agencies, where disclosure is required by law or in response to a valid legal request.</li>
         <li><strong>Professional advisers</strong> — auditors, lawyers, and accountants under a duty of confidentiality.</li>
         <li><strong>Successors</strong> — any acquirer in connection with a merger, acquisition, or sale of assets, subject to the same protections set out in this Policy.</li>
       </ul>
@@ -124,7 +124,7 @@ export default function PrivacyPage() {
         <li>request erasure of data we are no longer required to retain;</li>
         <li>withdraw consent for processing based on consent;</li>
         <li>nominate another individual to exercise your rights in the event of your death or incapacity;</li>
-        <li>file a complaint with our Grievance Officer and, where unresolved, with the Data Protection Board of India.</li>
+        <li>file a complaint with our Grievance Officer and, where unresolved, with the relevant Data Protection Authority of Uganda.</li>
       </ul>
       <p>
         Some rights are limited by our legal obligation to retain KYC and transaction records
@@ -135,8 +135,8 @@ export default function PrivacyPage() {
 
       <h2>9. International transfers</h2>
       <p>
-        We process and store data primarily in India. Where any sub-processor stores data
-        outside India, we transfer data only to jurisdictions notified or otherwise permitted
+        We process and store data primarily in Uganda. Where any sub-processor stores data
+        outside Uganda, we transfer data only to jurisdictions notified or otherwise permitted
         under the DPDP Act, 2023 and on the basis of contractual safeguards.
       </p>
 

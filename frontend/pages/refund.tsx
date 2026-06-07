@@ -10,7 +10,7 @@ export default function RefundPage() {
     >
       <p>
         InTuition Exchange is a virtual digital asset (<strong>VDA</strong>) trading platform
-        operated by <strong>Intuition India OPC Private Limited</strong>. This Refund Policy
+        operated by <strong>General Exchange</strong>. This Refund Policy
         explains the limited circumstances in which we issue an INR refund, the route the
         refund takes, and the timeline you can expect.
       </p>
@@ -37,19 +37,19 @@ export default function RefundPage() {
         the Platform:
       </p>
       <ul>
-        <li><strong>Failed credit.</strong> Your bank or UPI app shows a successful debit but the deposit is not credited to your InTuition INR balance within 24 hours, and our verification confirms the payment was not received or could not be reconciled.</li>
+        <li><strong>Failed credit.</strong> Your bank or Mobile Money app shows a successful debit but the deposit is not credited to your UGX balance within 24 hours, and our verification confirms the payment was not received or could not be reconciled.</li>
         <li><strong>Duplicate debit.</strong> Razorpay processes the same deposit attempt more than once because of a network or gateway error.</li>
         <li><strong>Account closed before use.</strong> Your account is suspended or closed for KYC, AML, or sanctions reasons before the deposited INR is used to trade or withdraw, and applicable law and our internal policies permit the return of funds.</li>
-        <li><strong>Wrong-name or third-party deposit.</strong> Funds were received from a bank account or UPI VPA whose holder name does not match your verified KYC name; such deposits are reversed to source.</li>
+        <li><strong>Wrong-name or third-party deposit.</strong> Funds were received from a bank account or Mobile Money number whose holder name does not match your verified KYC name; such deposits are reversed to source.</li>
       </ul>
 
       <h2>3. Refund route</h2>
       <p>
-        Refunds are remitted only to the <strong>original source bank account or UPI VPA</strong>{" "}
+        Refunds are remitted only to the <strong>original source bank account or Mobile Money number</strong>{" "}
         from which the deposit was received. We do not issue refunds:
       </p>
       <ul>
-        <li>to any other bank account, UPI VPA, wallet, or instrument;</li>
+        <li>to any other bank account, Mobile Money number, wallet, or instrument;</li>
         <li>to a third party;</li>
         <li>in cash, cheque, or in the form of any VDA;</li>
         <li>as platform credit, vouchers, or promotional balance.</li>
@@ -89,7 +89,7 @@ export default function RefundPage() {
         <li>the InTuition deposit transaction ID (begins with <code>TXN-</code>);</li>
         <li>the Razorpay payment ID (begins with <code>pay_</code>);</li>
         <li>the date, time, and INR amount of the deposit;</li>
-        <li>a screenshot of the bank or UPI debit confirmation.</li>
+        <li>a screenshot of the bank or Mobile Money debit confirmation.</li>
       </ul>
       <p>
         We acknowledge refund requests within 48 hours, complete our reconciliation within 7
