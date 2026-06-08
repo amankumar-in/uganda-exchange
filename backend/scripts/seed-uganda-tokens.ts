@@ -44,8 +44,12 @@ async function fetchCoinbaseProducts(): Promise<CoinbaseProduct[]> {
   return await res.json();
 }
 
+const cgHeaders = process.env.COINGECKO_API_KEY 
+  ? { 'x-cg-demo-api-key': process.env.COINGECKO_API_KEY } 
+  : {};
+
 async function fetchCoinGeckoList(): Promise<CoinGeckoCoin[]> {
-  const res = await fetch(COINGECKO_COINS_LIST);
+  const res = await fetch(COINGECKO_COINS_LIST, { headers: cgHeaders });
   if (!res.ok) throw new Error(`CoinGecko /coins/list failed: ${res.status}`);
   return await res.json();
 }
@@ -59,7 +63,7 @@ async function fetchTopMarketCaps(pages = 4): Promise<CoinGeckoCoin[]> {
   const all: CoinGeckoCoin[] = [];
   for (let page = 1; page <= pages; page++) {
     const url = `${COINGECKO_MARKETS}?vs_currency=inr&per_page=250&page=${page}&order=market_cap_desc`;
-    const res = await fetch(url);
+    const res = await fetch(url, { headers: cgHeaders });
     if (!res.ok) {
       console.warn(`  /coins/markets page ${page} returned ${res.status}`);
       // back off if rate-limited so we don't poison subsequent pages
