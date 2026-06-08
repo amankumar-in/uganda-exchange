@@ -217,8 +217,11 @@ async function main() {
   console.log(`  ${topList.length} top-ranked CoinGecko coins`);
 
   console.log('Fetching CoinGecko full coin list...');
-  const fullList = await fetchCoinGeckoList();
-  console.log(`  ${fullList.length} CoinGecko coins`);
+  const uniqueSymbols = new Set(Array.from(uniqueBases.keys()).map(k => k.toLowerCase()));
+  const fullListRaw = await fetchCoinGeckoList();
+  // Filter immediately to let V8 garbage collect the massive 15,000+ item array
+  const fullList = fullListRaw.filter(c => uniqueSymbols.has(c.symbol.toLowerCase()));
+  console.log(`  ${fullList.length} CoinGecko coins matched (freed memory for ${fullListRaw.length - fullList.length} unused)`);
 
   // Load global defaults once — fall back to hard defaults if singleton doesn't exist
   const defaults = await prisma.globalAssetSettings.upsert({
@@ -297,4 +300,7 @@ main()
     console.error(e);
     process.exit(1);
   })
-  .finally(() => prisma.$disconnect());
+  .finally(async () => {
+    await prisma.$disconnect();
+    await pool.end(); // CRITICAL: Close the pg pool so the process can exit, otherwise memory stacks up!
+  });
