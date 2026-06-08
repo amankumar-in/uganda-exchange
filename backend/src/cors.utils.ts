@@ -7,7 +7,9 @@
 const HARDCODED_FRONTEND_ORIGINS = [
   'https://intuitionexchange.com',
   'https://intuitionex.in',
+  'https://intuitionex.com',
   'https://intuition-ind-frontend.onrender.com',
+  'https://uganda-exchange-frontend.onrender.com',
 ];
 
 function expandWwwPair(origin: string): string[] {
