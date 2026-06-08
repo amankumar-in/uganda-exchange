@@ -10,6 +10,8 @@ import {
   DollarOutlined,
   GlobalOutlined,
   SwapOutlined,
+  UnorderedListOutlined,
+  BankOutlined,
 } from '@ant-design/icons';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
@@ -70,6 +72,16 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
       key: 'users',
       icon: <UserOutlined />,
       label: <Link href="/admin/users">Users</Link>,
+    },
+    {
+      key: 'transactions',
+      icon: <UnorderedListOutlined />,
+      label: <Link href="/admin/transactions">Transactions</Link>,
+    },
+    {
+      key: 'holdings',
+      icon: <BankOutlined />,
+      label: <Link href="/admin/holdings">Holdings</Link>,
     },
     {
       key: 'p2p-disputes',
@@ -194,6 +206,9 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                 {title || (
                   <>
                     {selectedKey === 'users' && 'User Management'}
+                    {selectedKey === 'transactions' && 'Transactions'}
+                    {selectedKey === 'holdings' && 'Holdings'}
+                    {selectedKey === 'fees' && 'Transaction Fees'}
                     {selectedKey === 'p2p-disputes' && 'P2P Disputes'}
                     {selectedKey === 'kyc-restrictions' && 'KYC Restrictions'}
                     {selectedKey === 'demo-college-coins' && 'Demo College Coins (Learner Mode)'}

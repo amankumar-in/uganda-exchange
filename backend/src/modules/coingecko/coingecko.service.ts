@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Redis } from 'ioredis';
 
 /**
  * CoinGecko API Service
@@ -217,15 +218,12 @@ interface CacheEntry<T> {
 export class CoinGeckoService {
   private readonly logger = new Logger(CoinGeckoService.name);
   private readonly apiKey: string | undefined;
-  
-  // In-memory cache
-  private tokenCache = new Map<string, CacheEntry<TokenMarketData>>();
-  private marketsCache: CacheEntry<MarketListItem[]> | null = null;
-  private marketsSparklineCache: CacheEntry<MarketListItem[]> | null = null;
-  private coinListCache: CacheEntry<Array<{ id: string; symbol: string; name: string }>> | null = null;
-  // OHLC cached per (coingeckoId, days). 10 min TTL — chart history isn't fast-moving.
-  private ohlcCache = new Map<string, CacheEntry<[number, number, number, number, number][]>>();
-  private readonly OHLC_CACHE_DURATION = 10 * 60 * 1000;
+  private redis: Redis;
+
+  // Redis TTL in seconds
+  private readonly TTL_5M = 300;
+  private readonly TTL_10M = 600;
+  private readonly TTL_1H = 3600;
 
   constructor(private configService: ConfigService) {
     this.apiKey = this.configService.get<string>('COINGECKO_API_KEY');
@@ -234,6 +232,9 @@ export class CoinGeckoService {
     } else {
       this.logger.warn('⚠️ CoinGecko API key not configured - using free tier');
     }
+    
+    const redisUrl = this.configService.get<string>('REDIS_URL') || 'redis://localhost:6379';
+    this.redis = new Redis(redisUrl);
   }
 
   /**
@@ -279,11 +280,10 @@ export class CoinGeckoService {
   private async getCoinList(): Promise<
     Array<{ id: string; symbol: string; name: string }>
   > {
-    if (
-      this.coinListCache &&
-      Date.now() - this.coinListCache.timestamp < STATIC_CACHE_DURATION
-    ) {
-      return this.coinListCache.data;
+    const cacheKey = 'cg:coinList';
+    const cached = await this.redis.get(cacheKey);
+    if (cached) {
+      return JSON.parse(cached);
     }
 
     try {
@@ -294,7 +294,7 @@ export class CoinGeckoService {
         throw new Error(`CoinGecko API error: ${response.status}`);
       }
       const data = await response.json();
-      this.coinListCache = { data, timestamp: Date.now() };
+      await this.redis.setex(cacheKey, this.TTL_1H, JSON.stringify(data));
       return data;
     } catch (error) {
       this.logger.error('Failed to fetch coin list', error);
@@ -315,17 +315,17 @@ export class CoinGeckoService {
   }
 
   async getCoinOHLC(id: string, days: number): Promise<[number, number, number, number, number][]> {
-    const cacheKey = `${id}:${days}`;
-    const cached = this.ohlcCache.get(cacheKey);
-    if (cached && Date.now() - cached.timestamp < this.OHLC_CACHE_DURATION) {
-      return cached.data;
+    const cacheKey = `cg:ohlc:${id}:${days}`;
+    const cached = await this.redis.get(cacheKey);
+    if (cached) {
+      return JSON.parse(cached);
     }
 
     const fetchWithFallback = async (d: number): Promise<[number, number, number, number, number][]> => {
       // 1. Try Market Chart first (High resolution: 5m for 1d, 1h for 1-90d)
       try {
         const chartRes = await fetch(
-          `${COINGECKO_API_URL}/coins/${id}/market_chart?vs_currency=ugx&days=${d}`,
+          `${COINGECKO_API_URL}/coins/${id}/market_chart?vs_currency=usd&days=${d}`,
           { headers: this.getHeaders() }
         );
         if (chartRes.ok) {
@@ -342,7 +342,7 @@ export class CoinGeckoService {
       // 2. Fallback: Standard OHLC Endpoint (Fixed resolutions: 30m, 4h, 4d)
       try {
         const ohlcRes = await fetch(
-          `${COINGECKO_API_URL}/coins/${id}/ohlc?vs_currency=ugx&days=${d}`,
+          `${COINGECKO_API_URL}/coins/${id}/ohlc?vs_currency=usd&days=${d}`,
           { headers: this.getHeaders() }
         );
         if (ohlcRes.ok) {
@@ -364,12 +364,12 @@ export class CoinGeckoService {
       if (data.length < 5 && days < 90) data = await fetchWithFallback(90);
 
       // Cache even empty results briefly to avoid hammering CoinGecko for 404-ish coins.
-      this.ohlcCache.set(cacheKey, { data, timestamp: Date.now() });
+      await this.redis.setex(cacheKey, this.TTL_10M, JSON.stringify(data));
       return data;
     } catch (error) {
       this.logger.error(`Fatal crash in getCoinOHLC for ${id}:`, error);
       // Serve stale on error if we have any
-      return cached?.data || [];
+      return cached ? JSON.parse(cached) : [];
     }
   }
 
@@ -377,10 +377,10 @@ export class CoinGeckoService {
    * Get detailed token information by ID
    */
   async getTokenDetailsById(id: string): Promise<TokenMarketData | null> {
-    // Check cache
-    const cached = this.tokenCache.get(id);
-    if (cached && Date.now() - cached.timestamp < PRICE_CACHE_DURATION) {
-      return cached.data;
+    const cacheKey = `cg:tokenDetails:${id}`;
+    const cachedStr = await this.redis.get(cacheKey);
+    if (cachedStr) {
+      return JSON.parse(cachedStr);
     }
 
     try {
@@ -393,7 +393,7 @@ export class CoinGeckoService {
         if (response.status === 429) {
           this.logger.warn('CoinGecko rate limit hit');
           // Return cached data if available, even if stale
-          if (cached) return cached.data;
+          if (cachedStr) return JSON.parse(cachedStr);
         }
         throw new Error(`CoinGecko API error: ${response.status}`);
       }
@@ -482,13 +482,13 @@ export class CoinGeckoService {
       };
 
       // Update cache
-      this.tokenCache.set(id, { data: tokenData, timestamp: Date.now() });
+      await this.redis.setex(cacheKey, this.TTL_5M, JSON.stringify(tokenData));
 
       return tokenData;
     } catch (error) {
       this.logger.error(`Failed to fetch token details for ID ${id}`, error);
       // Return cached data if available
-      if (cached) return cached.data;
+      if (cachedStr) return JSON.parse(cachedStr);
       return null;
     }
   }
@@ -503,24 +503,14 @@ export class CoinGeckoService {
     sparkline = false,
     ids?: string,
   ): Promise<MarketListItem[]> {
+    const cacheKey = `cg:marketsList:${sparkline}`;
+    let cachedStr: string | null = null;
+    
     // Check cache (only for first page and when no specific IDs are requested)
     if (page === 1 && !ids) {
-      if (sparkline) {
-        // Check sparkline cache
-        if (
-          this.marketsSparklineCache &&
-          Date.now() - this.marketsSparklineCache.timestamp < PRICE_CACHE_DURATION
-        ) {
-          return this.marketsSparklineCache.data;
-        }
-      } else {
-        // Check regular cache
-        if (
-          this.marketsCache &&
-          Date.now() - this.marketsCache.timestamp < PRICE_CACHE_DURATION
-        ) {
-          return this.marketsCache.data;
-        }
+      cachedStr = await this.redis.get(cacheKey);
+      if (cachedStr) {
+        return JSON.parse(cachedStr);
       }
     }
 
@@ -543,30 +533,22 @@ export class CoinGeckoService {
       if (!response.ok) {
         if (response.status === 429) {
           this.logger.warn('CoinGecko rate limit hit');
-          // Return appropriate cache based on sparkline param
-          const fallbackCache = sparkline ? this.marketsSparklineCache : this.marketsCache;
-          if (fallbackCache) return fallbackCache.data;
+          if (cachedStr) return JSON.parse(cachedStr);
         }
         throw new Error(`CoinGecko API error: ${response.status}`);
       }
 
       const data: MarketListItem[] = await response.json();
 
-      // Cache first page (separate caches for sparkline vs non-sparkline)
+      // Cache first page
       if (page === 1) {
-        if (sparkline) {
-          this.marketsSparklineCache = { data, timestamp: Date.now() };
-        } else {
-          this.marketsCache = { data, timestamp: Date.now() };
-        }
+        await this.redis.setex(cacheKey, this.TTL_5M, JSON.stringify(data));
       }
 
       return data;
     } catch (error) {
       this.logger.error('Failed to fetch markets list', error);
-      // Return appropriate cache based on sparkline param
-      const fallbackCache = sparkline ? this.marketsSparklineCache : this.marketsCache;
-      if (fallbackCache) return fallbackCache.data;
+      if (cachedStr) return JSON.parse(cachedStr);
       throw error;
     }
   }

@@ -723,3 +723,236 @@ export async function deleteMediaFile(filename: string): Promise<{
     method: 'DELETE',
   });
 }
+
+// ============================================
+// PLATFORM TRANSACTIONS
+// ============================================
+
+export interface PlatformTransaction {
+  id: string;
+  transactionId: string | null;
+  txnType: 'BUY' | 'SELL' | 'DEPOSIT' | 'WITHDRAWAL';
+  category: 'trade' | 'fiat';
+  asset: string;
+  quote: string | null;
+  productId: string | null;
+  amount: number;
+  filledAmount: number | null;
+  price: number | null;
+  totalValue: number;
+  platformFee: number;
+  exchangeFee: number;
+  status: string;
+  userId: string;
+  userEmail: string;
+  userPhone: string;
+  coinbaseOrderId: string | null;
+  method: string | null;
+  reference: string | null;
+  metadata: any;
+  createdAt: string;
+  completedAt: string | null;
+}
+
+export interface TransactionDetail {
+  id: string;
+  transactionId: string | null;
+  txnType: string;
+  category: 'trade' | 'fiat';
+  asset: string;
+  quote?: string;
+  productId?: string;
+  requestedAmount?: number;
+  filledAmount?: number;
+  price?: number;
+  totalValue?: number;
+  platformFee?: number;
+  exchangeFee?: number;
+  feePercent?: number;
+  amount?: number;
+  method?: string;
+  reference?: string;
+  metadata?: any;
+  status: string;
+  coinbaseOrderId?: string;
+  user: {
+    id: string;
+    email: string;
+    phone: string;
+    phoneCountry: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+  completedAt?: string | null;
+}
+
+export interface AssetHolding {
+  asset: string;
+  totalBalance: number;
+  userCount: number;
+}
+
+export interface PlatformHoldings {
+  fiat: AssetHolding;
+  crypto: AssetHolding[];
+  learnerFiat: AssetHolding;
+  learnerCrypto: AssetHolding[];
+  revenue: Array<{ currency: string; amount: number }>;
+  totalUsers: number;
+}
+
+export interface FeeReportSummary {
+  totalFees: number;
+  totalTransactions: number;
+  avgFeePerTxn: number;
+  totalVolume: number;
+  feePercentOfVolume: number;
+}
+
+export interface FeeByCurrency {
+  currency: string;
+  totalFees: number;
+  transactionCount: number;
+  avgFee: number;
+}
+
+export interface FeeTransaction {
+  id: string;
+  transactionId: string | null;
+  txnType: string;
+  asset: string;
+  quote: string;
+  productId: string;
+  totalValue: number;
+  platformFee: number;
+  feePercent: number;
+  status: string;
+  userEmail: string;
+  createdAt: string;
+}
+
+export interface FeeReport {
+  summary: FeeReportSummary;
+  byCurrency: FeeByCurrency[];
+  transactions: FeeTransaction[];
+  period: { from: string; to: string };
+}
+
+/**
+ * Get all platform transactions with filters
+ */
+export async function getAllTransactions(options?: {
+  page?: number;
+  limit?: number;
+  type?: string;
+  status?: string;
+  asset?: string;
+  userId?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  search?: string;
+}): Promise<{
+  success: boolean;
+  transactions: PlatformTransaction[];
+  total: number;
+  page: number;
+  limit: number;
+}> {
+  const params = new URLSearchParams();
+  if (options?.page) params.append('page', options.page.toString());
+  if (options?.limit) params.append('limit', options.limit.toString());
+  if (options?.type) params.append('type', options.type);
+  if (options?.status) params.append('status', options.status);
+  if (options?.asset) params.append('asset', options.asset);
+  if (options?.userId) params.append('userId', options.userId);
+  if (options?.dateFrom) params.append('dateFrom', options.dateFrom);
+  if (options?.dateTo) params.append('dateTo', options.dateTo);
+  if (options?.search) params.append('search', options.search);
+
+  const queryString = params.toString();
+  return adminApiCall(`/admin/transactions${queryString ? `?${queryString}` : ''}`, {
+    method: 'GET',
+  });
+}
+
+/**
+ * Get single transaction detail
+ */
+export async function getTransactionDetail(
+  id: string,
+  type: 'trade' | 'fiat',
+): Promise<{
+  success: boolean;
+  transaction: TransactionDetail;
+}> {
+  return adminApiCall(`/admin/transactions/${id}?type=${type}`, {
+    method: 'GET',
+  });
+}
+
+/**
+ * Get platform-wide holdings
+ */
+export async function getPlatformHoldings(): Promise<{
+  success: boolean;
+} & PlatformHoldings> {
+  return adminApiCall('/admin/holdings', {
+    method: 'GET',
+  });
+}
+
+/**
+ * Get transactions for a specific asset
+ */
+export async function getAssetTransactions(
+  asset: string,
+  options?: {
+    page?: number;
+    limit?: number;
+    type?: string;
+    status?: string;
+    dateFrom?: string;
+    dateTo?: string;
+  },
+): Promise<{
+  success: boolean;
+  transactions: PlatformTransaction[];
+  total: number;
+  page: number;
+  limit: number;
+}> {
+  const params = new URLSearchParams();
+  if (options?.page) params.append('page', options.page.toString());
+  if (options?.limit) params.append('limit', options.limit.toString());
+  if (options?.type) params.append('type', options.type);
+  if (options?.status) params.append('status', options.status);
+  if (options?.dateFrom) params.append('dateFrom', options.dateFrom);
+  if (options?.dateTo) params.append('dateTo', options.dateTo);
+
+  const queryString = params.toString();
+  return adminApiCall(`/admin/holdings/${encodeURIComponent(asset)}/transactions${queryString ? `?${queryString}` : ''}`, {
+    method: 'GET',
+  });
+}
+
+/**
+ * Get fee report
+ */
+export async function getFeeReport(options?: {
+  period?: string;
+  dateFrom?: string;
+  dateTo?: string;
+}): Promise<{
+  success: boolean;
+} & FeeReport> {
+  const params = new URLSearchParams();
+  if (options?.period) params.append('period', options.period);
+  if (options?.dateFrom) params.append('dateFrom', options.dateFrom);
+  if (options?.dateTo) params.append('dateTo', options.dateTo);
+
+  const queryString = params.toString();
+  return adminApiCall(`/admin/fees${queryString ? `?${queryString}` : ''}`, {
+    method: 'GET',
+  });
+}
+

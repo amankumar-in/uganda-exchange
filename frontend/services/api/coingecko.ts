@@ -35,13 +35,13 @@ export interface TokenMarketData {
   categories: string[];
   genesis_date: string | null;
   market_data: {
-    current_price: { inr: number };
-    market_cap: { inr: number };
+    current_price: { usd: number };
+    market_cap: { usd: number };
     market_cap_rank: number;
-    fully_diluted_valuation: { inr: number };
-    total_volume: { inr: number };
-    high_24h: { inr: number };
-    low_24h: { inr: number };
+    fully_diluted_valuation: { usd: number };
+    total_volume: { usd: number };
+    high_24h: { usd: number };
+    low_24h: { usd: number };
     price_change_24h: number;
     price_change_percentage_24h: number;
     price_change_percentage_7d: number;
@@ -51,12 +51,12 @@ export interface TokenMarketData {
     circulating_supply: number;
     total_supply: number;
     max_supply: number | null;
-    ath: { inr: number };
-    ath_change_percentage: { inr: number };
-    ath_date: { inr: string };
-    atl: { inr: number };
-    atl_change_percentage: { inr: number };
-    atl_date: { inr: string };
+    ath: { usd: number };
+    ath_change_percentage: { usd: number };
+    ath_date: { usd: string };
+    atl: { usd: number };
+    atl_change_percentage: { usd: number };
+    atl_date: { usd: string };
   };
   community_data: {
     twitter_followers: number;

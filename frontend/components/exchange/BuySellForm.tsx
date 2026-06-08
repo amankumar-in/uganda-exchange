@@ -954,11 +954,11 @@ const BuySellForm: React.FC<BuySellFormProps> = ({
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
                     <span>Price</span>
-                    <span>${price.toLocaleString('en-UG', { minimumFractionDigits: 2, maximumFractionDigits: price < 1 ? 4 : 2 })}</span>
+                    <span>UGX {price.toLocaleString('en-UG', { minimumFractionDigits: 2, maximumFractionDigits: price < 1 ? 4 : 2 })}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span>Fee (0.5%)</span>
-                    <span>${fee.toFixed(2)}</span>
+                    <span>UGX {fee.toFixed(2)}</span>
                   </div>
                 </motion.div>
               )}

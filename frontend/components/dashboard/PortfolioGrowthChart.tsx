@@ -166,7 +166,7 @@ const PortfolioGrowthChart: React.FC<PortfolioGrowthChartProps> = ({
                 fontSize: 13,
               }}
             >
-              {entry.name}: ${entry.value.toLocaleString('en-UG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {entry.name}: UGX {entry.value.toLocaleString('en-UG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
           ))}
         </div>
@@ -199,7 +199,7 @@ const PortfolioGrowthChart: React.FC<PortfolioGrowthChartProps> = ({
               fontWeight: fontWeights.bold, 
               color: token.colorText,
             }}>
-              ${performanceData.currentValue.toLocaleString('en-UG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              UGX {performanceData.currentValue.toLocaleString('en-UG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
             <div style={{ 
               fontSize: token.fontSize, 

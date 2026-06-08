@@ -45,7 +45,7 @@ export class FiatService {
     this.consumerSecret = this.config.get<string>('PESAPAL_CONSUMER_SECRET') || '';
     this.ipnId = this.config.get<string>('PESAPAL_IPN_ID') || '';
     this.pesapalBaseUrl = this.config.get<string>('PESAPAL_BASE_URL') || 'https://pay.pesapal.com/v3';
-    this.frontendUrl = this.config.get<string>('FRONTEND_URL') || 'https://ugandanext.com';
+    this.frontendUrl = this.config.get<string>('FRONTEND_URL') || 'https://intuitionex.com';
 
     if (this.consumerKey && this.consumerSecret) {
       this.logger.log('Pesapal payment gateway configured');

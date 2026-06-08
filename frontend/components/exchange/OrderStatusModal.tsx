@@ -58,7 +58,7 @@ export default function OrderStatusModal({
   const isSuccess = currentOrder.status === 'COMPLETED';
   const isFailed = currentOrder.status === 'FAILED' || currentOrder.status === 'CANCELLED';
 
-  const [baseAsset] = currentOrder.productId.split('-');
+  const [baseAsset, quoteAsset] = currentOrder.productId.split('-');
 
   // Status configuration
   const statusConfig = {
@@ -304,7 +304,7 @@ export default function OrderStatusModal({
                               fontWeight: fontWeights.semibold,
                             }}
                           >
-                            ${(currentOrder.totalValue || 0).toFixed(2)}
+                            {(currentOrder.totalValue || 0).toFixed(2)} {quoteAsset}
                           </Text>
                         </div>
                       </div>

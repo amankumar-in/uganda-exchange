@@ -1,7 +1,7 @@
 import { Html, Head, Main, NextScript } from "next/document";
 
 export default function Document() {
-  const siteUrl = "https://ugandanext.com";
+  const siteUrl = "https://intuitionex.com";
   const siteName = "General Exchange";
   const siteDescription = "Learn crypto trading with virtual funds. Practice buying and selling Bitcoin, Ethereum, and more in a risk-free sandbox environment.";
   const metaImage = `${siteUrl}/images/meta-image-sandbox.jpg`;
@@ -68,10 +68,9 @@ export default function Document() {
         {/* Preconnect to external services */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link rel="preconnect" href="https://api.sandbox.ugandanext.com" />
-        
-        {/* DNS Prefetch */}
-        <link rel="dns-prefetch" href="https://api.sandbox.ugandanext.com" />
+        <link rel="preconnect" href="https://api.sandbox.intuitionex.com" />
+        {/* Pre-resolve DNS for the API domain */}
+        <link rel="dns-prefetch" href="https://api.sandbox.intuitionex.com" />
       </Head>
       <body>
         <Main />

@@ -89,6 +89,7 @@ interface ExchangeContextType {
   currentPrice: number;
   priceChange: number;
   currentUsdVolume: number;
+  usdUgxRate: number;
   
   // WebSocket status
   isConnected: boolean;
@@ -212,6 +213,7 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [isLoadingPairs, setIsLoadingPairs] = useState(true);
   const [selectedPair, setSelectedPair] = useState('BTC-UGX');
   const [isConnected, setIsConnected] = useState(false);
+  const [usdUgxRate, setUsdUgxRate] = useState<number>(3700); // Default to 3700 until WS sends live rate
   
   const [candles, setCandles] = useState<CoinbaseCandle[]>([]);
   const [isLoadingCandles, setIsLoadingCandles] = useState(false);
@@ -372,6 +374,12 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Handle WebSocket price updates
   const handlePriceUpdate = useCallback((pricesData: Record<string, PriceUpdate>) => {
+    // Extract exchange rate if present
+    if (pricesData['FIAT-USD-UGX']) {
+      const rate = parseFloat(pricesData['FIAT-USD-UGX'].price);
+      if (rate > 0) setUsdUgxRate(rate);
+    }
+
     setPairs(prevPairs => {
       const updated = prevPairs.map(pair => {
         // Regular pair update
@@ -543,14 +551,20 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       if (isDemoCollegeCoin && currentPair?.peggedToAsset) {
         const refPair = currentPairs.find(p => p.baseCurrency === currentPair.peggedToAsset && p.quote === 'UGX');
         coingeckoId = refPair?.coingeckoId;
-        conversionRate = (currentPair.peggedPercentage || 0) / 100;
-      } else if (quoteAsset !== 'UGX') {
-        // Non-UGX quote — chart reference is always base-UGX price, divide by quote-UGX price
-        const baseUgxPair = currentPairs.find(p => p.baseCurrency === baseAsset && p.quote === 'UGX');
+        conversionRate = ((currentPair.peggedPercentage || 0) / 100) * usdUgxRate;
+      } else if (quoteAsset === 'UGX') {
+        // Native UGX quote: API returns USD, so multiply by usdUgxRate
+        conversionRate = usdUgxRate;
+      } else if (quoteAsset === 'USD' || quoteAsset === 'USDT' || quoteAsset === 'USDC') {
+        // Stablecoin quotes: API returns USD, no conversion needed
+        conversionRate = 1;
+      } else {
+        // Non-UGX cross quote (e.g., BTC-ETH)
+        // We get Base in USD. We need to divide by Quote in USD.
         const quoteUgxPair = currentPairs.find(p => p.baseCurrency === quoteAsset && p.quote === 'UGX');
-        coingeckoId = baseUgxPair?.coingeckoId;
         if (quoteUgxPair && quoteUgxPair.price > 0) {
-          conversionRate = 1 / quoteUgxPair.price;
+          const quoteUsdPrice = quoteUgxPair.price / usdUgxRate;
+          conversionRate = 1 / quoteUsdPrice;
         }
       }
 
@@ -563,8 +577,12 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           if (candleGranularity === '1D') days = 90;
 
           const ohlcData = await getCoinOHLC(coingeckoId, days);
+          
+          if (!ohlcData || ohlcData.length === 0) {
+            throw new Error("No OHLC data returned from CoinGecko");
+          }
 
-          let sourceCandles: CoinbaseCandle[] = (ohlcData || []).map(c => ({
+          let sourceCandles: CoinbaseCandle[] = ohlcData.map(c => ({
             start: Math.floor(c[0] / 1000).toString(),
             open: (c[1] * conversionRate).toString(),
             high: (c[2] * conversionRate).toString(),
@@ -960,7 +978,9 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     currentPrice,
     priceChange,
     currentUsdVolume,
+    usdUgxRate,
     isConnected,
+    
     candles,
     isLoadingCandles,
     candleGranularity,

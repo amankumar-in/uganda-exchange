@@ -763,4 +763,111 @@ export class AdminController {
   }
 
   // ============================================
+  // PLATFORM-WIDE TRANSACTIONS
+  // ============================================
+
+  /**
+   * Get all platform transactions (trades + fiat) with filters
+   */
+  @Get('transactions')
+  async getAllTransactions(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('type') type?: string,
+    @Query('status') status?: string,
+    @Query('asset') asset?: string,
+    @Query('userId') userId?: string,
+    @Query('dateFrom') dateFrom?: string,
+    @Query('dateTo') dateTo?: string,
+    @Query('search') search?: string,
+  ) {
+    const result = await this.adminService.getAllTransactions({
+      page: page ? parseInt(page, 10) : 1,
+      limit: limit ? parseInt(limit, 10) : 20,
+      type: type as any,
+      status,
+      asset,
+      userId,
+      dateFrom,
+      dateTo,
+      search,
+    });
+
+    return { success: true, ...result };
+  }
+
+  /**
+   * Get single transaction detail
+   */
+  @Get('transactions/:id')
+  async getTransactionDetail(
+    @Param('id') id: string,
+    @Query('type') type?: string,
+  ) {
+    const txnType = (type === 'fiat' ? 'fiat' : 'trade') as 'trade' | 'fiat';
+    const detail = await this.adminService.getTransactionDetail(id, txnType);
+    return { success: true, transaction: detail };
+  }
+
+  // ============================================
+  // PLATFORM HOLDINGS
+  // ============================================
+
+  /**
+   * Get platform-wide holdings summary
+   */
+  @Get('holdings')
+  async getPlatformHoldings() {
+    const holdings = await this.adminService.getPlatformHoldings();
+    return { success: true, ...holdings };
+  }
+
+  /**
+   * Get transactions for a specific asset
+   */
+  @Get('holdings/:asset/transactions')
+  async getAssetTransactions(
+    @Param('asset') asset: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('type') type?: string,
+    @Query('status') status?: string,
+    @Query('dateFrom') dateFrom?: string,
+    @Query('dateTo') dateTo?: string,
+  ) {
+    const result = await this.adminService.getAssetTransactions(asset, {
+      page: page ? parseInt(page, 10) : 1,
+      limit: limit ? parseInt(limit, 10) : 20,
+      type,
+      status,
+      dateFrom,
+      dateTo,
+    });
+
+    return { success: true, ...result };
+  }
+
+  // ============================================
+  // FEE REPORTS
+  // ============================================
+
+  /**
+   * Get fee report
+   */
+  @Get('fees')
+  async getFeeReport(
+    @Query('period') period?: string,
+    @Query('dateFrom') dateFrom?: string,
+    @Query('dateTo') dateTo?: string,
+  ) {
+    const result = await this.adminService.getFeeReport({
+      period: period as any,
+      dateFrom,
+      dateTo,
+    });
+
+    return { success: true, ...result };
+  }
+
+  // ============================================
 }

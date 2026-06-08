@@ -19,6 +19,9 @@ export class PriceCacheService implements OnModuleInit, OnModuleDestroy {
   private cache: PriceCache = {};
   private pollingInterval: NodeJS.Timeout | null = null;
   private listeners: Set<(prices: PriceCache) => void> = new Set();
+  
+  private cachedUsdUgxRate: number | null = null;
+  private lastRateFetch: number = 0;
 
   // CoinGecko free tier is ~10-30 req/min depending on traffic. We self-schedule
   // the next refresh only after the previous one finishes, so cycles never overlap.
@@ -78,7 +81,8 @@ export class PriceCacheService implements OnModuleInit, OnModuleDestroy {
       });
 
       const withCoingecko = tokens.filter(t => t.coingeckoId);
-      const result = await this.fetchCoinGeckoPrices(withCoingecko.map(t => t.coingeckoId!));
+      const usdUgxRate = await this.getUsdUgxRate();
+      const result = await this.fetchCoinGeckoPrices(withCoingecko.map(t => t.coingeckoId!), usdUgxRate);
       hadRateLimit = result.hadRateLimit;
       const prices = result.prices;
 
@@ -169,6 +173,9 @@ export class PriceCacheService implements OnModuleInit, OnModuleDestroy {
         }
       });
 
+      // Special entry: Broadcast the exchange rate to the frontend
+      putEntry('FIAT-USD-UGX', await this.getUsdUgxRate(), 0, 0);
+
       this.notifyListeners();
     } catch (error) {
       this.logger.error('Failed to refresh prices from CoinGecko', error);
@@ -177,11 +184,42 @@ export class PriceCacheService implements OnModuleInit, OnModuleDestroy {
   }
 
   /**
+   * Fetch live USD -> UGX exchange rate from open.er-api.com (updates once a day, free, no key)
+   */
+  private async getUsdUgxRate(): Promise<number> {
+    const now = Date.now();
+    // Cache for 1 hour
+    if (this.cachedUsdUgxRate && (now - this.lastRateFetch) < 3600_000) {
+      return this.cachedUsdUgxRate;
+    }
+
+    try {
+      this.logger.log('Fetching live USD -> UGX exchange rate...');
+      const res = await fetch('https://open.er-api.com/v6/latest/USD');
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.rates && data.rates.UGX) {
+          this.cachedUsdUgxRate = data.rates.UGX;
+          this.lastRateFetch = now;
+          this.logger.log(`Updated exchange rate: 1 USD = ${this.cachedUsdUgxRate} UGX`);
+          return this.cachedUsdUgxRate || 3700;
+        }
+      }
+    } catch (e) {
+      this.logger.error(`Failed to fetch exchange rate: ${e}`);
+    }
+
+    // Fallback to previous cache or hardcoded default if all fails
+    return this.cachedUsdUgxRate || 3700;
+  }
+
+  /**
    * Hit CoinGecko /simple/price in batches. No retries — if a batch 429s we
    * bail out fast so the outer loop can back off to a longer interval.
    */
   private async fetchCoinGeckoPrices(
     ids: string[],
+    usdUgxRate: number,
   ): Promise<{ prices: Record<string, { ugx: number; ugx_24h_change: number; ugx_24h_vol: number }>; hadRateLimit: boolean }> {
     const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
     const merged: Record<string, { ugx: number; ugx_24h_change: number; ugx_24h_vol: number }> = {};
@@ -194,7 +232,7 @@ export class PriceCacheService implements OnModuleInit, OnModuleDestroy {
       if (hadRateLimit) break; // stop after first 429 — don't compound the problem
       const chunk = ids.slice(i, i + this.BATCH_SIZE).join(',');
       try {
-        const url = `https://api.coingecko.com/api/v3/simple/price?ids=${chunk}&vs_currencies=ugx&include_24hr_change=true&include_24hr_vol=true`;
+        const url = `https://api.coingecko.com/api/v3/simple/price?ids=${chunk}&vs_currencies=usd&include_24hr_change=true&include_24hr_vol=true`;
         const res = await fetch(url, { headers });
         if (res.status === 429) {
           hadRateLimit = true;
@@ -205,7 +243,15 @@ export class PriceCacheService implements OnModuleInit, OnModuleDestroy {
           this.logger.warn(`CoinGecko returned ${res.status}`);
           continue;
         }
-        Object.assign(merged, await res.json());
+        
+        const rawData = await res.json();
+        for (const [coinId, data] of Object.entries(rawData) as any) {
+          merged[coinId] = {
+            ugx: (data.usd || 0) * usdUgxRate,
+            ugx_24h_change: data.usd_24h_change || 0,
+            ugx_24h_vol: (data.usd_24h_vol || 0) * usdUgxRate
+          };
+        }
       } catch (e) {
         this.logger.error(`CoinGecko batch fetch failed: ${e}`);
       }
