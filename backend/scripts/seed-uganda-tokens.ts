@@ -44,7 +44,7 @@ async function fetchCoinbaseProducts(): Promise<CoinbaseProduct[]> {
   return await res.json();
 }
 
-const cgHeaders = process.env.COINGECKO_API_KEY 
+const cgHeaders: Record<string, string> = process.env.COINGECKO_API_KEY 
   ? { 'x-cg-demo-api-key': process.env.COINGECKO_API_KEY } 
   : {};
 
