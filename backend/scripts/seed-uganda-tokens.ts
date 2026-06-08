@@ -19,8 +19,8 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 const COINBASE_PRODUCTS = 'https://api.exchange.coinbase.com/products';
-const COINGECKO_COINS_LIST = 'https://api.coingecko.com/api/v3/coins/list';
 const COINGECKO_MARKETS = 'https://api.coingecko.com/api/v3/coins/markets';
+const COINGECKO_SEARCH = 'https://api.coingecko.com/api/v3/search';
 
 interface CoinbaseProduct {
   id: string;
@@ -48,10 +48,20 @@ const cgHeaders: Record<string, string> = process.env.COINGECKO_API_KEY
   ? { 'x-cg-demo-api-key': process.env.COINGECKO_API_KEY } 
   : {};
 
-async function fetchCoinGeckoList(): Promise<CoinGeckoCoin[]> {
-  const res = await fetch(COINGECKO_COINS_LIST, { headers: cgHeaders });
-  if (!res.ok) throw new Error(`CoinGecko /coins/list failed: ${res.status}`);
-  return await res.json();
+async function searchCoinGecko(symbol: string): Promise<string | undefined> {
+  const url = `${COINGECKO_SEARCH}?query=${symbol}`;
+  const res = await fetch(url, { headers: cgHeaders });
+  if (!res.ok) {
+    if (res.status === 429) {
+      console.warn(`  Rate limited searching for ${symbol}, sleeping 15s`);
+      await sleep(15000);
+      return searchCoinGecko(symbol);
+    }
+    return undefined;
+  }
+  const data = await res.json();
+  const exactMatch = data.coins?.find((c: any) => c.symbol.toLowerCase() === symbol.toLowerCase());
+  return exactMatch?.id;
 }
 
 /**
@@ -158,10 +168,8 @@ function resolveCoingeckoId(
   symbol: string,
   baseName: string | undefined,
   topList: CoinGeckoCoin[],
-  fullList: CoinGeckoCoin[],
 ): string | undefined {
-  // 1. Hardcoded canonical map — short-circuits the top-50-ish symbols where
-  //    collisions on the CoinGecko list would otherwise pick junk (e.g. BTC→batcat).
+  // 1. Hardcoded canonical map
   const canonical = CANONICAL_COINGECKO_IDS[symbol.toUpperCase()];
   if (canonical) return canonical;
 
@@ -175,21 +183,13 @@ function resolveCoingeckoId(
       const byName = matches.find(c => c.name.toLowerCase() === lowerName);
       if (byName) return byName.id;
     }
-    return matches[0].id; // top-ranked (caller preserves rank)
+    return matches[0].id; // top-ranked
   };
 
   // 2. Top-market-cap list preserves market-cap order
   const topMatches = topList.filter(c => c.symbol.toLowerCase() === lowerSym);
   const topPick = pickBest(topMatches);
   if (topPick) return topPick;
-
-  // 3. Full list — only take single or name-match to avoid guessing wrong
-  const fullMatches = fullList.filter(c => c.symbol.toLowerCase() === lowerSym);
-  if (fullMatches.length === 1) return fullMatches[0].id;
-  if (fullMatches.length > 1 && lowerName) {
-    const byName = fullMatches.find(c => c.name.toLowerCase() === lowerName);
-    if (byName) return byName.id;
-  }
 
   return undefined;
 }
@@ -213,15 +213,8 @@ async function main() {
   console.log(`  ${uniqueBases.size} unique base currencies`);
 
   console.log('Fetching CoinGecko top market-caps...');
-  const topList = await fetchTopMarketCaps(4);
+  const topList = await fetchTopMarketCaps(8); // Increased to cover more Coinbase assets
   console.log(`  ${topList.length} top-ranked CoinGecko coins`);
-
-  console.log('Fetching CoinGecko full coin list...');
-  const uniqueSymbols = new Set(Array.from(uniqueBases.keys()).map(k => k.toLowerCase()));
-  const fullListRaw = await fetchCoinGeckoList();
-  // Filter immediately to let V8 garbage collect the massive 15,000+ item array
-  const fullList = fullListRaw.filter(c => uniqueSymbols.has(c.symbol.toLowerCase()));
-  console.log(`  ${fullList.length} CoinGecko coins matched (freed memory for ${fullListRaw.length - fullList.length} unused)`);
 
   // Load global defaults once — fall back to hard defaults if singleton doesn't exist
   const defaults = await prisma.globalAssetSettings.upsert({
@@ -249,7 +242,16 @@ async function main() {
 
   for (const [symbol, name] of uniqueBases) {
     const existing = await prisma.token.findUnique({ where: { symbol } });
-    const coingeckoId = resolveCoingeckoId(symbol, name, topList, fullList);
+    let coingeckoId = resolveCoingeckoId(symbol, name, topList);
+
+    // 3. Fallback to Search API if not in top list or canonical map
+    if (!coingeckoId) {
+      coingeckoId = await searchCoinGecko(symbol);
+      if (coingeckoId) {
+        console.log(`  Resolved ${symbol} via fallback search -> ${coingeckoId}`);
+        await sleep(1500); // Politeness delay
+      }
+    }
 
     if (existing) {
       // Overwrite coingeckoId — earlier runs may have picked a wrong id
