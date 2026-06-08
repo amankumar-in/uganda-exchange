@@ -88,7 +88,7 @@ export default function LegalPageLayout({
                   fontSize: token.fontSize,
                 }}
               >
-                Last updated: {lastUpdated} · General Exchange
+                Last updated: {lastUpdated} · InTuition Exchange
               </Text>
             </div>
           </section>

@@ -38,6 +38,21 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  
+  async redirects() {
+    return [
+      {
+        source: '/onboarding',
+        destination: '/overview',
+        permanent: false,
+      },
+      {
+        source: '/onboarding/:path*',
+        destination: '/overview',
+        permanent: false,
+      },
+    ];
+  },
 };
 
 export default withBundleAnalyzer(nextConfig);

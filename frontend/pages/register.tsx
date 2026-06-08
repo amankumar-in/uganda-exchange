@@ -155,8 +155,8 @@ export default function RegisterPage() {
 
         login(loginResponse.user);
         
-        // Redirect to onboarding for KYC
-        router.replace('/onboarding');
+        // Redirect to overview
+        router.replace('/overview');
       } catch {
         // If auto-login fails, redirect to login page
         router.push('/login?registered=true');

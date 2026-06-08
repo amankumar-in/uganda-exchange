@@ -10,7 +10,7 @@ export default function RefundPage() {
     >
       <p>
         InTuition Exchange is a virtual digital asset (<strong>VDA</strong>) trading platform
-        operated by <strong>General Exchange</strong>. This Refund Policy
+        operated by <strong>InTuition Exchange</strong>. This Refund Policy
         explains the limited circumstances in which we issue an INR refund, the route the
         refund takes, and the timeline you can expect.
       </p>

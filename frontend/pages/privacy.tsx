@@ -5,11 +5,11 @@ export default function PrivacyPage() {
   return (
     <LegalPageLayout
       title="Privacy Policy"
-      description="How General Exchange collects, uses, shares, and retains personal data on the platform."
+      description="How InTuition Exchange collects, uses, shares, and retains personal data on the platform."
       lastUpdated="27 April 2026"
     >
       <p>
-        This Privacy Policy explains how <strong>General Exchange</strong>{" "}
+        This Privacy Policy explains how <strong>InTuition Exchange</strong>{" "}
         (<strong>&ldquo;we&rdquo;</strong>, <strong>&ldquo;us&rdquo;</strong>) processes
         personal data of users of the InTuition Exchange platform. It applies in addition to,
         and forms part of, our Terms of Service. This Policy is published in accordance with

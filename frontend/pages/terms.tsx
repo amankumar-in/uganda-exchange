@@ -5,14 +5,14 @@ export default function TermsPage() {
   return (
     <LegalPageLayout
       title="Terms of Service"
-      description="Terms governing the use of the General Exchange virtual digital asset trading platform operated by General Exchange."
+      description="Terms governing the use of the InTuition Exchange virtual digital asset trading platform operated by InTuition Exchange."
       lastUpdated="27 April 2026"
     >
       <p>
         These Terms of Service (<strong>&ldquo;Terms&rdquo;</strong>) form a binding agreement
         between you (<strong>&ldquo;User&rdquo;</strong>, <strong>&ldquo;you&rdquo;</strong>)
-        and <strong>General Exchange</strong>, a company
-        incorporated under the laws of Uganda, having its registered office at Kampala, Uganda (<strong>&ldquo;General Exchange&rdquo;</strong>,{" "}
+        and <strong>InTuition Exchange</strong>, a company
+        incorporated under the laws of Uganda, having its registered office at Kampala, Uganda (<strong>&ldquo;InTuition Exchange&rdquo;</strong>,{" "}
         <strong>&ldquo;we&rdquo;</strong>, <strong>&ldquo;us&rdquo;</strong>), governing your
         access to and use of the InTuition Exchange platform at intuitionexchange.com and any
         related services (the <strong>&ldquo;Platform&rdquo;</strong>).

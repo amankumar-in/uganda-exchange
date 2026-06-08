@@ -1639,7 +1639,7 @@ export default function TokenDetailsPage() {
         <title>{`Buy ${tokenData?.name || symbolStr} (${symbolStr}) in UGX — InTuition Exchange`}</title>
         <meta
           name="description"
-          content={`Live ${tokenData?.name || symbolStr} (${symbolStr}) price in Ugandan Shillings. Buy, sell, and trade ${tokenData?.name || symbolStr} on General Exchange — Uganda's home for crypto and college coins.`}
+          content={`Live ${tokenData?.name || symbolStr} (${symbolStr}) price in Ugandan Shillings. Buy, sell, and trade ${tokenData?.name || symbolStr} on InTuition Exchange — Uganda's home for crypto and college coins.`}
         />
       </Head>
 

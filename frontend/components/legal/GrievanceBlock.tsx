@@ -8,7 +8,7 @@ export default function GrievanceBlock() {
       </p>
       <p>
         <strong>Grievance Officer</strong><br />
-        Head — Uganda Region, General Exchange<br />
+        Head — Uganda Region, InTuition Exchange<br />
         <br />
         Kampala, Uganda<br />       <br />
         Email: <a href="mailto:help@intuitionexchange.com">help@intuitionexchange.com</a>

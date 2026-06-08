@@ -10,7 +10,7 @@ export default function CancellationPage() {
     >
       <p>
         This Cancellation Policy explains what you can cancel on the InTuition Exchange
-        platform operated by <strong>General Exchange</strong>, and what
+        platform operated by <strong>InTuition Exchange</strong>, and what
         cannot be cancelled because of how blockchain settlement and payment-rail processing
         work. Read it together with our Refund Policy and Terms of Service.
       </p>

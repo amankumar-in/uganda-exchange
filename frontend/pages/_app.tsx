@@ -112,7 +112,7 @@ function ThemedApp({ Component, pageProps }: AppPropsWithLayout) {
       <Head>
         {/* Note: maximum-scale=1 prevents pinch-zoom. Users can still zoom via iOS Accessibility settings */}
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-        <title>General Exchange - Sandbox</title>
+        <title>InTuition Exchange - Sandbox</title>
       </Head>
       {getLayout(<Component {...pageProps} />)}
     </ConfigProvider>

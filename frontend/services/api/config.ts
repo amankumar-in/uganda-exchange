@@ -5,8 +5,8 @@
  *   1. NEXT_PUBLIC_API_URL / NEXT_PUBLIC_WS_URL from env (production, or explicit override)
  *   2. Runtime: derive from window.location.hostname so that dev on localhost,
  *      LAN IP (e.g. iPhone at http://192.168.x.x:3000), or tunnels all work
- *      without reconfiguring. Backend runs on port 8001 in this repo.
- *   3. SSR fallback: http://localhost:8001
+ *      without reconfiguring. Backend runs on port 8000 in this repo.
+ *   3. SSR fallback: http://localhost:8000
  *
  * Do NOT hardcode localhost in individual service files — import from here.
  */

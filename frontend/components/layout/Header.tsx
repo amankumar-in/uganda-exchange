@@ -132,7 +132,7 @@ export default function Header() {
               height={token.controlHeightLG}
             />
             <div style={{ display: "flex", flexDirection: "column" }}>
-              <span style={logoTextStyle}>General Exchange</span>
+              <span style={logoTextStyle}>InTuition Exchange</span>
               <span style={{ fontSize: token.fontSizeSM - 1, color: token.colorTextSecondary, lineHeight: 1, marginTop: -2 }}>Uganda</span>
             </div>
           </div>
@@ -257,7 +257,7 @@ export default function Header() {
                   fontSize: token.fontSizeLG,
                   color: mode === "dark" ? "#ffffff" : "#0f172a",
                 }}>
-                  General Exchange
+                  InTuition Exchange
                 </span>
                 <span style={{ fontSize: token.fontSizeSM - 1, color: mode === "dark" ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.45)", lineHeight: 1, marginTop: -2 }}>Uganda</span>
               </div>

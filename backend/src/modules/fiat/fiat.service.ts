@@ -155,11 +155,11 @@ export class FiatService {
         id: transaction.transactionId || transaction.id,
         currency: PLATFORM_CURRENCY,
         amount: amountUgx,
-        description: `Deposit UGX ${amountUgx.toLocaleString()} - General Exchange`,
+        description: `Deposit UGX ${amountUgx.toLocaleString()} - InTuition Exchange`,
         callback_url: callbackUrl,
         redirect_mode: '',
         notification_id: this.ipnId,
-        branch: 'General Exchange',
+        branch: 'InTuition Exchange',
         billing_address: {
           email_address: userEmail || '',
           phone_number: userPhone || '',
