@@ -5,11 +5,11 @@ export class RegisterDto {
   email: string;
 
   @IsString()
-  @Length(10, 10)
+  @Length(7, 15)
   phone: string;
 
   @IsString()
-  @Length(1, 2)
+  @Length(1, 4)
   phoneCountry: string;
 
   @IsString()
