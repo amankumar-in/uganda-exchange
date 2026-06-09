@@ -139,7 +139,7 @@ export default function HeroSection() {
                 color: isDark ? colors.vibrantCyan : colors.electricBlue,
               }}
             >
-              Financial Learning & Investments
+              Real World Assets & Crypto
             </span>
           </motion.div>
 
@@ -159,7 +159,7 @@ export default function HeroSection() {
                 : undefined,
             }}
           >
-            The Campus For
+            Uganda's
             <br />
             <span
               style={{
@@ -170,8 +170,10 @@ export default function HeroSection() {
                 backgroundClip: "text",
               }}
             >
-              College Coins
+              Land, Commodity, & Celebrity
             </span>
+            <br />
+            Coin Marketplace
           </h1>
 
           {/* Subtitle */}
@@ -192,9 +194,7 @@ export default function HeroSection() {
                 : undefined,
             }}
           >
-            Trade university-issued College Coins for tuition, living expenses,
-            or liquidity. Swap between TUIT and major cryptocurrencies with
-            instant settlement.
+            Access traditional cryptocurrencies alongside exclusive tokenized Real World Assets. Monetize brand power (Celebrities), trade local demand (Commodities), and securely own property (Land) through Uganda's leading digital exchange.
           </p>
 
           {/* CTA Buttons - claymorphic style */}

@@ -19,7 +19,7 @@ export interface Token {
   allowBuy: boolean;
   allowSell: boolean;
   allowTradeUsdt: boolean;
-  allowTradeInr: boolean;
+  allowTradeUgx: boolean;
   allowTradeEth: boolean;
   allowTradeTuit: boolean;
   allowDeposit: boolean;
@@ -32,6 +32,10 @@ export interface Token {
 
   // Token Type
   isNative: boolean;
+  assetType: 'CRYPTO' | 'COLLEGE_COIN' | 'LAND' | 'COMMODITY' | 'CELEBRITY';
+  landAddress?: string;
+  commodityType?: string;
+  celebrityName?: string;
 
   // Mining & College Coin
   // Real college token flag (NOT demo/practice coins – see TradingPair.isDemoCollegeCoin for those)
@@ -63,7 +67,7 @@ export interface GlobalAssetSettings {
   defaultAllowP2P: boolean;
   defaultAllowDeposit: boolean;
   defaultAllowWithdraw: boolean;
-  defaultAllowTradeInr: boolean;
+  defaultAllowTradeUgx: boolean;
   defaultAllowTradeUsdt: boolean;
   defaultAllowTradeEth: boolean;
   defaultAllowTradeTuit: boolean;

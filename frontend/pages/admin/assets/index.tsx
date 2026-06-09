@@ -376,8 +376,8 @@ export default function AssetManagerPage() {
           <Divider titlePlacement="left">Trading Pairs</Divider>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 24px' }}>
             <Form.Item style={{ marginBottom: 8 }}>
-              <Form.Item name="defaultAllowTradeInr" valuePropName="checked" noStyle><Switch /></Form.Item>
-              <span style={{ marginLeft: 8 }}>INR Pair</span>
+              <Form.Item name="defaultAllowTradeUgx" valuePropName="checked" noStyle><Switch /></Form.Item>
+              <span style={{ marginLeft: 8 }}>UGX Pair</span>
             </Form.Item>
             <Form.Item style={{ marginBottom: 8 }}>
               <Form.Item name="defaultAllowTradeUsdt" valuePropName="checked" noStyle><Switch /></Form.Item>
@@ -395,10 +395,10 @@ export default function AssetManagerPage() {
 
           <Divider titlePlacement="left">Transaction Limits</Divider>
           <Space size="large">
-            <Form.Item name="defaultMinTransaction" label="Min (INR)">
+            <Form.Item name="defaultMinTransaction" label="Min (UGX)">
               <InputNumber prefix="UGX " min={0} style={{ width: 150 }} />
             </Form.Item>
-            <Form.Item name="defaultMaxTransaction" label="Max (INR)">
+            <Form.Item name="defaultMaxTransaction" label="Max (UGX)">
               <InputNumber prefix="UGX " min={0} style={{ width: 150 }} />
             </Form.Item>
           </Space>

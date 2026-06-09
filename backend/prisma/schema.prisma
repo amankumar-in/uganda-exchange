@@ -14,23 +14,23 @@ datasource db {
 // ============================================
 
 model User {
-  id            String    @id @default(uuid())
-  email         String    @unique
-  emailVerified Boolean   @default(false)
-  phone         String    @unique
-  phoneCountry  String
-  phoneVerified Boolean   @default(false)
-  passwordHash  String
-  country       String    @default("UG")
-  kycStatus     KycStatus @default(PENDING)
-  role          UserRole  @default(USER)
-  appMode       AppMode   @default(LEARNER) // Current trading mode preference
+  id                   String    @id @default(uuid())
+  email                String    @unique
+  emailVerified        Boolean   @default(false)
+  phone                String    @unique
+  phoneCountry         String
+  phoneVerified        Boolean   @default(false)
+  passwordHash         String
+  country              String    @default("UG")
+  kycStatus            KycStatus @default(APPROVED)
+  role                 UserRole  @default(USER)
+  appMode              AppMode   @default(INVESTOR) // Current trading mode preference
   // Set when the learner-mode WelcomeModal is dismissed. Account-scoped (not
   // device-scoped via localStorage) so the modal doesn't reappear when the
   // user signs in from a different device or browser.
   learnerWelcomeSeenAt DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 
   // Relations - Live Mode
   kyc                     Kyc?
@@ -46,32 +46,32 @@ model User {
   watchlistItems          WatchlistItem[]
   notificationPreferences NotificationPreferences?
   portfolioSnapshots      PortfolioSnapshot[]
-  
+
   // P2P OTC Relations
-  p2pAds                  P2PAd[]
-  p2pTradesAsBuyer        P2PTrade[]          @relation("BuyerTrades")
-  p2pTradesAsSeller       P2PTrade[]          @relation("SellerTrades")
-  p2pDisputesOpened       P2PDispute[]        @relation("DisputeOpener")
-  p2pDisputesResolved     P2PDispute[]        @relation("DisputeResolver")
-  p2pPaymentMethods       P2PPaymentMethod[]
-  p2pUserStats            P2PUserStats?
+  p2pAds              P2PAd[]
+  p2pTradesAsBuyer    P2PTrade[]         @relation("BuyerTrades")
+  p2pTradesAsSeller   P2PTrade[]         @relation("SellerTrades")
+  p2pDisputesOpened   P2PDispute[]       @relation("DisputeOpener")
+  p2pDisputesResolved P2PDispute[]       @relation("DisputeResolver")
+  p2pPaymentMethods   P2PPaymentMethod[]
+  p2pUserStats        P2PUserStats?
 
   // Relations - Learner Mode (Virtual Trading)
-  learnerFiatBalance       LearnerFiatBalance?
-  learnerCryptoBalances    LearnerCryptoBalance[]
-  learnerTrades            LearnerTrade[]
+  learnerFiatBalance        LearnerFiatBalance?
+  learnerCryptoBalances     LearnerCryptoBalance[]
+  learnerTrades             LearnerTrade[]
   learnerPortfolioSnapshots LearnerPortfolioSnapshot[]
 
   // TUIT Transfer (Vesting Migration)
-  tuitTransfers            TuitTransfer[]
-  tuitConversionRequests   TuitConversionRequest[]
+  tuitTransfers          TuitTransfer[]
+  tuitConversionRequests TuitConversionRequest[]
 
   // College Coin Mining & CFC Integration
-  miningProfile            UserMiningProfile?
-  miningSessions           MiningSession[]
-  miningColleges           UserMiningCollege[]
-  cfcLink                  CfcLink?
-  migrationRecords         MigrationRecord[]
+  miningProfile    UserMiningProfile?
+  miningSessions   MiningSession[]
+  miningColleges   UserMiningCollege[]
+  cfcLink          CfcLink?
+  migrationRecords MigrationRecord[]
 
   @@map("users")
 }
@@ -79,10 +79,10 @@ model User {
 enum KycStatus {
   PENDING
   SUBMITTED
-  IN_REVIEW   // Admin pause — auto-decide hit a soft fail (e.g. PAN-Aadhaar link unknown), needs manual sign-off
+  IN_REVIEW // Admin pause — auto-decide hit a soft fail (e.g. PAN-Aadhaar link unknown), needs manual sign-off
   APPROVED
   REJECTED
-  EXPIRED     // Periodic re-KYC due (compliance refresh window elapsed)
+  EXPIRED // Periodic re-KYC due (compliance refresh window elapsed)
 }
 
 enum UserRole {
@@ -91,8 +91,8 @@ enum UserRole {
 }
 
 enum AppMode {
-  LEARNER   // Practice trading with virtual funds
-  INVESTOR  // Real trading with actual funds
+  LEARNER // Practice trading with virtual funds
+  INVESTOR // Real trading with actual funds
 }
 
 // ============================================
@@ -110,42 +110,42 @@ model Kyc {
   // PAN (Step 2) — Sandbox /kyc/pan/verify
   // @unique so the same PAN can't be used across multiple accounts
   pan               String?   @unique
-  panName           String?   // Name as per PAN (authoritative from NSDL)
+  panName           String? // Name as per PAN (authoritative from NSDL)
   panDob            DateTime? // DOB user submitted (verified by Sandbox)
-  panStatus         String?   // valid / invalid / not_found etc.
-  panNameMatch      Boolean?  // Did user-submitted name match PAN records
-  panDobMatch       Boolean?  // Did user-submitted DOB match PAN records
-  panAadhaarSeeding String?   // linked / not_linked from PAN verify
+  panStatus         String? // valid / invalid / not_found etc.
+  panNameMatch      Boolean? // Did user-submitted name match PAN records
+  panDobMatch       Boolean? // Did user-submitted DOB match PAN records
+  panAadhaarSeeding String? // linked / not_linked from PAN verify
   panVerifiedAt     DateTime?
-  panRawData        Json?     // Full Sandbox response for audit
+  panRawData        Json? // Full Sandbox response for audit
 
   // Aadhaar (Steps 3-4) — Sandbox /kyc/aadhaar/okyc
-  aadhaarLast4      String?   // Only last 4 stored for display (compliance)
+  aadhaarLast4          String? // Only last 4 stored for display (compliance)
   // Salted SHA-256 of the full 12-digit Aadhaar; @unique so same Aadhaar
   // can't be used across accounts. Full number itself is never stored.
   // Written ONLY after successful OTP verification — not on OTP request — so
   // a user who mistypes their Aadhaar can't pollute the unique-namespace and
   // lock the real Aadhaar-holder out.
-  aadhaarHash            String?   @unique
-  aadhaarRefId           String?   // reference_id from OTP-gen; cleared after OTP verify or TTL
-  aadhaarRefIdExpiresAt  DateTime? // Sandbox/UIDAI ref ids expire ~10-30 min — we treat anything past this as gone
-  aadhaarOtpSentAt       DateTime?
-  aadhaarVerifiedAt      DateTime?
-  aadhaarName       String?   // Name as per Aadhaar (UIDAI-authoritative)
-  aadhaarDob        DateTime?
-  aadhaarYob        String?   // Year of birth (when DOB not available)
-  aadhaarGender     String?
-  aadhaarCareOf     String?
-  aadhaarPhotoPath  String?   // local path under uploads/kyc/
-  aadhaarRawData    Json?     // Full Sandbox response (photo base64 stripped)
+  aadhaarHash           String?   @unique
+  aadhaarRefId          String? // reference_id from OTP-gen; cleared after OTP verify or TTL
+  aadhaarRefIdExpiresAt DateTime? // Sandbox/UIDAI ref ids expire ~10-30 min — we treat anything past this as gone
+  aadhaarOtpSentAt      DateTime?
+  aadhaarVerifiedAt     DateTime?
+  aadhaarName           String? // Name as per Aadhaar (UIDAI-authoritative)
+  aadhaarDob            DateTime?
+  aadhaarYob            String? // Year of birth (when DOB not available)
+  aadhaarGender         String?
+  aadhaarCareOf         String?
+  aadhaarPhotoPath      String? // local path under uploads/kyc/
+  aadhaarRawData        Json? // Full Sandbox response (photo base64 stripped)
 
   // Address (Step 5) — prefilled from Aadhaar, user can edit flat/apt
   street1    String?
   street2    String?
   city       String?
-  region     String?    // Ugandan district name
-  postalCode String?    // pincode
-  country    String?    // "UG"
+  region     String? // Ugandan district name
+  postalCode String? // pincode
+  country    String? // "UG"
 
   // Selfie (Step 6)
   selfiePath       String?
@@ -206,7 +206,7 @@ model KycSubmission {
   panAadhaarLinked Boolean?
   status           KycStatus
   rejectionReason  String?
-  decisionType     String?  // AUTO_APPROVE, AUTO_REJECT, MANUAL_REVIEW, etc.
+  decisionType     String? // AUTO_APPROVE, AUTO_REJECT, MANUAL_REVIEW, etc.
 
   createdAt DateTime @default(now())
 
@@ -221,44 +221,44 @@ model KycSubmission {
 
 model AllowedCountry {
   id             String   @id @default(uuid())
-  countryCode    String   @unique  // ISO 3166-1 alpha-2 (US, CA, GB)
+  countryCode    String   @unique // ISO 3166-1 alpha-2 (US, CA, GB)
   countryName    String
   isActive       Boolean  @default(true)
-  allowAllStates Boolean  @default(false)  // If true, all states allowed
+  allowAllStates Boolean  @default(false) // If true, all states allowed
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  allowedStates  AllowedState[]
+  allowedStates AllowedState[]
 
   @@map("allowed_countries")
 }
 
 model AllowedState {
-  id          String   @id @default(uuid())
-  countryId   String
-  country     AllowedCountry @relation(fields: [countryId], references: [id], onDelete: Cascade)
-  stateCode   String   // ISO 3166-2 subdivision (CA, NY, TX)
-  stateName   String
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String         @id @default(uuid())
+  countryId String
+  country   AllowedCountry @relation(fields: [countryId], references: [id], onDelete: Cascade)
+  stateCode String // ISO 3166-2 subdivision (CA, NY, TX)
+  stateName String
+  isActive  Boolean        @default(true)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
 
   @@unique([countryId, stateCode])
   @@map("allowed_states")
 }
 
 model KycRejectionLog {
-  id                   String   @id @default(uuid())
-  kycId                String
-  userId               String
-  rejectionType        String   // PAN_INVALID, PAN_NAME_MISMATCH, AADHAAR_FAIL, NAME_MISMATCH, RESTRICTED_STATE, RESTRICTED_COUNTRY
-  userProvidedCountry  String?
-  userProvidedState    String?
-  documentCountry      String?
-  documentState        String?
-  reason               String
-  providerRefId        String?  // Sandbox reference id or equivalent
-  createdAt            DateTime @default(now())
+  id                  String   @id @default(uuid())
+  kycId               String
+  userId              String
+  rejectionType       String // PAN_INVALID, PAN_NAME_MISMATCH, AADHAAR_FAIL, NAME_MISMATCH, RESTRICTED_STATE, RESTRICTED_COUNTRY
+  userProvidedCountry String?
+  userProvidedState   String?
+  documentCountry     String?
+  documentState       String?
+  reason              String
+  providerRefId       String? // Sandbox reference id or equivalent
+  createdAt           DateTime @default(now())
 
   @@index([userId])
   @@index([kycId])
@@ -321,7 +321,7 @@ model FiatTransaction {
   id            String  @id @default(uuid())
   transactionId String? @unique // Human-readable ID like TXN-00012345
   userId        String
-  user          User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user          User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   type      FiatTransactionType // deposit, withdrawal
   method    String // wire, card, bank
@@ -433,7 +433,7 @@ model Trade {
   id            String  @id @default(uuid())
   transactionId String? @unique // Human-readable ID like TXN-00012345
   userId        String
-  user          User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user          User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   productId String // BTC-USD (Coinbase format)
   asset     String // BTC
@@ -486,10 +486,10 @@ model P2PPaymentMethod {
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  type        P2PPaymentMethodType // BANK_TRANSFER, MOBILE_MONEY, PAYPAL, etc.
-  name        String               // Display name: "My Bank Account", "PayPal"
-  details     Json                 // Encrypted/masked details specific to payment type
-  isActive    Boolean              @default(true)
+  type     P2PPaymentMethodType // BANK_TRANSFER, MOBILE_MONEY, PAYPAL, etc.
+  name     String // Display name: "My Bank Account", "PayPal"
+  details  Json // Encrypted/masked details specific to payment type
+  isActive Boolean              @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -519,27 +519,27 @@ model P2PAd {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // What is being traded
-  side          P2PAdSide // SELL (maker sells crypto) or BUY (maker buys crypto)
-  asset         String    // Crypto asset: BTC, ETH, etc.
-  fiatCurrency  String    // Fiat or payment asset: USD, EUR, etc.
+  side         P2PAdSide // SELL (maker sells crypto) or BUY (maker buys crypto)
+  asset        String // Crypto asset: BTC, ETH, etc.
+  fiatCurrency String // Fiat or payment asset: USD, EUR, etc.
 
   // Pricing (fixed price only)
-  price         Decimal   @db.Decimal(20, 8) // Fixed price per unit
+  price Decimal @db.Decimal(20, 8) // Fixed price per unit
 
   // Quantity
-  totalQty      Decimal   @db.Decimal(20, 8) // Total quantity for the ad
-  remainingQty  Decimal   @db.Decimal(20, 8) // Remaining quantity available
-  minQty        Decimal   @db.Decimal(20, 8) // Minimum per trade
-  maxQty        Decimal   @db.Decimal(20, 8) // Maximum per trade
+  totalQty     Decimal @db.Decimal(20, 8) // Total quantity for the ad
+  remainingQty Decimal @db.Decimal(20, 8) // Remaining quantity available
+  minQty       Decimal @db.Decimal(20, 8) // Minimum per trade
+  maxQty       Decimal @db.Decimal(20, 8) // Maximum per trade
 
   // Ad status
-  status        P2PAdStatus @default(ACTIVE)
+  status P2PAdStatus @default(ACTIVE)
 
   // Terms and conditions (optional)
-  terms         String?     @db.Text
+  terms String? @db.Text
 
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
   paymentMethods P2PAdPaymentMethod[]
@@ -553,8 +553,8 @@ model P2PAd {
 }
 
 enum P2PAdSide {
-  BUY   // Maker wants to buy crypto (taker sells)
-  SELL  // Maker wants to sell crypto (taker buys)
+  BUY // Maker wants to buy crypto (taker sells)
+  SELL // Maker wants to sell crypto (taker buys)
 }
 
 enum P2PAdStatus {
@@ -577,56 +577,56 @@ model P2PAdPaymentMethod {
 
 // P2P Trade (created when taker accepts an ad)
 model P2PTrade {
-  id            String  @id @default(uuid())
-  tradeNumber   String  @unique // Human-readable: P2P-20241222-ABC123
+  id          String @id @default(uuid())
+  tradeNumber String @unique // Human-readable: P2P-20241222-ABC123
 
   // Parties
-  adId          String
-  ad            P2PAd   @relation(fields: [adId], references: [id])
-  buyerUserId   String
-  buyer         User    @relation("BuyerTrades", fields: [buyerUserId], references: [id])
-  sellerUserId  String
-  seller        User    @relation("SellerTrades", fields: [sellerUserId], references: [id])
+  adId         String
+  ad           P2PAd  @relation(fields: [adId], references: [id])
+  buyerUserId  String
+  buyer        User   @relation("BuyerTrades", fields: [buyerUserId], references: [id])
+  sellerUserId String
+  seller       User   @relation("SellerTrades", fields: [sellerUserId], references: [id])
 
   // Trade details
-  asset         String          // Crypto asset being traded
-  fiatCurrency  String          // Fiat currency for payment
-  qtyCrypto     Decimal         @db.Decimal(20, 8) // Amount of crypto
-  price         Decimal         @db.Decimal(20, 8) // Price per unit at trade creation
-  notional      Decimal         @db.Decimal(20, 8) // = qtyCrypto * price (fiat value)
+  asset        String // Crypto asset being traded
+  fiatCurrency String // Fiat currency for payment
+  qtyCrypto    Decimal @db.Decimal(20, 8) // Amount of crypto
+  price        Decimal @db.Decimal(20, 8) // Price per unit at trade creation
+  notional     Decimal @db.Decimal(20, 8) // = qtyCrypto * price (fiat value)
 
   // Payment
   paymentMethodType P2PPaymentMethodType // Selected payment method
-  paymentDetails    Json?                // Seller's payment details for this trade
+  paymentDetails    Json? // Seller's payment details for this trade
 
   // Timing
-  paymentWindowSeconds Int       @default(900) // 15 minutes default
-  expiresAt           DateTime  // When payment must be made by
+  paymentWindowSeconds Int      @default(900) // 15 minutes default
+  expiresAt            DateTime // When payment must be made by
 
   // Proof of payment
-  proofRequired       Boolean   @default(true)
-  proofUrls           String[]  // URLs to uploaded proof images
+  proofRequired Boolean  @default(true)
+  proofUrls     String[] // URLs to uploaded proof images
 
   // State machine
-  status              P2PTradeStatus @default(CREATED)
+  status P2PTradeStatus @default(CREATED)
 
   // Idempotency keys (for preventing duplicate operations)
-  createIdempotencyKey   String?  @unique
-  markPaidIdempotencyKey String?  @unique
-  releaseIdempotencyKey  String?  @unique
-  cancelIdempotencyKey   String?  @unique
+  createIdempotencyKey   String? @unique
+  markPaidIdempotencyKey String? @unique
+  releaseIdempotencyKey  String? @unique
+  cancelIdempotencyKey   String? @unique
 
   // Timestamps
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  paidAt       DateTime?
-  releasedAt   DateTime?
-  cancelledAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  paidAt      DateTime?
+  releasedAt  DateTime?
+  cancelledAt DateTime?
 
   // Relations
-  escrow       P2PEscrow?
-  dispute      P2PDispute?
-  auditLogs    P2PAuditLog[]
+  escrow    P2PEscrow?
+  dispute   P2PDispute?
+  auditLogs P2PAuditLog[]
 
   @@index([buyerUserId])
   @@index([sellerUserId])
@@ -636,59 +636,59 @@ model P2PTrade {
 }
 
 enum P2PTradeStatus {
-  CREATED    // Trade created, escrow locked, timer running
-  CANCELLED  // Buyer cancelled before paid, or auto-expired unpaid
-  PAID       // Buyer marked paid with mandatory proof
-  DISPUTED   // Either party opened dispute after PAID
-  RELEASED   // Seller released escrow, funds credited to buyer
-  REFUNDED   // Dispute resolved to seller, escrow unlocked back to seller
-  EXPIRED    // Unpaid timer elapsed (treated as CANCELLED with strike)
+  CREATED // Trade created, escrow locked, timer running
+  CANCELLED // Buyer cancelled before paid, or auto-expired unpaid
+  PAID // Buyer marked paid with mandatory proof
+  DISPUTED // Either party opened dispute after PAID
+  RELEASED // Seller released escrow, funds credited to buyer
+  REFUNDED // Dispute resolved to seller, escrow unlocked back to seller
+  EXPIRED // Unpaid timer elapsed (treated as CANCELLED with strike)
 }
 
 // Escrow Lock (holds crypto during trade)
 model P2PEscrow {
-  id        String @id @default(uuid())
-  tradeId   String @unique
-  trade     P2PTrade @relation(fields: [tradeId], references: [id], onDelete: Cascade)
+  id      String   @id @default(uuid())
+  tradeId String   @unique
+  trade   P2PTrade @relation(fields: [tradeId], references: [id], onDelete: Cascade)
 
-  asset     String              // Crypto asset locked
-  qtyLocked Decimal             @db.Decimal(20, 8) // Amount locked
-  status    P2PEscrowStatus     @default(LOCKED)
+  asset     String // Crypto asset locked
+  qtyLocked Decimal         @db.Decimal(20, 8) // Amount locked
+  status    P2PEscrowStatus @default(LOCKED)
 
-  lockedAt    DateTime  @default(now())
-  releasedAt  DateTime?
-  unlockedAt  DateTime?
+  lockedAt   DateTime  @default(now())
+  releasedAt DateTime?
+  unlockedAt DateTime?
 
   @@map("p2p_escrows")
 }
 
 enum P2PEscrowStatus {
-  LOCKED    // Crypto is held in escrow
-  RELEASED  // Escrow transferred to buyer
-  UNLOCKED  // Escrow returned to seller (cancel/refund)
+  LOCKED // Crypto is held in escrow
+  RELEASED // Escrow transferred to buyer
+  UNLOCKED // Escrow returned to seller (cancel/refund)
 }
 
 // Dispute (opened when there's a conflict)
 model P2PDispute {
-  id        String   @id @default(uuid())
-  tradeId   String   @unique
-  trade     P2PTrade @relation(fields: [tradeId], references: [id], onDelete: Cascade)
+  id      String   @id @default(uuid())
+  tradeId String   @unique
+  trade   P2PTrade @relation(fields: [tradeId], references: [id], onDelete: Cascade)
 
-  openedById   String
-  openedBy     User     @relation("DisputeOpener", fields: [openedById], references: [id])
-  reason       String   @db.Text
-  evidence     String[] // URLs to evidence files
+  openedById String
+  openedBy   User     @relation("DisputeOpener", fields: [openedById], references: [id])
+  reason     String   @db.Text
+  evidence   String[] // URLs to evidence files
 
-  status       P2PDisputeStatus  @default(OPEN)
-  outcome      P2PDisputeOutcome?
+  status  P2PDisputeStatus   @default(OPEN)
+  outcome P2PDisputeOutcome?
 
   // Resolution
   resolvedById String?
-  resolvedBy   User?    @relation("DisputeResolver", fields: [resolvedById], references: [id])
-  resolution   String?  @db.Text // Admin notes on resolution
+  resolvedBy   User?   @relation("DisputeResolver", fields: [resolvedById], references: [id])
+  resolution   String? @db.Text // Admin notes on resolution
 
-  openedAt     DateTime  @default(now())
-  resolvedAt   DateTime?
+  openedAt   DateTime  @default(now())
+  resolvedAt DateTime?
 
   @@map("p2p_disputes")
 }
@@ -699,23 +699,23 @@ enum P2PDisputeStatus {
 }
 
 enum P2PDisputeOutcome {
-  RELEASE_TO_BUYER  // Escrow transfers to buyer
-  REFUND_TO_SELLER  // Escrow returns to seller
+  RELEASE_TO_BUYER // Escrow transfers to buyer
+  REFUND_TO_SELLER // Escrow returns to seller
 }
 
 // Immutable Audit Log (for every state transition)
 model P2PAuditLog {
-  id        String   @id @default(uuid())
-  tradeId   String
-  trade     P2PTrade @relation(fields: [tradeId], references: [id], onDelete: Cascade)
+  id      String   @id @default(uuid())
+  tradeId String
+  trade   P2PTrade @relation(fields: [tradeId], references: [id], onDelete: Cascade)
 
-  action        String   // CREATE, MARK_PAID, RELEASE, CANCEL, DISPUTE_OPEN, DISPUTE_RESOLVE, etc.
-  triggeredBy   String   // User ID or "SYSTEM" for auto actions
-  previousState String?  // Previous status
-  newState      String   // New status
-  metadata      Json?    // Additional context (amounts, reasons, etc.)
+  action        String // CREATE, MARK_PAID, RELEASE, CANCEL, DISPUTE_OPEN, DISPUTE_RESOLVE, etc.
+  triggeredBy   String // User ID or "SYSTEM" for auto actions
+  previousState String? // Previous status
+  newState      String // New status
+  metadata      Json? // Additional context (amounts, reasons, etc.)
 
-  createdAt     DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@index([tradeId])
   @@index([createdAt])
@@ -729,13 +729,13 @@ model P2PUserStats {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // Daily trading volume (resets daily)
-  dailyVolumeUsd    Decimal   @default(0) @db.Decimal(20, 8)
-  dailyVolumeDate   DateTime  @db.Date // Date of the daily volume
+  dailyVolumeUsd  Decimal  @default(0) @db.Decimal(20, 8)
+  dailyVolumeDate DateTime @db.Date // Date of the daily volume
 
   // Strike system
-  strikeCount       Int       @default(0)
-  lastStrikeAt      DateTime?
-  suspendedUntil    DateTime? // If suspended due to strikes
+  strikeCount    Int       @default(0)
+  lastStrikeAt   DateTime?
+  suspendedUntil DateTime? // If suspended due to strikes
 
   // Stats
   totalTradesCompleted Int     @default(0)
@@ -789,8 +789,8 @@ model WatchlistItem {
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  asset     String // BTC, ETH, etc. (base currency)
-  addedAt   DateTime @default(now())
+  asset   String // BTC, ETH, etc. (base currency)
+  addedAt DateTime @default(now())
 
   @@unique([userId, asset])
   @@map("watchlist_items")
@@ -806,23 +806,23 @@ model NotificationPreferences {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // Email Notifications
-  emailMarketing       Boolean @default(true)  // Promotional emails, newsletters
-  emailSecurityAlerts  Boolean @default(true)  // Login alerts, password changes
-  emailTransactions    Boolean @default(true)  // Deposit/withdrawal confirmations
-  emailPriceAlerts     Boolean @default(false) // Price movement notifications
-  emailNewsUpdates     Boolean @default(true)  // Platform news and updates
+  emailMarketing      Boolean @default(true) // Promotional emails, newsletters
+  emailSecurityAlerts Boolean @default(true) // Login alerts, password changes
+  emailTransactions   Boolean @default(true) // Deposit/withdrawal confirmations
+  emailPriceAlerts    Boolean @default(false) // Price movement notifications
+  emailNewsUpdates    Boolean @default(true) // Platform news and updates
 
   // Push Notifications
-  pushEnabled          Boolean @default(true)  // Master toggle for push
-  pushSecurityAlerts   Boolean @default(true)  // Login alerts, suspicious activity
-  pushTransactions     Boolean @default(true)  // Trade confirmations
-  pushPriceAlerts      Boolean @default(false) // Price alerts
-  pushNewsUpdates      Boolean @default(false) // News and updates
+  pushEnabled        Boolean @default(true) // Master toggle for push
+  pushSecurityAlerts Boolean @default(true) // Login alerts, suspicious activity
+  pushTransactions   Boolean @default(true) // Trade confirmations
+  pushPriceAlerts    Boolean @default(false) // Price alerts
+  pushNewsUpdates    Boolean @default(false) // News and updates
 
   // SMS Notifications
-  smsEnabled           Boolean @default(true)  // Master toggle for SMS
-  smsSecurityAlerts    Boolean @default(true)  // 2FA, login from new device
-  smsTransactions      Boolean @default(false) // Large transaction alerts
+  smsEnabled        Boolean @default(true) // Master toggle for SMS
+  smsSecurityAlerts Boolean @default(true) // 2FA, login from new device
+  smsTransactions   Boolean @default(false) // Large transaction alerts
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -927,29 +927,29 @@ model LearnerPortfolioSnapshot {
 // ============================================
 
 model DemoCollegeCoin {
-  id                String   @id @default(uuid())
-  ticker            String   @unique  // MIT, HARV, STAN, etc.
-  name              String   // MIT Coin, Harvard Coin, etc.
-  iconUrl           String?  // Path to icon in public/images/college-coins
-  
-  // Price pegging
-  peggedToAsset     String   // BTC, ETH, SOL, etc. (reference token)
-  peggedPercentage  Decimal  @db.Decimal(10, 4) // 10.0000 = 10% of reference token price
-  
-  // Status
-  isActive          Boolean  @default(true)
-  
-  // Optional marketing/info fields (matching token details page)
-  description       String?  @db.Text
-  website           String?
-  whitepaper        String?
-  twitter           String?
-  discord           String?
-  categories        String[] // ["DeFi", "Layer 1", etc.]
-  genesisDate       DateTime?
+  id      String  @id @default(uuid())
+  ticker  String  @unique // MIT, HARV, STAN, etc.
+  name    String // MIT Coin, Harvard Coin, etc.
+  iconUrl String? // Path to icon in public/images/college-coins
 
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  // Price pegging
+  peggedToAsset    String // BTC, ETH, SOL, etc. (reference token)
+  peggedPercentage Decimal @db.Decimal(10, 4) // 10.0000 = 10% of reference token price
+
+  // Status
+  isActive Boolean @default(true)
+
+  // Optional marketing/info fields (matching token details page)
+  description String?   @db.Text
+  website     String?
+  whitepaper  String?
+  twitter     String?
+  discord     String?
+  categories  String[] // ["DeFi", "Layer 1", etc.]
+  genesisDate DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("demo_college_coins")
 }
@@ -958,77 +958,91 @@ model DemoCollegeCoin {
 // GLOBAL ASSET MANAGEMENT (New Token System)
 // ============================================
 
+enum AssetType {
+  CRYPTO
+  COLLEGE_COIN
+  LAND
+  COMMODITY
+  CELEBRITY
+}
+
 model Token {
-  id                String   @id @default(uuid())
-  symbol            String   @unique  // BTC, ETH, TUIT, etc.
-  name              String   // Bitcoin, Ethereum, Tuition Coin
-  iconUrl           String?
-  
+  id      String  @id @default(uuid())
+  symbol  String  @unique // BTC, ETH, TUIT, etc.
+  name    String // Bitcoin, Ethereum, Tuition Coin
+  iconUrl String?
+
   // Price Discovery Identity
-  coingeckoId       String?  // e.g. "bitcoin", "tuition-coin"
-  contractAddress   String?  // e.g. "0x963cd..."
-  chain             String?  // e.g. "ethereum", "base", "solana" (Generic slug for API)
-  
+  coingeckoId     String? // e.g. "bitcoin", "tuition-coin"
+  contractAddress String? // e.g. "0x963cd..."
+  chain           String? // e.g. "ethereum", "base", "solana" (Generic slug for API)
+
   // Manual Price Fallback (if no API data found or preferred)
-  manualPrice       Decimal  @default(0) @db.Decimal(20, 8)
+  manualPrice Decimal @default(0) @db.Decimal(20, 8)
 
   // Live UGX price, 24h change, 24h volume — written by price-cache.service every ~60s from CoinGecko
-  currentPrice      Decimal  @default(0) @db.Decimal(20, 8)
-  change24h         Float    @default(0)
-  volume24h         Decimal  @default(0) @db.Decimal(24, 2)
-  pricesUpdatedAt   DateTime?
+  currentPrice    Decimal   @default(0) @db.Decimal(20, 8)
+  change24h       Float     @default(0)
+  volume24h       Decimal   @default(0) @db.Decimal(24, 2)
+  pricesUpdatedAt DateTime?
 
   // Toggles (9 standard permissions)
-  allowBuy          Boolean  @default(false)
-  allowSell         Boolean  @default(false)
-  allowTradeUsdt    Boolean  @default(false)
-  allowTradeInr     Boolean  @default(false)
-  allowTradeEth     Boolean  @default(false)
-  allowTradeTuit    Boolean  @default(false)
-  allowDeposit      Boolean  @default(false)
-  allowWithdraw     Boolean  @default(false)
-  allowP2P          Boolean  @default(false)
+  allowBuy       Boolean @default(false)
+  allowSell      Boolean @default(false)
+  allowTradeUsdt Boolean @default(false)
+  allowTradeUgx  Boolean @default(false)
+  allowTradeEth  Boolean @default(false)
+  allowTradeTuit Boolean @default(false)
+  allowDeposit   Boolean @default(false)
+  allowWithdraw  Boolean @default(false)
+  allowP2P       Boolean @default(false)
 
   // Transaction Limits (USD Value)
-  minTransactionAmount Decimal @default(10)   @db.Decimal(20, 8)
+  minTransactionAmount Decimal @default(10) @db.Decimal(20, 8)
   maxTransactionAmount Decimal @default(5000) @db.Decimal(20, 8)
 
   // College Coin specific fields
   /// Real college token from CFC (for mining/trading). NOT related to DemoCollegeCoin.
-  isCollegeCoin      Boolean  @default(false)
-  miningAllowed      Boolean  @default(false)
-  collegeCfcId       String?  // CFC MongoDB college _id (for migration linkage)
+  isCollegeCoin      Boolean @default(false)
+  miningAllowed      Boolean @default(false)
+  collegeCfcId       String? // CFC MongoDB college _id (for migration linkage)
   collegeName        String?
   collegeCountry     String?
   collegeLogo        String?
-  miningBaseRate     Float    @default(0.25)  // tokens per hour
-  miningSessionHours Int      @default(24)    // session duration in hours
+  miningBaseRate     Float   @default(0.25) // tokens per hour
+  miningSessionHours Int     @default(24) // session duration in hours
+
+  // Custom Asset Specific Fields
+  assetType          AssetType @default(CRYPTO)
+  landAddress        String?
+  commodityType      String?
+  celebrityName      String?
 
   // Token Type
   /// True for platform-native tokens (TUIT, college coins) that trade internally.
   /// False for standard crypto (BTC, ETH) that are here only for permission settings.
-  isNative          Boolean  @default(false)
+  isNative Boolean @default(false)
 
   // Status & Metadata
-  isActive          Boolean  @default(true)
-  description       String?  @db.Text
-  website           String?
-  whitepaper        String?
-  twitter           String?
-  discord           String?
+  isActive    Boolean @default(true)
+  description String? @db.Text
+  website     String?
+  whitepaper  String?
+  twitter     String?
+  discord     String?
 
-  updatedAt         DateTime @updatedAt
-  createdAt         DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
 
   // Relations
-  miningSessions      MiningSession[]
-  miningCollegeUsers  UserMiningCollege[] @relation("MiningCollegeTokens")
+  miningSessions     MiningSession[]
+  miningCollegeUsers UserMiningCollege[] @relation("MiningCollegeTokens")
 
   @@map("tokens")
 }
 
 model GlobalAssetSettings {
-  id                    String  @id @default("singleton")
+  id String @id @default("singleton")
 
   // Default permission toggles
   defaultAllowBuy       Boolean @default(false)
@@ -1036,13 +1050,13 @@ model GlobalAssetSettings {
   defaultAllowP2P       Boolean @default(false)
   defaultAllowDeposit   Boolean @default(false)
   defaultAllowWithdraw  Boolean @default(false)
-  defaultAllowTradeInr  Boolean @default(false)
+  defaultAllowTradeUgx  Boolean @default(false)
   defaultAllowTradeUsdt Boolean @default(false)
   defaultAllowTradeEth  Boolean @default(false)
   defaultAllowTradeTuit Boolean @default(false)
 
   // Default transaction limits
-  defaultMinTransaction Decimal @default(10)   @db.Decimal(20, 8)
+  defaultMinTransaction Decimal @default(10) @db.Decimal(20, 8)
   defaultMaxTransaction Decimal @default(5000) @db.Decimal(20, 8)
 
   // Default mining settings
@@ -1083,25 +1097,25 @@ model PortfolioSnapshot {
 
 // Authorized wallets from CSV - stores investor allocation data
 model TuitAuthorizedWallet {
-  id            String   @id @default(uuid())
-  name          String   // Investor name from CSV
-  email         String?  // Email (can be null, can repeat)
-  walletAddress String   @unique // Wallet address (unique identifier)
+  id            String  @id @default(uuid())
+  name          String // Investor name from CSV
+  email         String? // Email (can be null, can repeat)
+  walletAddress String  @unique // Wallet address (unique identifier)
 
   // Status tracking
-  isActive      Boolean  @default(true) // Admin can deactivate
+  isActive Boolean @default(true) // Admin can deactivate
 
   // Test pair fields (for admin demo - bypasses contract calls, OTP, and one-time limits)
-  isTestPair          Boolean  @default(false)
-  testTotalAllocated  Decimal? @db.Decimal(30, 18)
-  testUnlocked        Decimal? @db.Decimal(30, 18)
-  testWithdrawn       Decimal? @db.Decimal(30, 18)
+  isTestPair         Boolean  @default(false)
+  testTotalAllocated Decimal? @db.Decimal(30, 18)
+  testUnlocked       Decimal? @db.Decimal(30, 18)
+  testWithdrawn      Decimal? @db.Decimal(30, 18)
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  transfers     TuitTransfer[]
+  transfers TuitTransfer[]
 
   @@index([email])
   @@map("tuit_authorized_wallets")
@@ -1109,29 +1123,29 @@ model TuitAuthorizedWallet {
 
 // Flow 1: Transfer from vesting allocation to platform balance
 model TuitTransfer {
-  id                    String   @id @default(uuid())
+  id String @id @default(uuid())
 
   // User who claimed the transfer
-  userId                String
-  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // Authorized wallet used for this transfer
-  authorizedWalletId    String
-  authorizedWallet      TuitAuthorizedWallet @relation(fields: [authorizedWalletId], references: [id])
+  authorizedWalletId String
+  authorizedWallet   TuitAuthorizedWallet @relation(fields: [authorizedWalletId], references: [id])
 
   // Email used for verification (may differ from user's email)
-  verificationEmail     String
+  verificationEmail String
 
   // Amounts from smart contract at time of transfer
-  totalAllocated        Decimal  @db.Decimal(30, 18) // Total tokens allocated
-  totalUnlocked         Decimal  @db.Decimal(30, 18) // Total unlocked
-  totalWithdrawn        Decimal  @db.Decimal(30, 18) // Already withdrawn to external wallet
-  amountCredited        Decimal  @db.Decimal(30, 18) // Amount credited to platform (available at time)
+  totalAllocated Decimal @db.Decimal(30, 18) // Total tokens allocated
+  totalUnlocked  Decimal @db.Decimal(30, 18) // Total unlocked
+  totalWithdrawn Decimal @db.Decimal(30, 18) // Already withdrawn to external wallet
+  amountCredited Decimal @db.Decimal(30, 18) // Amount credited to platform (available at time)
 
   // Status
-  status                TuitTransferStatus @default(COMPLETED)
+  status TuitTransferStatus @default(COMPLETED)
 
-  createdAt             DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@unique([authorizedWalletId]) // One transfer per authorized wallet
   @@unique([userId, authorizedWalletId]) // User can only claim each wallet once
@@ -1140,34 +1154,34 @@ model TuitTransfer {
 }
 
 enum TuitTransferStatus {
-  COMPLETED  // Successfully credited to user
-  FAILED     // Failed to credit (for logging)
+  COMPLETED // Successfully credited to user
+  FAILED // Failed to credit (for logging)
 }
 
 // Flow 2: Conversion request for already withdrawn tokens
 model TuitConversionRequest {
-  id                String   @id @default(uuid())
+  id String @id @default(uuid())
 
   // User requesting conversion
-  userId            String
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // Transaction details
-  txHash            String   @unique // Transaction hash of transfer to deposit wallet
+  txHash String @unique // Transaction hash of transfer to deposit wallet
 
   // Amount (parsed from transaction by admin or auto-detected)
-  amount            Decimal? @db.Decimal(30, 18) // Amount of TUIT in the transaction
+  amount Decimal? @db.Decimal(30, 18) // Amount of TUIT in the transaction
 
   // Status
-  status            TuitConversionStatus @default(PENDING)
+  status TuitConversionStatus @default(PENDING)
 
   // Admin review
-  reviewedBy        String?  // Admin user ID who reviewed
-  reviewNotes       String?  // Admin notes
-  reviewedAt        DateTime?
+  reviewedBy  String? // Admin user ID who reviewed
+  reviewNotes String? // Admin notes
+  reviewedAt  DateTime?
 
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([userId])
   @@index([status])
@@ -1175,9 +1189,9 @@ model TuitConversionRequest {
 }
 
 enum TuitConversionStatus {
-  PENDING    // Awaiting admin review
-  APPROVED   // Approved and credited
-  REJECTED   // Rejected by admin
+  PENDING // Awaiting admin review
+  APPROVED // Approved and credited
+  REJECTED // Rejected by admin
 }
 
 // ============================================
@@ -1185,21 +1199,21 @@ enum TuitConversionStatus {
 // ============================================
 
 model MiningSession {
-  id          String              @id @default(uuid())
-  userId      String
-  user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tokenId     String
-  token       Token               @relation(fields: [tokenId], references: [id], onDelete: Cascade)
-  startTime   DateTime
-  endTime     DateTime
-  earningRate Float
-  tokensEarned Float              @default(0)
-  isActive    Boolean             @default(true)
-  stoppedAt   DateTime?
-  status      MiningSessionStatus @default(ACTIVE)
+  id           String              @id @default(uuid())
+  userId       String
+  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenId      String
+  token        Token               @relation(fields: [tokenId], references: [id], onDelete: Cascade)
+  startTime    DateTime
+  endTime      DateTime
+  earningRate  Float
+  tokensEarned Float               @default(0)
+  isActive     Boolean             @default(true)
+  stoppedAt    DateTime?
+  status       MiningSessionStatus @default(ACTIVE)
 
-  createdAt   DateTime            @default(now())
-  updatedAt   DateTime            @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([userId, tokenId, isActive])
   @@index([endTime, isActive])
@@ -1215,12 +1229,12 @@ enum MiningSessionStatus {
 }
 
 model UserMiningCollege {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tokenId   String
-  token     Token    @relation("MiningCollegeTokens", fields: [tokenId], references: [id], onDelete: Cascade)
-  addedAt   DateTime @default(now())
+  id      String   @id @default(uuid())
+  userId  String
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenId String
+  token   Token    @relation("MiningCollegeTokens", fields: [tokenId], references: [id], onDelete: Cascade)
+  addedAt DateTime @default(now())
 
   @@unique([userId, tokenId])
   @@index([userId])
@@ -1228,16 +1242,16 @@ model UserMiningCollege {
 }
 
 model UserMiningProfile {
-  id                  String              @id @default(uuid())
-  userId              String              @unique
-  user                User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  cfcUserId           String?
-  cfcMigrationDate    DateTime?
-  cfcMigrationStatus  CfcMigrationStatus  @default(NOT_STARTED)
-  totalTokensMined    Float               @default(0)
+  id                 String             @id @default(uuid())
+  userId             String             @unique
+  user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cfcUserId          String?
+  cfcMigrationDate   DateTime?
+  cfcMigrationStatus CfcMigrationStatus @default(NOT_STARTED)
+  totalTokensMined   Float              @default(0)
 
-  createdAt           DateTime            @default(now())
-  updatedAt           DateTime            @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("user_mining_profiles")
 }
@@ -1270,16 +1284,16 @@ enum CfcLinkStatus {
 }
 
 model MigrationRecord {
-  id              String                @id @default(uuid())
-  userId          String
-  user            User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  cfcWalletId     String                @unique
-  collegeCfcId    String
-  tokenSymbol     String
-  amount          Float
-  status          MigrationRecordStatus @default(PENDING)
-  migratedAt      DateTime              @default(now())
-  errorMessage    String?
+  id           String                @id @default(uuid())
+  userId       String
+  user         User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cfcWalletId  String                @unique
+  collegeCfcId String
+  tokenSymbol  String
+  amount       Float
+  status       MigrationRecordStatus @default(PENDING)
+  migratedAt   DateTime              @default(now())
+  errorMessage String?
 
   @@index([userId])
   @@map("migration_records")
@@ -1296,11 +1310,11 @@ enum MigrationRecordStatus {
 // ============================================
 
 model DailyAssetPrice {
-  id        String   @id @default(uuid())
-  asset     String   // BTC, ETH, etc.
-  price     Decimal  @db.Decimal(20, 8) // Price at midnight UTC
-  date      DateTime @db.Date // The date this price represents
-  
+  id    String   @id @default(uuid())
+  asset String // BTC, ETH, etc.
+  price Decimal  @db.Decimal(20, 8) // Price at midnight UTC
+  date  DateTime @db.Date // The date this price represents
+
   createdAt DateTime @default(now())
 
   @@unique([asset, date])

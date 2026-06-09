@@ -122,14 +122,14 @@ const BuySellForm: React.FC<BuySellFormProps> = ({
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Get only INR pairs for simplicity
+  // Get only UGX pairs for simplicity
   // In learner mode, include college coins as well
   const usdPairs = useMemo(() => {
     return pairs
       .filter(p => {
-        // Always include INR pairs
+        // Always include UGX pairs
         if (p.quote === 'UGX') {
-          // In learner mode, include all INR pairs (both regular and college coins)
+          // In learner mode, include all UGX pairs (both regular and college coins)
           // In investor mode, exclude college coins
           if (isLearnerMode) return true;
           return !(p as TradingPair).isDemoCollegeCoin;
@@ -155,7 +155,7 @@ const BuySellForm: React.FC<BuySellFormProps> = ({
   const [side, setSide] = useState<OrderSide>('BUY');
   const [selectedAsset, setSelectedAsset] = useState<string>(initialAsset || 'BTC');
   const [amount, setAmount] = useState<string>(''); // Token amount
-  const [cashAmount, setCashAmount] = useState<string>(''); // INR amount
+  const [cashAmount, setCashAmount] = useState<string>(''); // UGX amount
   const [showConfirm, setShowConfirm] = useState(false);
   const [showTokenPicker, setShowTokenPicker] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -223,7 +223,7 @@ const BuySellForm: React.FC<BuySellFormProps> = ({
     setShowConfirm(false);
   }, [selectedAsset]);
   
-  // Helper to restrict INR input to 2 decimal places
+  // Helper to restrict UGX input to 2 decimal places
   const restrictCashDecimals = (value: string): string => {
     // Allow empty string
     if (!value) return value;
@@ -265,7 +265,7 @@ const BuySellForm: React.FC<BuySellFormProps> = ({
     if (price <= 0) return;
     
     if (isBuy) {
-      // For BUY: percentage of INR balance
+      // For BUY: percentage of UGX balance
       const maxCash = percent === 100 
         ? Math.floor(cashBalance * 100) / 100 
         : cashBalance * (percent / 100);
@@ -289,7 +289,7 @@ const BuySellForm: React.FC<BuySellFormProps> = ({
     
     // Validate balance
     if (isBuy && cashAmountNum > cashBalance + 0.01) {
-      message.error(`Insufficient INR balance. You need UGX ${cashAmountNum.toFixed(2)} but only have UGX ${cashBalance.toFixed(2)}`);
+      message.error(`Insufficient UGX balance. You need UGX ${cashAmountNum.toFixed(2)} but only have UGX ${cashBalance.toFixed(2)}`);
       setShowConfirm(false);
       return;
     }

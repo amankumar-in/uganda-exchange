@@ -73,7 +73,7 @@ export class PriceCacheService implements OnModuleInit, OnModuleDestroy {
           symbol: true,
           coingeckoId: true,
           manualPrice: true,
-          allowTradeInr: true,
+          allowTradeUgx: true,
           allowTradeUsdt: true,
           allowTradeEth: true,
           allowTradeTuit: true,
@@ -129,7 +129,7 @@ export class PriceCacheService implements OnModuleInit, OnModuleDestroy {
           change24h: true,
           volume24h: true,
           manualPrice: true,
-          allowTradeInr: true,
+          allowTradeUgx: true,
           allowTradeUsdt: true,
           allowTradeEth: true,
           allowTradeTuit: true,
@@ -160,7 +160,7 @@ export class PriceCacheService implements OnModuleInit, OnModuleDestroy {
         const ugxPrice = Number(t.currentPrice) || Number(t.manualPrice) || 0;
         const change = t.change24h || 0;
         const volUgx = Number(t.volume24h) || 0;
-        if (t.allowTradeInr) putEntry(`${t.symbol}-UGX`, ugxPrice, change, volUgx);
+        if (t.allowTradeUgx) putEntry(`${t.symbol}-UGX`, ugxPrice, change, volUgx);
         if (t.allowTradeUsdt && t.symbol !== 'USDT' && usdtUgx > 0) {
           // Express volume in the quote currency so sort-by-volume stays comparable
           putEntry(`${t.symbol}-USDT`, ugxPrice / usdtUgx, change, volUgx / usdtUgx);

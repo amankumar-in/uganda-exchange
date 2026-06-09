@@ -73,7 +73,7 @@ const BuySellPage: NextPageWithLayout = () => {
     <>
       <Head>
         <title>Buy & Sell - UG Coin</title>
-        <meta name="description" content="Buy and sell cryptocurrency instantly with INR" />
+        <meta name="description" content="Buy and sell cryptocurrency instantly with UGX" />
       </Head>
 
       {/* Background Pattern */}
@@ -155,7 +155,7 @@ const BuySellPage: NextPageWithLayout = () => {
                 lineHeight: 1.6,
                 margin: 0,
               }}>
-                Trade instantly using your INR balance. Market orders execute at the best available price with a 0.5% fee.
+                Trade instantly using your UGX balance. Market orders execute at the best available price with a 0.5% fee.
               </p>
             </motion.div>
           )}

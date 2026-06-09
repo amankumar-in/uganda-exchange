@@ -24,7 +24,7 @@ export const countries: CountryData[] = allCountries.map((country: ICountry) => 
 }));
 
 // Get country options for Select component (for residence)
-// Priority countries appear first (US, UK, India, China)
+// Priority countries appear first (US, UK, Uganda, China)
 export const getCountryOptions = () => {
   const priorityCodes = ['UG', 'US', 'GB', 'CN'];
   

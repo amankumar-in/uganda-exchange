@@ -27,7 +27,7 @@ const { useBreakpoint } = Grid;
 
 type SortField = 'volume' | 'price' | 'change' | 'name';
 type SortOrder = 'asc' | 'desc';
-type FilterTab = 'all' | 'watchlist' | 'gainers' | 'losers' | 'colleges';
+type FilterTab = 'all' | 'watchlist' | 'gainers' | 'losers' | 'colleges' | 'land' | 'commodity' | 'celebrity';
 
 interface TradingPairExtended {
   symbol: string;
@@ -504,6 +504,12 @@ export default function MarketsPage() {
       result = result.filter((p) => p.change > 0);
     } else if (activeTab === 'losers') {
       result = result.filter((p) => p.change < 0);
+    } else if (activeTab === 'land') {
+      result = result.filter((p) => (p as TradingPairExtended).assetType === 'LAND');
+    } else if (activeTab === 'commodity') {
+      result = result.filter((p) => (p as TradingPairExtended).assetType === 'COMMODITY');
+    } else if (activeTab === 'celebrity') {
+      result = result.filter((p) => (p as TradingPairExtended).assetType === 'CELEBRITY');
     }
     // 'colleges' filter is handled above by using collegePairs as base
 
@@ -563,7 +569,7 @@ export default function MarketsPage() {
   if (pageLoading) {
     return (
       <>
-        <Head><title>Crypto Markets — Live INR Prices | UG Coin</title></Head>
+        <Head><title>Crypto Markets — Live UGX Prices | UG Coin</title></Head>
         {isAuthenticated ? (
           <DashboardLayout activeKey="markets">
             <Skeleton active paragraph={{ rows: 12 }} />
@@ -678,6 +684,30 @@ export default function MarketsPage() {
                   Colleges
                 </FilterPill>
               )}
+              <FilterPill
+                active={activeTab === 'land'}
+                onClick={() => setActiveTab('land')}
+                gradient="linear-gradient(135deg, #1D976C 0%, #93F9B9 100%)"
+                compact={useCompactFilters}
+              >
+                Land
+              </FilterPill>
+              <FilterPill
+                active={activeTab === 'commodity'}
+                onClick={() => setActiveTab('commodity')}
+                gradient="linear-gradient(135deg, #F2994A 0%, #F2C94C 100%)"
+                compact={useCompactFilters}
+              >
+                Commodity
+              </FilterPill>
+              <FilterPill
+                active={activeTab === 'celebrity'}
+                onClick={() => setActiveTab('celebrity')}
+                gradient="linear-gradient(135deg, #ff0844 0%, #ffb199 100%)"
+                compact={useCompactFilters}
+              >
+                Celebrity
+              </FilterPill>
             </div>
           </motion.div>
 

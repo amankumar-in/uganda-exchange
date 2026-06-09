@@ -333,25 +333,25 @@ const WalletPage: NextPageWithLayout = () => {
     await refreshBalances();
   };
 
-  // Separate INR and crypto assets — use viewBalances for display
+  // Separate UGX and crypto assets — use viewBalances for display
   const usdBalance = useMemo(() => {
-    const inr = viewBalances.find((b) => b.asset === 'UGX');
-    return inr ? {
+    const ugx = viewBalances.find((b) => b.asset === 'UGX');
+    return ugx ? {
       symbol: 'UGX',
       name: 'Ugandan Shilling',
-      balance: inr.balance.toLocaleString('en-UG', {
+      balance: ugx.balance.toLocaleString('en-UG', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       }),
-      availableBalance: inr.availableBalance.toLocaleString('en-UG', {
+      availableBalance: ugx.availableBalance.toLocaleString('en-UG', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       }),
-      lockedBalance: inr.lockedBalance.toLocaleString('en-UG', {
+      lockedBalance: ugx.lockedBalance.toLocaleString('en-UG', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       }),
-      value: `UGX ${inr.balance.toLocaleString('en-UG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      value: `UGX ${ugx.balance.toLocaleString('en-UG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
       change: 0,
       color: '#4CAF50',
       iconUrl: undefined,

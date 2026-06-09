@@ -63,6 +63,7 @@ interface TradingPair {
   peggedToAsset?: string;
   peggedPercentage?: number;
   isCustomToken?: boolean;
+  assetType?: 'CRYPTO' | 'COLLEGE_COIN' | 'LAND' | 'COMMODITY' | 'CELEBRITY';
   coingeckoId?: string;
   // Token permissions
   permissions?: {
@@ -277,12 +278,12 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const activeTokens = customTokens.filter((t: any) => t.isActive);
 
       // Index tokens by symbol for non-UGX pair price conversion
-      const tokenInrPrice = new Map<string, number>();
+      const tokenUgxPrice = new Map<string, number>();
       activeTokens.forEach((t: any) => {
         const p = t.currentPrice || Number(t.manualPrice) || 0;
-        tokenInrPrice.set(t.symbol, p);
+        tokenUgxPrice.set(t.symbol, p);
       });
-      const getInrPrice = (sym: string) => tokenInrPrice.get(sym) || 0;
+      const getUgxPrice = (sym: string) => tokenUgxPrice.get(sym) || 0;
 
       const baseProducts = new Map<string, Omit<TradingPair, 'price' | 'change' | 'volume'>>();
       const tokenPairs: TradingPair[] = [];
@@ -313,31 +314,32 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             _rawVolume24h: price > 0 ? volume / price : 0,
             _usdVolume: ugxVolume, // always the UGX-denominated volume for sorting
             isCustomToken: token.isNative || false,
+            assetType: token.assetType,
             coingeckoId: token.coingeckoId,
             permissions,
           });
         };
 
-        if (token.allowTradeInr) {
+        if (token.allowTradeUgx) {
           pushPair('UGX', ugxPrice, ugxVolume);
         }
         if (token.allowTradeUsdt && token.symbol !== 'USDT') {
-          const usdtInr = getInrPrice('USDT');
-          pushPair('USDT', usdtInr > 0 ? ugxPrice / usdtInr : 0, usdtInr > 0 ? ugxVolume / usdtInr : 0);
+          const usdtUgx = getUgxPrice('USDT');
+          pushPair('USDT', usdtUgx > 0 ? ugxPrice / usdtUgx : 0, usdtUgx > 0 ? ugxVolume / usdtUgx : 0);
         }
         if (token.allowTradeEth && token.symbol !== 'ETH') {
-          const ethInr = getInrPrice('ETH');
-          pushPair('ETH', ethInr > 0 ? ugxPrice / ethInr : 0, ethInr > 0 ? ugxVolume / ethInr : 0);
+          const ethUgx = getUgxPrice('ETH');
+          pushPair('ETH', ethUgx > 0 ? ugxPrice / ethUgx : 0, ethUgx > 0 ? ugxVolume / ethUgx : 0);
         }
         if (token.allowTradeTuit && token.symbol !== 'TUIT') {
-          const tuitInr = getInrPrice('TUIT');
-          pushPair('TUIT', tuitInr > 0 ? ugxPrice / tuitInr : 0, tuitInr > 0 ? ugxVolume / tuitInr : 0);
+          const tuitUgx = getUgxPrice('TUIT');
+          pushPair('TUIT', tuitUgx > 0 ? ugxPrice / tuitUgx : 0, tuitUgx > 0 ? ugxVolume / tuitUgx : 0);
         }
       });
 
       // Demo college coins — learner mode virtual pairs, UGX-quoted
       const collegePairs: TradingPair[] = collegeData.coins.map((coin: DemoCollegeCoin) => {
-        const refInrPrice = getInrPrice(coin.peggedToAsset);
+        const refUgxPrice = getUgxPrice(coin.peggedToAsset);
         return {
           symbol: `${coin.ticker}-UGX`, name: coin.name, price: coin.currentPrice || 0,
           change: 0, volume: '0',
@@ -352,7 +354,7 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const mergedMap = new Map<string, TradingPair>();
       [...tokenPairs, ...collegePairs].forEach(p => mergedMap.set(p.symbol, p));
 
-      // Sort by INR volume desc so popular pairs lead; fall back to symbol
+      // Sort by UGX volume desc so popular pairs lead; fall back to symbol
       const finalPairs = Array.from(mergedMap.values()).sort((a, b) => {
         const volA = (a as any)._usdVolume || 0;
         const volB = (b as any)._usdVolume || 0;
@@ -724,13 +726,58 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [isLoggedIn, appMode]);
 
-  // Public trades — we don't run a real exchange, so this is just our internal
-  // completed trades for the selected pair. Kept empty for now; fillable later
-  // from an /orders/public-trades endpoint when product requires it.
+  // Public trades — we use the user's recently completed orders as a stand-in
+  // for public trade history in this simulated environment.
   const refreshTrades = useCallback(async () => {
-    setPublicTrades([]);
-    setIsLoadingTrades(false);
-  }, []);
+    if (!selectedPair) return;
+    try {
+      setIsLoadingTrades(true);
+      let trades: PublicTrade[] = [];
+      const isCustomToken = currentPairData?.isCustomToken || currentPairData?.isDemoCollegeCoin;
+      
+      // Try to fetch live global trades for standard assets
+      if (!isCustomToken) {
+         try {
+           const cbPair = selectedPair.replace('-UGX', '-USD').replace('-USDT', '-USD');
+           const res = await fetch(`https://api.exchange.coinbase.com/products/${cbPair}/trades?limit=50`);
+           if (res.ok) {
+             const cbTrades = await res.json();
+             const isUgx = selectedPair.endsWith('-UGX');
+             trades = cbTrades.map((t: any) => ({
+               trade_id: t.trade_id.toString(),
+               product_id: selectedPair,
+               price: isUgx ? String(parseFloat(t.price) * usdUgxRate) : t.price,
+               size: t.size,
+               time: t.time,
+               side: t.side.toUpperCase(),
+             }));
+           }
+         } catch (e) {
+           console.warn('Failed to fetch public trades from Coinbase', e);
+         }
+      }
+
+      // Fall back to internal orders (always used for custom tokens)
+      if (trades.length === 0) {
+        const { orders: orderData } = await getOrders({ productId: selectedPair, limit: 50 });
+        const completed = orderData.filter((o: InternalOrder) => o.status === 'COMPLETED');
+        trades = completed.map((o: InternalOrder) => ({
+          trade_id: o.id,
+          product_id: o.productId,
+          price: String(o.price),
+          size: String(o.filledAmount),
+          time: o.completedAt || o.createdAt,
+          side: o.side,
+        }));
+      }
+      setPublicTrades(trades);
+    } catch (error) {
+      console.error('Failed to fetch trades:', error);
+      setPublicTrades([]);
+    } finally {
+      setIsLoadingTrades(false);
+    }
+  }, [selectedPair, currentPairData, usdUgxRate]);
 
   // Order book is always our internal DB-based book (pending orders aggregated by price)
   const refreshOrderBook = useCallback(async () => {

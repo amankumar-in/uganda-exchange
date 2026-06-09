@@ -332,7 +332,7 @@ export const UserBalances: React.FC<UserBalancesProps> = ({ userId }) => {
             <AutoComplete
               options={assetOptions}
               onSearch={setAssetSearch}
-              placeholder="Type to search: INR, BTC, ETH..."
+              placeholder="Type to search: UGX, BTC, ETH..."
               filterOption={false}
             />
           </Form.Item>

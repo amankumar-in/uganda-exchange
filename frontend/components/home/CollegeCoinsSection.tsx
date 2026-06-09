@@ -15,18 +15,18 @@ const { useBreakpoint } = Grid;
 const features = [
   {
     icon: <CalendarOutlined />,
-    title: "Earn Before Enrollment",
+    title: "Exclusive Asset Classes",
     description:
-      "Students accumulate coins from multiple universities through prep activities like AI tutoring, language tests, and document preparation - before even applying.",
+      "Gain direct access to Africa's fastest growing markets including real estate, local commodities, and celebrity brand equity.",
     color: "#8b5cf6",
     colorLight: "#a78bfa",
     colorDark: "#5b21b6",
   },
   {
     icon: <WalletOutlined />,
-    title: "Spend on Campus",
+    title: "Secure Ownership",
     description:
-      "Use coins for tuition, housing, meals, books, and all campus services. Universities set their own exchange rates and pricing.",
+      "Every asset is backed by real-world verification and securely tokenized on the blockchain, granting you provable digital ownership.",
     color: "#10b981",
     colorLight: "#34d399",
     colorDark: "#047857",
@@ -35,7 +35,7 @@ const features = [
     icon: <SwapOutlined />,
     title: "Trade on UG Coin",
     description:
-      "Convert coins to cash or other crypto through the UG Coin. Full liquidity for students, parents, and employers.",
+      "Convert your tokenized assets to cash or other cryptocurrencies through the UG Coin exchange with full market liquidity.",
     color: "#3b82f6",
     colorLight: "#60a5fa",
     colorDark: "#1e40af",
@@ -43,10 +43,10 @@ const features = [
 ];
 
 const stats = [
-  { value: "UGX 22 Lakh Cr", label: "Global annual scholarship market", color: "#f59e0b" },
-  { value: "28%", label: "Average unclaimed scholarship funds", color: "#ef4444" },
-  { value: "UGX 141 Lakh Cr", label: "Outstanding student loan debt", color: "#8b5cf6" },
-  { value: "20K+", label: "Universities worldwide", color: "#10b981" },
+  { value: "UGX 2200 Cr", label: "Tokenized asset volume", color: "#f59e0b" },
+  { value: "100%", label: "Verified ownership", color: "#ef4444" },
+  { value: "Instant", label: "Settlement times", color: "#8b5cf6" },
+  { value: "3+", label: "New asset classes", color: "#10b981" },
 ];
 
 export default function CollegeCoinsSection() {
@@ -113,7 +113,7 @@ export default function CollegeCoinsSection() {
                   backgroundClip: "text",
                 }}
               >
-                College Coins?
+                Real World Assets?
               </span>
             </h2>
 
@@ -127,10 +127,7 @@ export default function CollegeCoinsSection() {
                 maxWidth: 520,
               }}
             >
-              College Coins are university-specific digital tokens built on
-              blockchain technology. Each university issues its own coin -
-              creating a unique digital economy where students can earn, spend,
-              and trade.
+              Real World Assets (RWAs) are tokenized representations of physical and traditional assets built on blockchain technology. By tokenizing Land, Commodities, and Celebrity brand power, we create a secure, accessible, and highly liquid digital economy.
             </p>
 
             {/* Feature Items - Bold Claymorphic */}

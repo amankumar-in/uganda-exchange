@@ -1,7 +1,7 @@
 /**
  * One-time seed: pulls Coinbase's public product catalog, resolves a CoinGecko ID
  * for each base currency, and upserts into the tokens table with uganda defaults
- * (allowTradeInr=true, all trading enabled, isActive=true).
+ * (allowTradeUgx=true, all trading enabled, isActive=true).
  *
  * Safe to re-run — upserts by symbol, doesn't touch rows that already exist
  * unless they're missing a coingeckoId.
@@ -72,7 +72,7 @@ async function searchCoinGecko(symbol: string): Promise<string | undefined> {
 async function fetchTopMarketCaps(pages = 4): Promise<CoinGeckoCoin[]> {
   const all: CoinGeckoCoin[] = [];
   for (let page = 1; page <= pages; page++) {
-    const url = `${COINGECKO_MARKETS}?vs_currency=inr&per_page=250&page=${page}&order=market_cap_desc`;
+    const url = `${COINGECKO_MARKETS}?vs_currency=usd&per_page=250&page=${page}&order=market_cap_desc`;
     const res = await fetch(url, { headers: cgHeaders });
     if (!res.ok) {
       console.warn(`  /coins/markets page ${page} returned ${res.status}`);
@@ -226,14 +226,16 @@ async function main() {
       defaultAllowP2P: true,
       defaultAllowDeposit: true,
       defaultAllowWithdraw: true,
-      defaultAllowTradeInr: true,
+      defaultAllowTradeUgx: true,
       defaultAllowTradeUsdt: true,
       defaultAllowTradeEth: true,
       defaultAllowTradeTuit: false,
       defaultMinTransaction: 100,
       defaultMaxTransaction: 1000000,
     },
-    update: {},
+    update: {
+      defaultAllowTradeUgx: true, // Force to true on existing deployments
+    },
   });
 
   let created = 0;
@@ -278,7 +280,7 @@ async function main() {
         allowP2P: defaults.defaultAllowP2P,
         allowDeposit: defaults.defaultAllowDeposit,
         allowWithdraw: defaults.defaultAllowWithdraw,
-        allowTradeInr: defaults.defaultAllowTradeInr,
+        allowTradeUgx: defaults.defaultAllowTradeUgx,
         allowTradeUsdt: defaults.defaultAllowTradeUsdt,
         allowTradeEth: defaults.defaultAllowTradeEth,
         allowTradeTuit: defaults.defaultAllowTradeTuit,

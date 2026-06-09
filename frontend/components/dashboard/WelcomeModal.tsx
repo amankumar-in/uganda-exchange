@@ -55,9 +55,9 @@ export default function WelcomeModal({
 
   if (!mounted) return null;
 
-  // Get INR balance
-  const inrBalance = balances.find((b) => b.asset === 'UGX');
-  const cashAmount = inrBalance?.balance || 0;
+  // Get UGX balance
+  const ugxBalance = balances.find((b) => b.asset === 'UGX');
+  const cashAmount = ugxBalance?.balance || 0;
 
   // Get college coin balances with names
   const collegeCoinsReceived = balances
@@ -319,7 +319,7 @@ export default function WelcomeModal({
                           color: token.colorTextTertiary,
                         }}
                       >
-                        INR
+                        UGX
                       </div>
                     </div>
                   </div>

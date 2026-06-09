@@ -123,7 +123,7 @@ const PairSelector: React.FC<PairSelectorProps> = ({
       
       if (isLearnerMode) {
         if (activeQuote === 'Popular') {
-          // Show INR pairs that are NOT college coins
+          // Show UGX pairs that are NOT college coins
           matchesQuote = pair.quote === 'UGX' && !pair.isDemoCollegeCoin;
         } else if (activeQuote === 'Colleges') {
           // Show only college coins

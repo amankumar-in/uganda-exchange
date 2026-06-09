@@ -27,15 +27,15 @@ export default function CancellationPage() {
         <li>Market orders are designed to execute immediately at the best available price and are typically not cancellable in practice.</li>
       </ul>
 
-      <h2>2. INR deposits</h2>
+      <h2>2. UGX deposits</h2>
       <ul>
         <li>A UGX deposit initiated through Pesapal cannot be cancelled by us once you have authorised the payment with your bank or Mobile Money provider. If the payment fails or times out, no charge is applied to your account, and no further action is needed from you.</li>
         <li>If you authorised a deposit in error and were charged, see our Refund Policy for the limited circumstances in which the deposit may be reversed.</li>
       </ul>
 
-      <h2>3. INR withdrawals</h2>
+      <h2>3. UGX withdrawals</h2>
       <ul>
-        <li><strong>Pending</strong> — INR withdrawal requests can be cancelled by you, from the Portfolio screen, while the request is in <code>PENDING</code> status (typically the first few minutes after submission).</li>
+        <li><strong>Pending</strong> — UGX withdrawal requests can be cancelled by you, from the Portfolio screen, while the request is in <code>PENDING</code> status (typically the first few minutes after submission).</li>
         <li><strong>Processing</strong> — once the request moves to <code>PROCESSING</code> and has been handed off to the payment rail (EFT / Mobile Money), it cannot be cancelled.</li>
         <li><strong>Completed</strong> — completed withdrawals cannot be cancelled. If you sent funds to a wrong-but-verified bank account, you must approach the receiving bank directly under the RBI&rsquo;s wrong-credit recovery process.</li>
       </ul>
@@ -66,7 +66,7 @@ export default function CancellationPage() {
       <h2>6. Account closure</h2>
       <ul>
         <li>You may request closure of your UG Coin account at any time by writing to <a href="mailto:help@ugcoin.com">help@ugcoin.com</a> from your registered email.</li>
-        <li>Before we close the account, you must close all open orders, withdraw your VDA balances, and withdraw your INR balance to your verified bank account. Any residual INR below the minimum withdrawal threshold may be retained as administrative cost.</li>
+        <li>Before we close the account, you must close all open orders, withdraw your VDA balances, and withdraw your UGX balance to your verified bank account. Any residual UGX below the minimum withdrawal threshold may be retained as administrative cost.</li>
         <li>Closure is typically completed within 7 business days of all balances being settled.</li>
         <li>KYC, account, and transaction records are retained for at least <strong>five years</strong> after closure as required by Section 12 of the Prevention of Money Laundering Act, 2002. Closure does not result in deletion of these records.</li>
       </ul>
@@ -89,7 +89,7 @@ export default function CancellationPage() {
       <h2>9. How to cancel</h2>
       <ul>
         <li><strong>Open orders</strong> — Trade screen, Open Orders panel.</li>
-        <li><strong>INR withdrawals (Pending)</strong> — Portfolio screen, Withdrawals tab.</li>
+        <li><strong>UGX withdrawals (Pending)</strong> — Portfolio screen, Withdrawals tab.</li>
         <li><strong>Account closure</strong> — email <a href="mailto:help@ugcoin.com">help@ugcoin.com</a>.</li>
         <li><strong>Anything else</strong> — email <a href="mailto:help@ugcoin.com">help@ugcoin.com</a>; we acknowledge within 48 hours.</li>
       </ul>

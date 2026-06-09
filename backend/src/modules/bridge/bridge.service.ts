@@ -436,7 +436,7 @@ export class BridgeService {
         allowBuy: false,
         allowSell: false,
         allowTradeUsdt: false,
-        allowTradeInr: false,
+        allowTradeUgx: false,
         allowTradeEth: false,
         allowTradeTuit: false,
         allowDeposit: false,

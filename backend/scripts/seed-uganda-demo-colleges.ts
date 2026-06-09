@@ -25,16 +25,16 @@ interface Seed {
 }
 
 const COLLEGES: Seed[] = [
-  { ticker: 'XIT',  name: 'Xenon Institute of Technology',       peggedToAsset: 'BTC',  peggedPercentage: 0.01,  description: 'Fictional ugandan tech institute coin — learner mode only.' },
-  { ticker: 'DPU',  name: 'Demo Public University',              peggedToAsset: 'ETH',  peggedPercentage: 0.1,   description: 'Fictional ugandan public university coin — learner mode only.' },
-  { ticker: 'VGU',  name: 'Vishnav Global University',           peggedToAsset: 'ETH',  peggedPercentage: 0.05,  description: 'Fictional ugandan global university coin — learner mode only.' },
-  { ticker: 'BIST', name: 'Bharat Institute of Science & Tech',  peggedToAsset: 'SOL',  peggedPercentage: 1.0,   description: 'Fictional ugandan STEM institute coin — learner mode only.' },
-  { ticker: 'SIIM', name: 'Sample ugandan Institute of Mgmt',     peggedToAsset: 'BTC',  peggedPercentage: 0.005, description: 'Fictional ugandan business school coin — learner mode only.' },
-  { ticker: 'NICT', name: 'National Inst. of Commerce & Tech',   peggedToAsset: 'SOL',  peggedPercentage: 0.5,   description: 'Fictional ugandan commerce-tech institute coin — learner mode only.' },
-  { ticker: 'MRIT', name: 'Modern Rural Institute of Tech',      peggedToAsset: 'POL',   peggedPercentage: 10,    description: 'Fictional ugandan rural tech institute coin — learner mode only.' },
-  { ticker: 'HCU',  name: 'Heritage College of Uplands',         peggedToAsset: 'ADA',  peggedPercentage: 5,     description: 'Fictional ugandan heritage college coin — learner mode only.' },
-  { ticker: 'GEST', name: 'Ganga Estuary School of Technology',  peggedToAsset: 'DOT',  peggedPercentage: 2,     description: 'Fictional ugandan technology school coin — learner mode only.' },
-  { ticker: 'TIDC', name: 'Tech Innovation Delta College',       peggedToAsset: 'AVAX', peggedPercentage: 1,     description: 'Fictional ugandan innovation college coin — learner mode only.' },
+  { ticker: 'MAK',  name: 'Makerere Institute of Technology',    peggedToAsset: 'BTC',  peggedPercentage: 0.01,  description: 'Fictional Ugandan tech institute coin — learner mode only.' },
+  { ticker: 'KCA',  name: 'Kampala City Academy',                peggedToAsset: 'ETH',  peggedPercentage: 0.1,   description: 'Fictional Ugandan public university coin — learner mode only.' },
+  { ticker: 'UGU',  name: 'Uganda Global University',            peggedToAsset: 'ETH',  peggedPercentage: 0.05,  description: 'Fictional Ugandan global university coin — learner mode only.' },
+  { ticker: 'EIST', name: 'Entebbe Institute of Science & Tech', peggedToAsset: 'SOL',  peggedPercentage: 1.0,   description: 'Fictional Ugandan STEM institute coin — learner mode only.' },
+  { ticker: 'UIM',  name: 'Uganda Institute of Management',      peggedToAsset: 'BTC',  peggedPercentage: 0.005, description: 'Fictional Ugandan business school coin — learner mode only.' },
+  { ticker: 'NICT', name: 'National Inst. of Commerce & Tech',   peggedToAsset: 'SOL',  peggedPercentage: 0.5,   description: 'Fictional Ugandan commerce-tech institute coin — learner mode only.' },
+  { ticker: 'VRI',  name: 'Victoria Rural Institute of Tech',    peggedToAsset: 'POL',  peggedPercentage: 10,    description: 'Fictional Ugandan rural tech institute coin — learner mode only.' },
+  { ticker: 'NIL',  name: 'Nile Heritage College',               peggedToAsset: 'ADA',  peggedPercentage: 5,     description: 'Fictional Ugandan heritage college coin — learner mode only.' },
+  { ticker: 'KEST', name: 'Kagera School of Technology',         peggedToAsset: 'DOT',  peggedPercentage: 2,     description: 'Fictional Ugandan technology school coin — learner mode only.' },
+  { ticker: 'RWI',  name: 'Ruwenzori Innovation College',        peggedToAsset: 'AVAX', peggedPercentage: 1,     description: 'Fictional Ugandan innovation college coin — learner mode only.' },
 ];
 
 async function main() {

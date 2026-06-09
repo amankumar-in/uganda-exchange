@@ -27,7 +27,8 @@
     "seed:uganda:tokens": "npx ts-node scripts/seed-uganda-tokens.ts",
     "seed:uganda:demo-colleges": "npx ts-node scripts/seed-uganda-demo-colleges.ts",
     "seed:uganda": "npm run seed:uganda:tokens && npm run seed:uganda:demo-colleges",
-    "build:prod": "npm run prisma:generate && npm run prisma:migrate:deploy && npm run build",
+    "seed:conditional": "npx ts-node scripts/seed-conditional.ts",
+    "build:prod": "npm run prisma:generate && npm run prisma:migrate:deploy && npm run seed:conditional && npm run build",
     "render:build": "npm install --include=dev && npm run build:prod"
   },
   "dependencies": {

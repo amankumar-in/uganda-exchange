@@ -18,25 +18,25 @@ const ecosystemItems = [
   {
     step: "01",
     icon: <BankOutlined />,
-    title: "Colleges Issue Coins",
+    title: "Asset Tokenization",
     description:
-      "Universities create digital tokens through Coins For College, issuing them as scholarships and rewards.",
+      "Real estate, commodities, and celebrity brands are tokenized into digital assets securely stored on the blockchain.",
     color: "#8b5cf6",
   },
   {
     step: "02",
     icon: <TeamOutlined />,
-    title: "Students Earn & Spend",
+    title: "Investors Trade & Build",
     description:
-      "Students complete tasks to earn coins via Rewards For Education, then spend on tuition and services.",
+      "Investors buy, sell, and build portfolios with verified real-world assets directly alongside cryptocurrencies.",
     color: "#10b981",
   },
   {
     step: "03",
     icon: <DollarOutlined />,
-    title: "UG Coin",
+    title: "Full Liquidity",
     description:
-      "Trade coins for USD, USDC, or USDT. Full liquidity for students, parents, and employers.",
+      "Trade assets for UGX, USD, or USDC. Instant settlement and global liquidity for all investors.",
     color: "#f59e0b",
   },
 ];
@@ -91,7 +91,7 @@ export default function EcosystemSection() {
               lineHeight: 1.1,
             }}
           >
-            The College Coins{" "}
+            The Real World Assets{" "}
             <span
               style={{
                 background: `linear-gradient(135deg, #10b981 0%, #3b82f6 50%, #8b5cf6 100%)`,
@@ -111,7 +111,7 @@ export default function EcosystemSection() {
               margin: 0,
             }}
           >
-            An interconnected network on the CollegenZ L2 blockchain.
+            An interconnected network of tokenized value on the blockchain.
           </p>
         </motion.div>
 

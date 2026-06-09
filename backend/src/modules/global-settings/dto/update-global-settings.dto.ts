@@ -23,7 +23,7 @@ export class UpdateGlobalSettingsDto {
 
   @IsBoolean()
   @IsOptional()
-  defaultAllowTradeInr?: boolean;
+  defaultAllowTradeUgx?: boolean;
 
   @IsBoolean()
   @IsOptional()

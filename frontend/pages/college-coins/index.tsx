@@ -806,7 +806,7 @@ const CollegeCoinsPage: NextPageWithLayout = () => {
         <title>College Coins — Buy, Trade & Spend on Campus | UG Coin</title>
         <meta
           name="description"
-          content="Discover, mine, and trade university-issued college coins on UG Coin. Earn TUIT, swap with crypto, and pay for tuition, housing, and campus services in INR."
+          content="Discover, mine, and trade university-issued college coins on UG Coin. Earn TUIT, swap with crypto, and pay for tuition, housing, and campus services in UGX."
         />
       </Head>
 

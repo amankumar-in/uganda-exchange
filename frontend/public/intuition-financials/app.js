@@ -65,7 +65,7 @@ const commonOptions = {
 function initCharts() {
     renderCapTableChart();
     renderGlobalMarketChart();
-    renderIndiaMarketChart();
+    renderUgandaMarketChart();
     renderCollegesUsersChart();
     renderUserSegmentChart();
     renderVolumeChart();
@@ -160,8 +160,8 @@ function renderGlobalMarketChart() {
     new ApexCharts(document.querySelector('#globalMarketChart'), options).render();
 }
 
-// 3. India Market Chart
-function renderIndiaMarketChart() {
+// 3. Uganda Market Chart
+function renderUgandaMarketChart() {
     const options = {
         ...commonOptions,
         series: [{
@@ -199,7 +199,7 @@ function renderIndiaMarketChart() {
         legend: { show: false }
     };
     
-    new ApexCharts(document.querySelector('#indiaMarketChart'), options).render();
+    new ApexCharts(document.querySelector('#ugandaMarketChart'), options).render();
 }
 
 // 4. Colleges & Users Dual-Axis Chart

@@ -15,26 +15,26 @@ const steps = [
   {
     number: "01",
     icon: <UserAddOutlined />,
-    title: "Sign Up on Coins For College",
-    description: "Register for an account on Coins for College to begin your journey toward higher education savings.",
+    title: "Sign Up & Get Verified",
+    description: "Create an account and complete KYC verification to instantly unlock the investor mode.",
   },
   {
     number: "02",
-    icon: <TrophyOutlined />,
-    title: "Earn TUIT by Completing Tasks",
-    description: "Accumulate TUIT by completing educational tasks and achievements within the Coins for College platform.",
+    icon: <LinkOutlined />,
+    title: "Browse Premium Markets",
+    description: "Explore exclusive asset classes including Real Estate, local Commodities, and Celebrity brand tokens.",
   },
   {
     number: "03",
-    icon: <LinkOutlined />,
-    title: "Connect with UG Coin",
-    description: "Link your Coins for College account to access the full range of trading options available for TUIT.",
+    icon: <DollarOutlined />,
+    title: "Invest & Trade",
+    description: "Build your portfolio by investing in tokenized real-world assets alongside traditional cryptocurrencies using UGX.",
   },
   {
     number: "04",
-    icon: <DollarOutlined />,
-    title: "Redeem or Swap",
-    description: "Trade your TUIT for other cryptocurrencies, convert to INR, or redeem for tuition credits.",
+    icon: <TrophyOutlined />,
+    title: "Monetize Value",
+    description: "Realize the value of brand power, demand, and ownership through a secure and liquid exchange platform.",
   },
 ];
 
@@ -134,7 +134,7 @@ export default function HowItWorksSection() {
             How It Works
           </Title>
           <Text style={sectionSubtitleStyle}>
-            Start earning and trading College Coins in four simple steps
+            Start trading real world assets in four simple steps
           </Text>
         </div>
 

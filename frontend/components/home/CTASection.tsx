@@ -110,7 +110,7 @@ export default function CTASection() {
                   backgroundClip: "text",
                 }}
               >
-                College Coin Journey?
+                Investment Journey?
               </span>
             </h2>
 
@@ -125,8 +125,8 @@ export default function CTASection() {
                 marginBottom: token.marginXL,
               }}
             >
-              Create your free account today and start trading College Coins
-              with the most trusted exchange for higher education.
+              Create your free account today and start trading premium assets
+              with the most trusted exchange in Uganda.
             </p>
 
             {/* CTA Button - 3D Claymorphic */}

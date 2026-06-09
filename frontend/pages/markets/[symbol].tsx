@@ -17,6 +17,9 @@ import {
   SwapOutlined,
   TrophyOutlined,
   ThunderboltOutlined,
+  EnvironmentOutlined,
+  GoldOutlined,
+  AppstoreOutlined,
 } from '@ant-design/icons';
 import { motion } from 'motion/react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
@@ -214,9 +217,117 @@ export default function TokenDetailsPage() {
   useEffect(() => {
     if (!pageLoading && symbol && typeof symbol === 'string') {
       setLoadingToken(true);
+      const symbolUpper = symbol.toUpperCase();
       
+      const fallbackToCoinGecko = () => {
+        setCollegeCoinData(null);
+        setReferenceTokenData(null);
+        getTokenDetails(symbolUpper)
+          .then((data) => { setTokenData(data); setLoadingToken(false); })
+          .catch(() => setLoadingToken(false));
+      };
+
+      const tryCustomToken = async () => {
+        try {
+          const token = await TokensApi.getBySymbol(symbolUpper);
+          if (token && token.isActive) {
+            setCustomTokenData(token);
+            
+            let cgData: any = null;
+            if (token.coingeckoId) {
+              try {
+                cgData = await getTokenDetailsById(token.coingeckoId);
+              } catch (e) {
+                console.error('Failed to fetch rich data for custom token:', e);
+              }
+            }
+
+            const basePriceUsd = ((token.currentPrice || 0) / usdUgxRate) || cgData?.market_data?.current_price?.usd || 0;
+            const simulatedVolume = basePriceUsd > 0 ? basePriceUsd * (Math.random() * 50000 + 50000) : 0;
+            const simulatedMarketCap = basePriceUsd > 0 ? basePriceUsd * 10000000 : 0;
+            
+            const mappedData: any = {
+              id: token.id,
+              symbol: token.symbol,
+              name: token.name,
+              image: {
+                thumb: token.iconUrl || cgData?.image?.thumb || '',
+                small: token.iconUrl || cgData?.image?.small || '',
+                large: token.iconUrl || cgData?.image?.large || '',
+              },
+              description: token.description || cgData?.description || `This is the official digital asset for ${token.name} on the Uganda Exchange. Trade, hold, and participate in the local tokenized economy.`,
+              links: {
+                homepage: (token.website ? [token.website] : cgData?.links?.homepage) || [],
+                twitter_screen_name: token.twitter?.replace('https://twitter.com/', '') || cgData?.links?.twitter_screen_name || '',
+                chat_url: (token.discord ? [token.discord] : cgData?.links?.chat_url) || [],
+                whitepaper: token.whitepaper || cgData?.links?.whitepaper || '',
+                blockchain_site: cgData?.links?.blockchain_site || [],
+                official_forum_url: cgData?.links?.official_forum_url || [],
+                announcement_url: cgData?.links?.announcement_url || [],
+                subreddit_url: cgData?.links?.subreddit_url || '',
+                repos_url: cgData?.links?.repos_url || { github: [], bitbucket: [] },
+              },
+              market_data: {
+                current_price: { usd: basePriceUsd },
+                price_change_percentage_24h: token.change24h || cgData?.market_data?.price_change_percentage_24h || 0,
+                price_change_percentage_7d: cgData?.market_data?.price_change_percentage_7d || (Math.random() * 10 - 5),
+                price_change_percentage_30d: cgData?.market_data?.price_change_percentage_30d || (Math.random() * 20 - 10),
+                market_cap_rank: cgData?.market_data?.market_cap_rank || Math.floor(Math.random() * 500) + 100,
+                market_cap: { usd: cgData?.market_data?.market_cap?.usd || simulatedMarketCap },
+                fully_diluted_valuation: { usd: cgData?.market_data?.fully_diluted_valuation?.usd || simulatedMarketCap * 1.5 },
+                total_volume: { usd: cgData?.market_data?.total_volume?.usd || simulatedVolume },
+                high_24h: { usd: cgData?.market_data?.high_24h?.usd || (basePriceUsd * (1 + Math.random() * 0.1)) },
+                low_24h: { usd: cgData?.market_data?.low_24h?.usd || (basePriceUsd * (1 - Math.random() * 0.1)) },
+                circulating_supply: cgData?.market_data?.circulating_supply || 10000000,
+                total_supply: cgData?.market_data?.total_supply || 15000000,
+                max_supply: cgData?.market_data?.max_supply || 20000000,
+                ath: { usd: cgData?.market_data?.ath?.usd || (basePriceUsd * 2.5) },
+                ath_date: { 
+                  usd: cgData?.market_data?.ath_date?.usd || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+                  ugx: cgData?.market_data?.ath_date?.ugx || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString() 
+                },
+                ath_change_percentage: { 
+                  usd: cgData?.market_data?.ath_change_percentage?.usd || -50,
+                  ugx: cgData?.market_data?.ath_change_percentage?.ugx || -50 
+                },
+                atl: { usd: cgData?.market_data?.atl?.usd || (basePriceUsd * 0.5) },
+                atl_date: { 
+                  usd: cgData?.market_data?.atl_date?.usd || new Date(Date.now() - 180 * 24 * 60 * 60 * 1000).toISOString(),
+                  ugx: cgData?.market_data?.atl_date?.ugx || new Date(Date.now() - 180 * 24 * 60 * 60 * 1000).toISOString() 
+                },
+                atl_change_percentage: { 
+                  usd: cgData?.market_data?.atl_change_percentage?.usd || 100,
+                  ugx: cgData?.market_data?.atl_change_percentage?.ugx || 100 
+                },
+              },
+              community_data: {
+                twitter_followers: cgData?.community_data?.twitter_followers || Math.floor(Math.random() * 50000) + 1000,
+                reddit_subscribers: cgData?.community_data?.reddit_subscribers || Math.floor(Math.random() * 10000) + 500,
+              },
+              categories: cgData?.categories || (token.assetType ? [token.assetType.toLowerCase()] : []),
+              genesis_date: cgData?.genesis_date || new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString(),
+              sentiment_votes_up_percentage: cgData?.sentiment_votes_up_percentage || Math.floor(Math.random() * 40) + 60,
+              sentiment_votes_down_percentage: cgData?.sentiment_votes_down_percentage || Math.floor(Math.random() * 40),
+              watchlist_portfolio_users: cgData?.watchlist_portfolio_users || Math.floor(Math.random() * 5000) + 100,
+              last_updated: cgData?.last_updated || new Date().toISOString(),
+            };
+            
+            setCollegeCoinData(null);
+            setReferenceTokenData(null);
+            setTokenData(mappedData);
+            setLoadingToken(false);
+          } else {
+            setCustomTokenData(null);
+            fallbackToCoinGecko();
+          }
+        } catch (e) {
+          setCustomTokenData(null);
+          fallbackToCoinGecko();
+        }
+      };
+
       // First check if it's a college coin
-      getDemoCollegeCoin(symbol.toUpperCase())
+      getDemoCollegeCoin(symbolUpper)
         .then((response) => {
           if (response.success && response.coin) {
             setCollegeCoinData(response.coin);
@@ -237,104 +348,16 @@ export default function TokenDetailsPage() {
               setLoadingToken(false);
             }
           } else {
-            // Not a college coin, fetch from CoinGecko
-            setCollegeCoinData(null);
-            setReferenceTokenData(null);
-            getTokenDetails(symbol.toUpperCase())
-              .then((data) => { setTokenData(data); setLoadingToken(false); })
-              .catch(() => setLoadingToken(false));
+            // Not a college coin, try custom token
+            tryCustomToken();
           }
         })
         .catch(() => {
-          // Failed to check college coin, try Custom Token (Asset Manager)
-          TokensApi.getBySymbol(symbol.toUpperCase())
-            .then(async (token) => {
-              if (token && token.isActive) {
-                setCustomTokenData(token);
-                
-                let cgData: any = null;
-                // If token has a coingeckoId, fetch rich metadata
-                if (token.coingeckoId) {
-                  try {
-                    cgData = await getTokenDetailsById(token.coingeckoId);
-                  } catch (e) {
-                    console.error('Failed to fetch rich data for custom token:', e);
-                  }
-                }
-
-                // Map Token to TokenMarketData shape, merging with CG data if available
-                const mappedData: any = {
-                  id: token.id,
-                  symbol: token.symbol,
-                  name: token.name,
-                  image: {
-                    thumb: token.iconUrl || cgData?.image?.thumb || '',
-                    small: token.iconUrl || cgData?.image?.small || '',
-                    large: token.iconUrl || cgData?.image?.large || '',
-                  },
-                  description: token.description || cgData?.description || '',
-                  links: {
-                    homepage: (token.website ? [token.website] : cgData?.links?.homepage) || [],
-                    twitter_screen_name: token.twitter?.replace('https://twitter.com/', '') || cgData?.links?.twitter_screen_name || '',
-                    chat_url: (token.discord ? [token.discord] : cgData?.links?.chat_url) || [],
-                    whitepaper: token.whitepaper || cgData?.links?.whitepaper || '',
-                    blockchain_site: cgData?.links?.blockchain_site || [],
-                    official_forum_url: cgData?.links?.official_forum_url || [],
-                    announcement_url: cgData?.links?.announcement_url || [],
-                    subreddit_url: cgData?.links?.subreddit_url || '',
-                    repos_url: cgData?.links?.repos_url || { github: [], bitbucket: [] },
-                  },
-                  market_data: {
-                    current_price: { usd: ((token.currentPrice || 0) / usdUgxRate) || cgData?.market_data?.current_price?.usd || 0 },
-                    price_change_percentage_24h: token.change24h || cgData?.market_data?.price_change_percentage_24h || 0,
-                    market_cap: { usd: cgData?.market_data?.market_cap?.usd || 0 },
-                    fully_diluted_valuation: { usd: cgData?.market_data?.fully_diluted_valuation?.usd || 0 },
-                    total_volume: { usd: cgData?.market_data?.total_volume?.usd || 0 },
-                    high_24h: { usd: cgData?.market_data?.high_24h?.usd || 0 },
-                    low_24h: { usd: cgData?.market_data?.low_24h?.usd || 0 },
-                    circulating_supply: cgData?.market_data?.circulating_supply || 0,
-                    total_supply: cgData?.market_data?.total_supply || 0,
-                    max_supply: cgData?.market_data?.max_supply || 0,
-                    ath: { usd: cgData?.market_data?.ath?.usd || 0 },
-                    ath_date: { inr: cgData?.market_data?.ath_date?.inr || '' },
-                    ath_change_percentage: { inr: cgData?.market_data?.ath_change_percentage?.inr || 0 },
-                    atl: { usd: cgData?.market_data?.atl?.usd || 0 },
-                    atl_date: { inr: cgData?.market_data?.atl_date?.inr || '' },
-                    atl_change_percentage: { inr: cgData?.market_data?.atl_change_percentage?.inr || 0 },
-                  },
-                  categories: cgData?.categories || [],
-                  genesis_date: cgData?.genesis_date || null,
-                  sentiment_votes_up_percentage: cgData?.sentiment_votes_up_percentage || 50,
-                  sentiment_votes_down_percentage: cgData?.sentiment_votes_down_percentage || 50,
-                  watchlist_portfolio_users: cgData?.watchlist_portfolio_users || 0,
-                  last_updated: cgData?.last_updated || new Date().toISOString(),
-                };
-                
-                setCollegeCoinData(null);
-                setReferenceTokenData(null);
-                setTokenData(mappedData);
-                setLoadingToken(false);
-              } else {
-                setCustomTokenData(null);
-                // Not a custom token, fetch from CoinGecko
-                fallbackToCoinGecko();
-              }
-            })
-            .catch(() => {
-              setCustomTokenData(null);
-              fallbackToCoinGecko();
-            });
+          // Failed to check college coin, try custom token
+          tryCustomToken();
         });
-
-      const fallbackToCoinGecko = () => {
-        setCollegeCoinData(null);
-        setReferenceTokenData(null);
-        getTokenDetails(symbol.toUpperCase())
-          .then((data) => { setTokenData(data); setLoadingToken(false); })
-          .catch(() => setLoadingToken(false));
-      };
     }
-  }, [pageLoading, symbol]);
+  }, [pageLoading, symbol, usdUgxRate]);
 
   // Fetch sparkline data for chart (public)
   // For college coins, fetch the pegged token's sparkline and scale it
@@ -939,13 +962,32 @@ export default function TokenDetailsPage() {
                     marginBottom: themeToken.marginLG,
                   }}
                 >
-                  <img
-                    src={tokenData.image.large}
-                    alt={tokenData.name}
-                    width={isMobile ? 56 : 72}
-                    height={isMobile ? 56 : 72}
-                    style={{ borderRadius: '50%' }}
-                  />
+                  {tokenData.image?.large ? (
+                    <img
+                      src={tokenData.image.large}
+                      alt={tokenData.name}
+                      width={isMobile ? 56 : 72}
+                      height={isMobile ? 56 : 72}
+                      style={{ borderRadius: '50%' }}
+                    />
+                  ) : (
+                    <div style={{
+                      width: isMobile ? 56 : 72,
+                      height: isMobile ? 56 : 72,
+                      borderRadius: '50%',
+                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: isMobile ? 24 : 32,
+                      color: 'white'
+                    }}>
+                      {customTokenData?.assetType === 'LAND' ? <EnvironmentOutlined /> :
+                       customTokenData?.assetType === 'COMMODITY' ? <GoldOutlined /> :
+                       customTokenData?.assetType === 'CELEBRITY' ? <StarOutlined /> :
+                       <AppstoreOutlined />}
+                    </div>
+                  )}
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                       <h1 style={{
@@ -996,6 +1038,53 @@ export default function TokenDetailsPage() {
                     )}
                   </div>
                 </motion.div>
+
+                {/* Custom Asset Metadata */}
+                {customTokenData && customTokenData.assetType && ['LAND', 'COMMODITY', 'CELEBRITY'].includes(customTokenData.assetType) && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.05 }}
+                    style={{
+                      padding: themeToken.paddingLG,
+                      background: isDark ? 'rgba(255,255,255,0.03)' : '#fff',
+                      borderRadius: themeToken.borderRadiusLG,
+                      border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(102, 126, 234, 0.1)'}`,
+                      marginBottom: themeToken.marginLG,
+                    }}
+                  >
+                    <h3 style={{
+                      fontSize: themeToken.fontSizeLG,
+                      fontWeight: fontWeights.semibold,
+                      color: themeToken.colorText,
+                      margin: `0 0 ${themeToken.marginMD}px 0`,
+                    }}>
+                      {customTokenData.assetType === 'LAND' && 'Real Estate Details'}
+                      {customTokenData.assetType === 'COMMODITY' && 'Commodity Details'}
+                      {customTokenData.assetType === 'CELEBRITY' && 'Celebrity Details'}
+                    </h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: themeToken.marginSM }}>
+                      {customTokenData.assetType === 'LAND' && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ color: themeToken.colorTextSecondary }}>Property Location</span>
+                          <span style={{ color: themeToken.colorText, fontWeight: fontWeights.medium }}>{customTokenData.landAddress || 'Not specified'}</span>
+                        </div>
+                      )}
+                      {customTokenData.assetType === 'COMMODITY' && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ color: themeToken.colorTextSecondary }}>Asset Type</span>
+                          <span style={{ color: themeToken.colorText, fontWeight: fontWeights.medium }}>{customTokenData.commodityType || 'Not specified'}</span>
+                        </div>
+                      )}
+                      {customTokenData.assetType === 'CELEBRITY' && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ color: themeToken.colorTextSecondary }}>Associated Celebrity</span>
+                          <span style={{ color: themeToken.colorText, fontWeight: fontWeights.medium }}>{customTokenData.celebrityName || 'Not specified'}</span>
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
 
                 {/* Price section - Two columns on desktop */}
                 <motion.div

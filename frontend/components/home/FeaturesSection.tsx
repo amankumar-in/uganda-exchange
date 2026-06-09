@@ -20,7 +20,7 @@ const features = [
   {
     icon: <SwapOutlined />,
     title: "Instant Swaps",
-    description: "Exchange College Coins for major cryptocurrencies in seconds with competitive rates and zero hidden fees.",
+    description: "Exchange traditional and real world assets for major cryptocurrencies in seconds with competitive rates and zero hidden fees.",
     color: "#3b82f6",
     colorLight: "#60a5fa",
     colorDark: "#1e40af",
@@ -36,7 +36,7 @@ const features = [
   {
     icon: <LineChartOutlined />,
     title: "Real-Time Markets",
-    description: "Track live prices, charts, and market data for all College Coins with professional trading tools.",
+    description: "Track live prices, charts, and market data for all tokenized assets with professional trading tools.",
     color: "#f59e0b",
     colorLight: "#fbbf24",
     colorDark: "#b45309",
@@ -51,8 +51,8 @@ const features = [
   },
   {
     icon: <GlobalOutlined />,
-    title: "50+ College Coins",
-    description: "Access tokens from universities nationwide. Trade, hold, or redeem for tuition credits.",
+    title: "Exclusive Assets",
+    description: "Access premium assets across Africa. Invest, trade, or build your diversified portfolio.",
     color: "#8b5cf6",
     colorLight: "#a78bfa",
     colorDark: "#5b21b6",
@@ -152,11 +152,11 @@ export default function FeaturesSection() {
           style={headerStyle}
         >
           <Title level={2} style={sectionTitleStyle}>
-            The InTuitive Way To Trade
+            The Premium Way To Trade
           </Title>
           <Text style={sectionSubtitleStyle}>
-            The most trusted platform for trading College Coins with powerful features
-            built for students, parents, and institutions.
+            The most trusted platform for trading Real World Assets with powerful features
+            built for modern investors.
           </Text>
         </motion.div>
 

@@ -36,7 +36,7 @@ export default function TermsPage() {
         The Platform allows you to (a) deposit Ugandan Shillings (UGX) through Pesapal, (b) place
         orders to buy or sell virtual digital assets (<strong>&ldquo;VDAs&rdquo;</strong>),
         including listed cryptocurrencies and college-issued tokens (TUIT and similar), and (c)
-        withdraw INR back to your verified bank account.
+        withdraw UGX back to your verified bank account.
       </p>
       <p>
         We provide an execution venue and a custodial wallet. We do not provide investment,
@@ -61,9 +61,9 @@ export default function TermsPage() {
 
       <h2>4. Deposits, withdrawals, and Razorpay</h2>
       <p>
-        INR deposits are processed through Razorpay Software Private Limited, a payment
+        UGX deposits are processed through Razorpay Software Private Limited, a payment
         aggregator authorised by the Bank of Uganda. Pesapal is used solely to collect
-        and settle INR amounts; the underlying VDA transactions on the Platform are not
+        and settle UGX amounts; the underlying VDA transactions on the Platform are not
         processed through Razorpay and Razorpay bears no responsibility for them.
       </p>
       <ul>

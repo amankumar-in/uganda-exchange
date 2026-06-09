@@ -5,7 +5,7 @@ let content = fs.readFileSync(file, 'utf8');
 
 // 1. Change tokenData fallback in livePrice
 content = content.replace(
-  /tokenData\?\.market_data\?\.current_price\?\.inr \|\| 0/g,
+  /tokenData\?\.market_data\?\.current_price\?\.ugx \|\| 0/g,
   '0 /* fallback removed to enforce single source of truth */'
 );
 
@@ -22,9 +22,9 @@ content = content.replace(
 );
 
 // 4. Dates don't need multiplication
-content = content.replace(/\.inr \? "Market Cap" : "FDV"/g, '.usd > 0 ? "Market Cap" : "FDV"');
-content = content.replace(/\.ath_date\.inr/g, '.ath_date.usd');
-content = content.replace(/\.atl_date\.inr/g, '.atl_date.usd');
+content = content.replace(/\.ugx \? "Market Cap" : "FDV"/g, '.usd > 0 ? "Market Cap" : "FDV"');
+content = content.replace(/\.ath_date\.ugx/g, '.ath_date.usd');
+content = content.replace(/\.atl_date\.ugx/g, '.atl_date.usd');
 
 // 5. Replace other metrics with ( .usd * usdUgxRate )
 const metrics = [
@@ -33,30 +33,30 @@ const metrics = [
 ];
 
 for (const metric of metrics) {
-  const regex = new RegExp(`\\.market_data\\.?${metric}\\.?inr`, 'g');
+  const regex = new RegExp(`\\.market_data\\.?${metric}\\.?ugx`, 'g');
   // If it's a change percentage, we don't multiply by exchange rate!
   if (metric.includes('percentage')) {
     content = content.replace(regex, `.market_data?.${metric}?.usd`);
   } else {
     // For price values, we multiply
     // Special handling for the cgData mock block around line 288
-    content = content.replace(new RegExp(`current_price: \\{ inr: token\\.currentPrice \\|\\| cgData\\?\\.market_data\\?\\.current_price\\?\\.inr \\|\\| 0 \\}`, 'g'),
+    content = content.replace(new RegExp(`current_price: \\{ ugx: token\\.currentPrice \\|\\| cgData\\?\\.market_data\\?\\.current_price\\?\\.ugx \\|\\| 0 \\}`, 'g'),
       `current_price: { usd: (token.currentPrice / usdUgxRate) || cgData?.market_data?.current_price?.usd || 0 }`);
       
-    content = content.replace(new RegExp(`${metric}: \\{ inr: cgData\\?\\.market_data\\?\\.${metric}\\?\\.inr \\|\\| 0 \\}`, 'g'),
+    content = content.replace(new RegExp(`${metric}: \\{ ugx: cgData\\?\\.market_data\\?\\.${metric}\\?\\.ugx \\|\\| 0 \\}`, 'g'),
       `${metric}: { usd: cgData?.market_data?.${metric}?.usd || 0 }`);
       
-    content = content.replace(new RegExp(`tokenData\\.market_data\\.${metric}\\.inr`, 'g'),
+    content = content.replace(new RegExp(`tokenData\\.market_data\\.${metric}\\.ugx`, 'g'),
       `(tokenData.market_data.${metric}.usd * usdUgxRate)`);
       
-    content = content.replace(new RegExp(`referenceTokenData\\.market_data\\.${metric}\\.inr`, 'g'),
+    content = content.replace(new RegExp(`referenceTokenData\\.market_data\\.${metric}\\.ugx`, 'g'),
       `(referenceTokenData.market_data.${metric}.usd * usdUgxRate)`);
   }
 }
 
 // 6. Fix title
-content = content.replace(/Buy Crypto in INR/g, 'Buy Crypto in UGX');
-content = content.replace(/in INR —/g, 'in UGX —');
+content = content.replace(/Buy Crypto in UGX/g, 'Buy Crypto in UGX');
+content = content.replace(/in UGX —/g, 'in UGX —');
 
 fs.writeFileSync(file, content);
 console.log('Replacements complete');

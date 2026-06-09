@@ -82,7 +82,7 @@ export class OrdersService {
 
       // Check trading pair permissions
       const pairChecks: Record<string, boolean | null> = {
-        'UGX': baseToken.allowTradeInr,
+        'UGX': baseToken.allowTradeUgx,
         'USDT': baseToken.allowTradeUsdt,
         'ETH': baseToken.allowTradeEth,
         'TUIT': baseToken.allowTradeTuit,
@@ -91,14 +91,14 @@ export class OrdersService {
         throw new BadRequestException(`${asset}-${quote} trading pair is not available.`);
       }
 
-      // Enforce transaction limits (calculate INR value first)
+      // Enforce transaction limits (calculate UGX value first)
       const tokenPrice = baseToken.currentPrice || Number(baseToken.manualPrice) || 0;
-      let inrValueForLimits: number;
+      let ugxValueForLimits: number;
 
       if (side === 'BUY' && quote === 'UGX') {
-        inrValueForLimits = amount;
+        ugxValueForLimits = amount;
       } else if (side === 'SELL') {
-        inrValueForLimits = amount * tokenPrice;
+        ugxValueForLimits = amount * tokenPrice;
       } else {
         // BUY with non-UGX quote - convert to UGX
         const quoteCustom = await this.tokensService.findBySymbol(quote);
@@ -106,20 +106,20 @@ export class OrdersService {
         if (quoteCustom) {
           quoteUgxPrice = quoteCustom.currentPrice || Number(quoteCustom.manualPrice) || 1;
         }
-        inrValueForLimits = amount * quoteUgxPrice;
+        ugxValueForLimits = amount * quoteUgxPrice;
       }
 
       const minAmount = Number(baseToken.minTransactionAmount) || 0;
       const maxAmount = Number(baseToken.maxTransactionAmount) || 0;
 
-      if (minAmount > 0 && inrValueForLimits > 0 && inrValueForLimits < minAmount) {
+      if (minAmount > 0 && ugxValueForLimits > 0 && ugxValueForLimits < minAmount) {
         throw new BadRequestException(
-          `Minimum transaction for ${asset} is ₹${minAmount}. Your order is ₹${inrValueForLimits.toFixed(2)}.`
+          `Minimum transaction for ${asset} is ₹${minAmount}. Your order is ₹${ugxValueForLimits.toFixed(2)}.`
         );
       }
-      if (maxAmount > 0 && inrValueForLimits > maxAmount) {
+      if (maxAmount > 0 && ugxValueForLimits > maxAmount) {
         throw new BadRequestException(
-          `Maximum transaction for ${asset} is ₹${maxAmount}. Your order is ₹${inrValueForLimits.toFixed(2)}.`
+          `Maximum transaction for ${asset} is ₹${maxAmount}. Your order is ₹${ugxValueForLimits.toFixed(2)}.`
         );
       }
     }
@@ -181,17 +181,17 @@ export class OrdersService {
       const baseToken = await this.tokensService.findBySymbol(asset);
       const quoteToken = await this.tokensService.findBySymbol(quote);
 
-      const baseInrPrice = baseToken?.currentPrice || Number(baseToken?.manualPrice) || 0;
+      const baseUgxPrice = baseToken?.currentPrice || Number(baseToken?.manualPrice) || 0;
       const quoteUgxPrice = quote === 'UGX'
         ? 1
         : (quoteToken?.currentPrice || Number(quoteToken?.manualPrice) || 0);
 
-      if (baseInrPrice <= 0 || quoteUgxPrice <= 0) {
-        throw new BadRequestException(`Price not available for ${baseInrPrice <= 0 ? asset : quote}.`);
+      if (baseUgxPrice <= 0 || quoteUgxPrice <= 0) {
+        throw new BadRequestException(`Price not available for ${baseUgxPrice <= 0 ? asset : quote}.`);
       }
 
       // Price of base asset expressed in quote currency
-      const currentPrice = baseInrPrice / quoteUgxPrice;
+      const currentPrice = baseUgxPrice / quoteUgxPrice;
 
       let platformFee: number;
       let userPerceivedValue: number;
@@ -366,16 +366,16 @@ export class OrdersService {
     const baseToken = await this.tokensService.findBySymbol(asset);
     const quoteToken = await this.tokensService.findBySymbol(quote);
 
-    const baseInrPrice = baseToken?.currentPrice || Number(baseToken?.manualPrice) || 0;
+    const baseUgxPrice = baseToken?.currentPrice || Number(baseToken?.manualPrice) || 0;
     const quoteUgxPrice = quote === 'UGX'
       ? 1
       : (quoteToken?.currentPrice || Number(quoteToken?.manualPrice) || 0);
 
-    if (baseInrPrice <= 0 || quoteUgxPrice <= 0) {
+    if (baseUgxPrice <= 0 || quoteUgxPrice <= 0) {
       throw new BadRequestException(`Price not available for quote calculation`);
     }
 
-    const currentPrice = baseInrPrice / quoteUgxPrice;
+    const currentPrice = baseUgxPrice / quoteUgxPrice;
 
     if (side === 'BUY') {
       const platformFee = amount * (this.PLATFORM_FEE_PERCENT / 100);

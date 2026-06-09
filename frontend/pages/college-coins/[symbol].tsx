@@ -219,7 +219,7 @@ const CollegeCoinDetailPage: NextPageWithLayout = () => {
   return (
     <>
       <Head>
-        <title>{`Buy ${symbol} College Coin in INR — UG Coin`}</title>
+        <title>{`Buy ${symbol} College Coin in UGX — UG Coin`}</title>
         <meta
           name="description"
           content={`Buy and trade ${symbol} on UG Coin. Earn ${symbol} through mining, swap with crypto, and pay for campus services. Uganda's college-coin marketplace.`}

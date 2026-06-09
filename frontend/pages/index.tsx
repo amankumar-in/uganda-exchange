@@ -2,9 +2,10 @@ import Head from "next/head";
 import Header, { HEADER_HEIGHT } from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import HeroSection from "@/components/home/HeroSection";
-import CollegeCoinsSection from "@/components/home/CollegeCoinsSection";
+import LandSection from "@/components/home/LandSection";
+import CommoditySection from "@/components/home/CommoditySection";
+import CelebritySection from "@/components/home/CelebritySection";
 import EcosystemSection from "@/components/home/EcosystemSection";
-import LearningSection from "@/components/home/LearningSection";
 import FeaturesSection from "@/components/home/FeaturesSection";
 import MarketsSection from "@/components/home/MarketsSection";
 import CTASection from "@/components/home/CTASection";
@@ -30,10 +31,10 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>UG Coin — Buy Crypto in INR & Trade College Coins</title>
+        <title>UG Coin — The Exchange for Land, Commodities & Celebrities</title>
         <meta
           name="description"
-          content="Buy crypto in UGX, mine TUIT, and pay for tuition with college coins. UG Coin — Uganda's home for digital assets and campus money. Instant UGX deposits via Pesapal."
+          content="Buy and trade tokenized real estate, local commodities, and celebrity brand equity in UGX. UG Coin is Uganda's premier digital asset exchange."
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
@@ -43,9 +44,10 @@ export default function Home() {
         <Header />
         <main style={mainStyle}>
           <HeroSection />
-          <CollegeCoinsSection />
+          <LandSection />
+          <CommoditySection />
+          <CelebritySection />
           <EcosystemSection />
-          <LearningSection />
           <FeaturesSection />
           <MarketsSection />
           <CTASection />

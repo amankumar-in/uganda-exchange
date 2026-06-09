@@ -18,9 +18,11 @@ async function main() {
     process.exit(1);
   }
 
-  console.log('🔑 Authenticating with Pesapal...');
+  const baseUrl = process.env.PESAPAL_BASE_URL || 'https://pay.pesapal.com/v3';
   
-  const authRes = await fetch('https://pay.pesapal.com/v3/api/Auth/RequestToken', {
+  console.log(`🔑 Authenticating with Pesapal (${baseUrl})...`);
+  
+  const authRes = await fetch(`${baseUrl}/api/Auth/RequestToken`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
     body: JSON.stringify({ consumer_key: key, consumer_secret: secret }),
@@ -35,7 +37,7 @@ async function main() {
   console.log('✅ Successfully authenticated!');
 
   console.log(`📡 Registering IPN URL: ${ipnUrl} ...`);
-  const registerRes = await fetch('https://pay.pesapal.com/v3/api/URLSetup/RegisterIPN', {
+  const registerRes = await fetch(`${baseUrl}/api/URLSetup/RegisterIPN`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

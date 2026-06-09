@@ -29,10 +29,21 @@ export const TokensApi = {
    * Get a single token by Symbol
    */
   getBySymbol: async (symbol: string): Promise<Token | null> => {
-    const res = await fetch(`${API_BASE_URL}/tokens/symbol/${symbol}`);
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data || null; // API might return null (204) or empty body? Controller returns object or null.
+    try {
+      console.log(`[TokensApi] Fetching: ${API_BASE_URL}/tokens/symbol/${symbol}`);
+      const res = await fetch(`${API_BASE_URL}/tokens/symbol/${symbol}`);
+      console.log(`[TokensApi] Response status:`, res.status);
+      if (!res.ok) {
+        console.error(`[TokensApi] Response not OK. Text:`, await res.text().catch(() => ''));
+        return null;
+      }
+      const data = await res.json();
+      console.log(`[TokensApi] Data:`, data?.symbol);
+      return data || null;
+    } catch (e) {
+      console.error(`[TokensApi] Fetch failed:`, e);
+      return null;
+    }
   },
 
   /**

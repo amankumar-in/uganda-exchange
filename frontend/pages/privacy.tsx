@@ -44,7 +44,7 @@ export default function PrivacyPage() {
       <ul>
         <li><strong>Account creation and login</strong> — to authenticate you and secure your account.</li>
         <li><strong>KYC and AML/CFT compliance</strong> — to verify your identity, screen against sanctions and PEP lists, conduct ongoing due diligence, and file STRs / CTRs with FIU-IND under the Prevention of Money Laundering Act, 2002.</li>
-        <li><strong>Payment processing</strong> — to collect INR deposits and disburse INR withdrawals through our regulated payment partners.</li>
+        <li><strong>Payment processing</strong> — to collect UGX deposits and disburse UGX withdrawals through our regulated payment partners.</li>
         <li><strong>Tax compliance</strong> — to comply with local tax regulations regarding cryptocurrency trading.</li>
         <li><strong>Service operation</strong> — to execute orders, maintain wallet balances, settle trades, and provide transaction history.</li>
         <li><strong>Fraud and security</strong> — to detect and prevent unauthorised access, account takeover, market abuse, and money laundering.</li>
@@ -67,7 +67,7 @@ export default function PrivacyPage() {
       <h2>4. Who we share data with</h2>
       <p>We share personal data only with the following categories of recipients:</p>
       <ul>
-        <li><strong>Payment partners</strong> — Razorpay Software Private Limited, for processing INR deposits and the bank account of record for INR withdrawals.</li>
+        <li><strong>Payment partners</strong> — Razorpay Software Private Limited, for processing UGX deposits and the bank account of record for UGX withdrawals.</li>
         <li><strong>KYC and identity-verification providers</strong> — Sandbox.co.in (Quicko Infosoft Private Limited) for PAN, Aadhaar, and bank verification.</li>
         <li><strong>Communications providers</strong> — Twilio (SMS) and Zeptomail (email) for transactional notifications.</li>
         <li><strong>Cloud hosting and infrastructure</strong> — providers under contract that store and process data on our behalf.</li>

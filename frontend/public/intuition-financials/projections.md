@@ -12,7 +12,7 @@
 >
 > and I want more data, less paragraphs. Investors need to see what they get, why its valued like this, what are exit options, what exit looks like 3 or 5 years down the road.
 >
-> Market sizes need to be considered, India is a big market. We had built an exchange in past with Prime Trust which was profitable in one month but went down because Prime Trust went bankrupt (read about it).
+> Market sizes need to be considered, Uganda is a big market. We had built an exchange in past with Prime Trust which was profitable in one month but went down because Prime Trust went bankrupt (read about it).
 >
 > i am not looking for a long document but I need actual data and projections, numbers, breakdowns, justifications, industry standards, our position, leverage, cap tables etc
 
@@ -67,11 +67,11 @@ After 500k at 8M post:
 | Global crypto **exchange platform** market   | $33.4B (2024)  | $37.2B (2025 est.) | $88.8B (2033 est.)  | **11.2%** (2025–33) |        |
 | Global **crypto exchange** market (alt est.) | $24.75B (2024) | –                  | $213.2B (2034 est.) | **24%** (2024–34)   |        |
 
-### 2.2 India crypto market (strategic focus)
+### 2.2 Uganda crypto market (strategic focus)
 
 | Market                      | 2024 Size | 2033 Size | CAGR 2025–33 | Note                                           |
 | --------------------------- | --------: | --------: | -----------: | ---------------------------------------------- |
-| India cryptocurrency market |     $2.6B |    $13.9B |   **18.48%** | Large young user base, strong digital adoption |
+| Uganda cryptocurrency market |     $2.6B |    $13.9B |   **18.48%** | Large young user base, strong digital adoption |
 
 ---
 
@@ -82,7 +82,7 @@ After 500k at 8M post:
 | Exchange / data point | Headline spot fees                                                    | Effective revenue / volume signal |
 | --------------------- | --------------------------------------------------------------------- | --------------------------------- |
 | Typical global CEX    | Maker/taker ~0.1–0.2% per trade                                       |                                   |
-| WazirX (India)        | 0.2% maker / 0.2% taker                                               |                                   |
+| WazirX (Uganda)        | 0.2% maker / 0.2% taker                                               |                                   |
 | Binance 2024          | Revenue **$16.8B** on volume **$7.3T** → ~**0.23%** effective capture |                                   |
 | Coinbase Q1 2024      | Revenue **$1.2B** on volume **$312B** → ~**0.38%** effective capture  |                                   |
 
@@ -210,14 +210,14 @@ These tables show **what investors get** under conservative, base, and strong ex
 | --------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------- |
 | Binance         | Revenue **$16.8B**, volume **$7.3T**, ~150–250M users reported                  | Global leader; shows potential scale.                         |
 | Coinbase        | 2024 revenue **$6.56B**; Q1 2024 volume **$312B**, revenue **$1.2B**            | Public market comp; reference for EV/Revenue.                 |
-| CoinDCX (India) | Valuation **$2.45B** at latest round; annualised revenue ≈ **$141M**, AUC $1.2B | Shows what a leading India-focused exchange can be worth.     |
-| WazirX (India)  | 24h volume ≈ **$0.30M** (~$110M annual)                                         | Illustrates local volume level even with regulatory overhang. |
+| CoinDCX (Uganda) | Valuation **$2.45B** at latest round; annualised revenue ≈ **$141M**, AUC $1.2B | Shows what a leading Uganda-focused exchange can be worth.     |
+| WazirX (Uganda)  | 24h volume ≈ **$0.30M** (~$110M annual)                                         | Illustrates local volume level even with regulatory overhang. |
 
 ### 7.2 UG Coin leverage points (data-oriented)
 
 Use bullets, not story, on your slide:
 
-* India crypto market: $2.6B → $13.9B by 2033, 18.48% CAGR
+* Uganda crypto market: $2.6B → $13.9B by 2033, 18.48% CAGR
 * Global exchange platform market: $33.4B → $88.8B by 2033, 11.2% CAGR
 * First-month CFC app: **~500 early users** mining future college coins with zero marketing (your internal metric).
 * College pipeline plan: **1,350 colleges live by Year 3**, driving structurally captive order flow to UG Coin.
@@ -252,7 +252,7 @@ For the deck, suggested charts (based on the tables above):
    * Stacked or side-by-side bars:
 
      * Global exchange platform market 2024 vs 2033.
-     * India crypto market 2024 vs 2033.
+     * Uganda crypto market 2024 vs 2033.
 
 ---
 
@@ -301,8 +301,8 @@ You can overlay ESOP inside “Founders + existing” if needed.
 | Market                                     | 2024/25 size        | 2033 size     | CAGR       | Source |
 | ------------------------------------------ | ------------------- | ------------- | ---------- | ------ |
 | Global **crypto exchange platform** market | $33.4B (2024)       | $88.8B (2033) | **11.2%**  |        |
-| India **crypto market**                    | $2.6B (2024)        | $13.9B (2033) | **18.48%** |        |
-| India crypto users                         | ~100M monthly users | –             | –          |        |
+| Uganda **crypto market**                    | $2.6B (2024)        | $13.9B (2033) | **18.48%** |        |
+| Uganda crypto users                         | ~100M monthly users | –             | –          |        |
 
 ### 2.2 Exchange scale benchmarks
 
@@ -333,7 +333,7 @@ Our **Year-3 volume in the aggressive scenario (below)** is **$30B**, **less tha
 Assumptions (you can tune in the deck):
 
 * Each college brings a growing **active trader base** over time.
-* Open-market users scale independently (India + US + others).
+* Open-market users scale independently (Uganda + US + others).
 
 | Metric                             | Year 1        | Year 2         | Year 3           |
 | ---------------------------------- | ------------- | -------------- | ---------------- |
@@ -468,13 +468,13 @@ Minimal text, mostly visuals:
 
    * Table from section 1.
 
-2. **Slide: Market & India opportunity**
+2. **Slide: Market & Uganda opportunity**
 
    * Two bar charts:
 
      * Global exchange market 2024 vs 2033
-     * India crypto market 2024 vs 2033
-   * One line: “100M+ Indians already use crypto.”
+     * Uganda crypto market 2024 vs 2033
+   * One line: “100M+ Ugandans already use crypto.”
 
 3. **Slide: Colleges → users**
 

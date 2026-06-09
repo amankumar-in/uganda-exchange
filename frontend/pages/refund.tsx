@@ -5,13 +5,13 @@ export default function RefundPage() {
   return (
     <LegalPageLayout
       title="Refund Policy"
-      description="When INR refunds are issued on the UG Coin platform and how to request one. Crypto trades are not reversible."
+      description="When UGX refunds are issued on the UG Coin platform and how to request one. Crypto trades are not reversible."
       lastUpdated="27 April 2026"
     >
       <p>
         UG Coin is a virtual digital asset (<strong>VDA</strong>) trading platform
         operated by <strong>UG Coin</strong>. This Refund Policy
-        explains the limited circumstances in which we issue an INR refund, the route the
+        explains the limited circumstances in which we issue an UGX refund, the route the
         refund takes, and the timeline you can expect.
       </p>
 
@@ -30,16 +30,16 @@ export default function RefundPage() {
         <li>losses arising from price movement, change of mind, or operator error in placing an order.</li>
       </ul>
 
-      <h2>2. INR deposit refunds — when we issue them</h2>
+      <h2>2. UGX deposit refunds — when we issue them</h2>
       <p>
-        We issue an INR refund only in the following narrow scenarios, where the deposit has{" "}
+        We issue an UGX refund only in the following narrow scenarios, where the deposit has{" "}
         <strong>not</strong> been used to purchase any VDA or to fund any other transaction on
         the Platform:
       </p>
       <ul>
         <li><strong>Failed credit.</strong> Your bank or Mobile Money app shows a successful debit but the deposit is not credited to your UGX balance within 24 hours, and our verification confirms the payment was not received or could not be reconciled.</li>
         <li><strong>Duplicate debit.</strong> Razorpay processes the same deposit attempt more than once because of a network or gateway error.</li>
-        <li><strong>Account closed before use.</strong> Your account is suspended or closed for KYC, AML, or sanctions reasons before the deposited INR is used to trade or withdraw, and applicable law and our internal policies permit the return of funds.</li>
+        <li><strong>Account closed before use.</strong> Your account is suspended or closed for KYC, AML, or sanctions reasons before the deposited UGX is used to trade or withdraw, and applicable law and our internal policies permit the return of funds.</li>
         <li><strong>Wrong-name or third-party deposit.</strong> Funds were received from a bank account or Mobile Money number whose holder name does not match your verified KYC name; such deposits are reversed to source.</li>
       </ul>
 
@@ -88,7 +88,7 @@ export default function RefundPage() {
         <li>your registered mobile number and the last four digits of your KYC PAN;</li>
         <li>the UG Coin deposit transaction ID (begins with <code>TXN-</code>);</li>
         <li>the Razorpay payment ID (begins with <code>pay_</code>);</li>
-        <li>the date, time, and INR amount of the deposit;</li>
+        <li>the date, time, and UGX amount of the deposit;</li>
         <li>a screenshot of the bank or Mobile Money debit confirmation.</li>
       </ul>
       <p>
@@ -98,7 +98,7 @@ export default function RefundPage() {
 
       <h2>7. Razorpay&rsquo;s role</h2>
       <p>
-        Razorpay Software Private Limited is engaged solely as the payment aggregator for INR
+        Razorpay Software Private Limited is engaged solely as the payment aggregator for UGX
         deposits. The underlying VDA transactions on the Platform are not processed through
         Razorpay and are not within Razorpay&rsquo;s scope. Disputes about VDA trades must be
         raised with us directly and not as a payment dispute with Razorpay.

@@ -53,17 +53,17 @@ const TradeFormModal: React.FC<TradeFormModalProps> = ({
   const amountNum = parseFloat(amount) || 0;
   const totalNum = parseFloat(total) || 0;
   
-  // INR value for limit checks — convert non-UGX quote via {quote}-UGX pair
-  const getInrValue = (): number => {
+  // UGX value for limit checks — convert non-UGX quote via {quote}-UGX pair
+  const getUgxValue = (): number => {
     if (quoteAsset === 'UGX') return totalNum;
-    const quoteInrPair = pairs.find(p => p.symbol === `${quoteAsset}-UGX`);
-    if (quoteInrPair && quoteInrPair.price > 0) {
-      return totalNum * quoteInrPair.price;
+    const quoteUgxPair = pairs.find(p => p.symbol === `${quoteAsset}-UGX`);
+    if (quoteUgxPair && quoteUgxPair.price > 0) {
+      return totalNum * quoteUgxPair.price;
     }
     return 0;
   };
 
-  const inrValue = getInrValue();
+  const ugxValue = getUgxValue();
 
   // Get current pair data for icon and permissions
   const currentPair = pairs.find(p => p.symbol === symbol || p.baseCurrency === baseAsset);
@@ -76,8 +76,8 @@ const TradeFormModal: React.FC<TradeFormModalProps> = ({
   // Token-specific transaction limits (from admin settings)
   const tokenMinAmount = permissions?.minTransactionAmount || 0;
   const tokenMaxAmount = permissions?.maxTransactionAmount || 0;
-  const isBelowTokenMin = tokenMinAmount > 0 && totalNum > 0 && inrValue < tokenMinAmount;
-  const isAboveTokenMax = tokenMaxAmount > 0 && totalNum > 0 && inrValue > tokenMaxAmount;
+  const isBelowTokenMin = tokenMinAmount > 0 && totalNum > 0 && ugxValue < tokenMinAmount;
+  const isAboveTokenMax = tokenMaxAmount > 0 && totalNum > 0 && ugxValue > tokenMaxAmount;
 
   // Reset form when modal opens/closes or pair changes
   useEffect(() => {
@@ -558,7 +558,7 @@ const TradeFormModal: React.FC<TradeFormModalProps> = ({
               }}
             >
               <InfoCircleOutlined />
-              Minimum transaction for {baseAsset} is UGX {tokenMinAmount.toFixed(2)} (current: UGX {inrValue.toFixed(2)})
+              Minimum transaction for {baseAsset} is UGX {tokenMinAmount.toFixed(2)} (current: UGX {ugxValue.toFixed(2)})
             </motion.div>
           )}
         </AnimatePresence>
@@ -584,7 +584,7 @@ const TradeFormModal: React.FC<TradeFormModalProps> = ({
               }}
             >
               <InfoCircleOutlined />
-              Maximum transaction for {baseAsset} is UGX {tokenMaxAmount.toFixed(2)} (current: UGX {inrValue.toFixed(2)})
+              Maximum transaction for {baseAsset} is UGX {tokenMaxAmount.toFixed(2)} (current: UGX {ugxValue.toFixed(2)})
             </motion.div>
           )}
         </AnimatePresence>
