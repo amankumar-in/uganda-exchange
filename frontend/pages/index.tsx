@@ -1,6 +1,8 @@
 import Head from "next/head";
 import Header, { HEADER_HEIGHT } from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import TradingHeroSection from "@/components/home/TradingHeroSection";
+import OWCSection from "@/components/home/OWCSection";
 import HeroSection from "@/components/home/HeroSection";
 import LandSection from "@/components/home/LandSection";
 import CommoditySection from "@/components/home/CommoditySection";
@@ -43,10 +45,12 @@ export default function Home() {
       <div style={pageStyle}>
         <Header />
         <main style={mainStyle}>
-          <HeroSection />
+          <TradingHeroSection />
+          <OWCSection />
           <LandSection />
           <CommoditySection />
           <CelebritySection />
+          <HeroSection />
           <EcosystemSection />
           <FeaturesSection />
           <MarketsSection />

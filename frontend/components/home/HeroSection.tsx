@@ -3,7 +3,7 @@ import { RocketOutlined, ArrowRightOutlined } from "@ant-design/icons";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "motion/react";
-import { MAX_CONTENT_WIDTH, HEADER_HEIGHT } from "../layout/Header";
+import { MAX_CONTENT_WIDTH } from "../layout/Header";
 import { fontWeights } from "@/theme/themeConfig";
 import { useThemeMode } from "@/context/ThemeContext";
 
@@ -33,11 +33,11 @@ export default function HeroSection() {
   return (
     <section
       style={{
-        minHeight: `calc(100vh - ${HEADER_HEIGHT}px)`,
+        padding: `${token.paddingXL * 3}px 0`,
         position: "relative",
         overflow: "hidden",
         display: "flex",
-        alignItems: isTablet ? "flex-start" : "center",
+        alignItems: "center",
         // Rich gradient background - not generic purple
         background: isDark
           ? `linear-gradient(135deg, ${colors.deepNavy} 0%, #0f172a 40%, #1e1b4b 70%, #0f172a 100%)`
