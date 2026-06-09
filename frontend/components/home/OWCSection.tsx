@@ -1,14 +1,6 @@
 import { Grid, theme } from "antd";
-import {
-  TeamOutlined,
-  GiftOutlined,
-  ToolOutlined,
-  ShopOutlined,
-  BuildOutlined,
-  RiseOutlined,
-  FlagOutlined,
-} from "@ant-design/icons";
 import { motion } from "motion/react";
+import { TeamOutlined, GiftOutlined, RiseOutlined } from "@ant-design/icons";
 import { MAX_CONTENT_WIDTH } from "../layout/Header";
 import { fontWeights } from "@/theme/themeConfig";
 import { useThemeMode } from "@/context/ThemeContext";
@@ -16,43 +8,39 @@ import { useThemeMode } from "@/context/ThemeContext";
 const { useToken } = theme;
 const { useBreakpoint } = Grid;
 
-const objectives = [
+const themeColor = {
+  heading: "#1e1b4b",
+  headingDark: "#ffffff",
+  body: "rgba(30, 27, 75, 0.8)",
+  bodyDark: "rgba(255,255,255,0.8)",
+  bodyMuted: "rgba(30, 27, 75, 0.75)",
+  bodyMutedDark: "rgba(255,255,255,0.75)",
+  gradient: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+  accent: "#667eea",
+};
+
+const features = [
   {
     icon: <TeamOutlined />,
-    title: "Mobilize Commercial Agriculture",
-    description: "Engage households in productive farming to boost incomes.",
+    title: "Commercial Agriculture",
+    description: "Mobilize households into productive farming.",
   },
   {
     icon: <GiftOutlined />,
-    title: "Equitable Input Distribution",
-    description: "Deliver seeds, livestock, and tools fairly and on time.",
-  },
-  {
-    icon: <ToolOutlined />,
-    title: "Rural Technology Upgrade",
-    description: "Help smallholder farmers become small-scale industrialists.",
-  },
-  {
-    icon: <ShopOutlined />,
-    title: "Local Enterprise Growth",
-    description: "Stimulate community enterprise development nationwide.",
-  },
-  {
-    icon: <BuildOutlined />,
-    title: "Rural Infrastructure",
-    description: "Facilitate infrastructure development across rural areas.",
+    title: "Equitable Inputs",
+    description: "Seeds, livestock, and tools distributed nationwide.",
   },
   {
     icon: <RiseOutlined />,
-    title: "Financial Inclusion",
-    description: "Empower the 68% of Ugandans outside the money economy.",
+    title: "Rural Prosperity",
+    description: "Reach communities across all 112 districts.",
   },
 ];
 
-const phases = [
-  { label: "Phase 1", title: "Mobilization", description: "Sensitize farmers and drive mindset change toward commercial agriculture." },
-  { label: "Phase 2", title: "Stabilization", description: "Secure gains through policy reform and close systemic gaps." },
-  { label: "Phase 3", title: "Consolidation", description: "Deepen adoption, attract investment, and build skilling institutions." },
+const highlights = [
+  { value: "July 2013", label: "Programme launched" },
+  { value: "112", label: "Districts covered" },
+  { value: "68%", label: "Target population reached" },
 ];
 
 export default function OWCSection() {
@@ -63,173 +51,187 @@ export default function OWCSection() {
   const isMobile = !screens.md;
   const isTablet = !screens.lg;
 
-  const accent = isDark ? "#fbbf24" : "#b45309";
-  const textColor = isDark ? "rgba(255,255,255,0.85)" : "rgba(0,0,0,0.7)";
-
   return (
     <section
       style={{
-        padding: `${token.paddingXL * 2.5}px ${token.paddingLG}px`,
+        padding: `${token.paddingXL * 3}px ${token.paddingLG}px`,
+        position: "relative",
+        overflow: "hidden",
         background: isDark
-          ? "linear-gradient(180deg, #1a1408 0%, #0f0f0f 100%)"
-          : "linear-gradient(180deg, #fffbeb 0%, #ffffff 100%)",
+          ? "linear-gradient(160deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%)"
+          : "linear-gradient(160deg, #eef2ff 0%, #e0e7ff 50%, #eef2ff 100%)",
       }}
     >
-      <div style={{ maxWidth: MAX_CONTENT_WIDTH, margin: "0 auto" }}>
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-80px" }}
-          transition={{ duration: 0.6 }}
-          style={{ textAlign: "center", marginBottom: token.marginXL * 2 }}
-        >
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: token.marginXS,
-              padding: `${token.paddingXS}px ${token.paddingMD}px`,
-              borderRadius: 50,
-              marginBottom: token.marginMD,
-              background: isDark ? "rgba(251, 191, 36, 0.12)" : "rgba(180, 83, 9, 0.08)",
-              border: isDark ? "1px solid rgba(251, 191, 36, 0.25)" : "1px solid rgba(180, 83, 9, 0.15)",
-            }}
-          >
-            <FlagOutlined style={{ color: accent, fontSize: 14 }} />
-            <span style={{ fontSize: token.fontSizeSM, fontWeight: fontWeights.semibold, color: accent }}>
-              National Programme
-            </span>
-          </div>
-
-          <h2
-            style={{
-              fontSize: isMobile ? 28 : isTablet ? 36 : 42,
-              fontWeight: 800,
-              lineHeight: 1.15,
-              letterSpacing: "-0.02em",
-              color: isDark ? "#ffffff" : "#1c1917",
-              marginBottom: token.marginMD,
-            }}
-          >
-            Operation Wealth Creation
-          </h2>
-
-          <p
-            style={{
-              fontSize: isMobile ? 15 : 17,
-              lineHeight: 1.7,
-              color: textColor,
-              maxWidth: 720,
-              margin: "0 auto",
-            }}
-          >
-            OG Coin builds on the successful Luwero-Rwenzori Triangle pilot supporting Civilian-Veterans.
-          </p>
-        </motion.div>
-
+      <div style={{ maxWidth: MAX_CONTENT_WIDTH, margin: "0 auto", position: "relative", zIndex: 2 }}>
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: isMobile ? "1fr" : isTablet ? "1fr 1fr" : "1fr 1fr 1fr",
-            gap: token.marginMD,
-            marginBottom: token.marginXL * 2,
+            gridTemplateColumns: isTablet ? "1fr" : "1fr 1fr",
+            gap: token.marginXL * 2,
+            alignItems: "center",
           }}
         >
-          {objectives.map((item, index) => (
-            <motion.div
-              key={item.title}
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: index * 0.06 }}
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6 }}
+          >
+            <h2
               style={{
+                fontSize: isMobile ? 32 : isTablet ? 40 : 48,
+                fontWeight: 800,
+                marginBottom: token.marginLG,
+                color: isDark ? themeColor.headingDark : themeColor.heading,
+                letterSpacing: "-0.02em",
+                lineHeight: 1.1,
+              }}
+            >
+              Building on{" "}
+              <span
+                style={{
+                  display: "inline-block",
+                  color: "transparent",
+                  backgroundImage: themeColor.gradient,
+                  WebkitBackgroundClip: "text",
+                  backgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                }}
+              >
+                Operation Wealth Creation
+              </span>
+            </h2>
+
+            <p
+              style={{
+                fontSize: isMobile ? 16 : 18,
+                lineHeight: 1.7,
+                color: isDark ? themeColor.bodyDark : themeColor.body,
+                marginBottom: token.marginXL,
+                maxWidth: 520,
+              }}
+            >
+              A national programme to raise household incomes by transforming subsistence farmers into commercial producers.
+            </p>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: token.marginLG }}>
+              {features.map((feature, index) => (
+                <motion.div
+                  key={feature.title}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: index * 0.15 }}
+                  style={{ display: "flex", alignItems: "flex-start", gap: token.marginMD }}
+                >
+                  <div
+                    style={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 12,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 24,
+                      color: "#fff",
+                      background: themeColor.gradient,
+                      flexShrink: 0,
+                    }}
+                  >
+                    {feature.icon}
+                  </div>
+                  <div>
+                    <h3
+                      style={{
+                        fontSize: token.fontSizeLG,
+                        fontWeight: fontWeights.bold,
+                        color: isDark ? themeColor.headingDark : themeColor.heading,
+                        marginBottom: 4,
+                      }}
+                    >
+                      {feature.title}
+                    </h3>
+                    <p
+                      style={{
+                        fontSize: token.fontSize,
+                        color: isDark ? themeColor.bodyMutedDark : themeColor.bodyMuted,
+                        margin: 0,
+                      }}
+                    >
+                      {feature.description}
+                    </p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            style={{
+              height: isMobile ? 280 : 400,
+              borderRadius: 24,
+              background: isDark ? "rgba(255,255,255,0.05)" : "rgba(102, 126, 234, 0.1)",
+              border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "rgba(102, 126, 234, 0.2)"}`,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: token.paddingXL,
+            }}
+          >
+            <div
+              style={{
+                width: "100%",
                 padding: token.paddingLG,
-                borderRadius: token.borderRadiusLG,
-                background: isDark ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.8)",
-                border: isDark ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(0,0,0,0.06)",
+                background: isDark ? "rgba(0,0,0,0.4)" : "rgba(255,255,255,0.85)",
+                backdropFilter: "blur(10px)",
+                borderRadius: 16,
+                border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "rgba(102, 126, 234, 0.2)"}`,
               }}
             >
               <div
                 style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 10,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  marginBottom: token.marginSM,
-                  fontSize: 18,
-                  color: accent,
-                  background: isDark ? "rgba(251, 191, 36, 0.12)" : "rgba(180, 83, 9, 0.08)",
-                }}
-              >
-                {item.icon}
-              </div>
-              <div
-                style={{
-                  fontSize: token.fontSize,
+                  fontSize: token.fontSizeSM,
                   fontWeight: fontWeights.semibold,
-                  color: isDark ? "#ffffff" : "#1c1917",
-                  marginBottom: 4,
+                  color: themeColor.accent,
+                  textTransform: "uppercase",
+                  letterSpacing: 0.5,
+                  marginBottom: token.marginMD,
                 }}
               >
-                {item.title}
+                National Programme
               </div>
-              <div style={{ fontSize: token.fontSizeSM, lineHeight: 1.5, color: textColor }}>
-                {item.description}
+              <div style={{ display: "flex", flexDirection: "column", gap: token.marginMD }}>
+                {highlights.map((item) => (
+                  <div key={item.label}>
+                    <div
+                      style={{
+                        fontSize: isMobile ? 24 : 28,
+                        fontWeight: fontWeights.bold,
+                        color: isDark ? "#fff" : themeColor.heading,
+                        lineHeight: 1,
+                      }}
+                    >
+                      {item.value}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: token.fontSize,
+                        color: isDark ? themeColor.bodyMutedDark : themeColor.bodyMuted,
+                        marginTop: 4,
+                      }}
+                    >
+                      {item.label}
+                    </div>
+                  </div>
+                ))}
               </div>
-            </motion.div>
-          ))}
+            </div>
+          </motion.div>
         </div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-        >
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr",
-              gap: token.marginMD,
-              marginBottom: token.marginLG,
-            }}
-          >
-            {phases.map((phase) => (
-              <div
-                key={phase.label}
-                style={{
-                  padding: token.paddingMD,
-                  borderRadius: token.borderRadius,
-                  borderLeft: `3px solid ${accent}`,
-                  background: isDark ? "rgba(255,255,255,0.03)" : "rgba(180, 83, 9, 0.04)",
-                }}
-              >
-                <div style={{ fontSize: 11, fontWeight: fontWeights.semibold, color: accent, marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.5 }}>
-                  {phase.label}
-                </div>
-                <div style={{ fontSize: token.fontSize, fontWeight: fontWeights.semibold, color: isDark ? "#fff" : "#1c1917", marginBottom: 4 }}>
-                  {phase.title}
-                </div>
-                <div style={{ fontSize: token.fontSizeSM, lineHeight: 1.5, color: textColor }}>
-                  {phase.description}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <p
-            style={{
-              textAlign: "center",
-              fontSize: token.fontSizeSM,
-              color: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.45)",
-              margin: 0,
-            }}
-          >
-            Officers deployed across all 112 districts and municipalities — distributing seeds, livestock, poultry, and mechanization equipment nationwide.
-          </p>
-        </motion.div>
       </div>
     </section>
   );

@@ -3,7 +3,7 @@ import { RocketOutlined, ArrowRightOutlined } from "@ant-design/icons";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "motion/react";
-import { MAX_CONTENT_WIDTH } from "../layout/Header";
+import { MAX_CONTENT_WIDTH, HEADER_HEIGHT } from "../layout/Header";
 import { fontWeights } from "@/theme/themeConfig";
 import { useThemeMode } from "@/context/ThemeContext";
 
@@ -17,8 +17,8 @@ export default function HeroSection() {
   const isDark = mode === "dark";
   const isMobile = !screens.md;
   const isTablet = !screens.lg;
-  const headlineSize = isMobile ? 28 : isTablet ? 36 : 46;
-  const headlineAccentSize = isMobile ? 20 : isTablet ? 24 : 30;
+  const headlineSize = isMobile ? 40 : isTablet ? 45 : 58;
+  const headlineAccentSize = isMobile ? 30 : isTablet ? 30 : 38;
 
   // Deep, rich color palette - not generic
   const colors = {
@@ -33,7 +33,8 @@ export default function HeroSection() {
   return (
     <section
       style={{
-        padding: `${token.paddingXL * 3}px 0`,
+        minHeight: `calc(100vh - ${HEADER_HEIGHT}px)`,
+        padding: `${isMobile ? token.paddingMD : token.paddingXL * 3}px 0 ${isMobile ? token.paddingXL : token.paddingXL * 2}px`,
         position: "relative",
         overflow: "hidden",
         display: "flex",
@@ -80,7 +81,7 @@ export default function HeroSection() {
           maxWidth: MAX_CONTENT_WIDTH,
           width: "100%",
           margin: "0 auto",
-          padding: `${token.paddingXL * 2}px ${token.paddingLG}px`,
+          padding: `${isMobile ? token.paddingSM : token.paddingXL * 2}px ${token.paddingLG}px`,
           display: "grid",
           gridTemplateColumns: isTablet ? "1fr" : "1fr 1fr",
           alignItems: "center",
@@ -91,8 +92,8 @@ export default function HeroSection() {
       >
         {/* Left side - Text content */}
         <motion.div
-          initial={{ opacity: 0, x: -40 }}
-          animate={{ opacity: 1, x: 0 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
           transition={{ duration: 0.7, ease: "easeOut" }}
           style={{
             textAlign: isTablet ? "center" : "left",
@@ -111,11 +112,11 @@ export default function HeroSection() {
               gap: token.marginXS,
               padding: `${token.paddingXS + 2}px ${token.paddingSM + 4}px`,
               borderRadius: 50,
-              marginBottom: token.marginLG,
+              marginBottom: isMobile ? token.marginMD : token.marginLG,
               // Glassmorphism badge
               background: isDark
                 ? "rgba(59, 130, 246, 0.15)"
-                : "rgba(59, 130, 246, 0.12)",
+                : "rgba(59, 130, 246, 0.18)",
               backdropFilter: "blur(12px)",
               border: isDark
                 ? "1px solid rgba(59, 130, 246, 0.3)"
@@ -138,7 +139,7 @@ export default function HeroSection() {
               style={{
                 fontSize: token.fontSize,
                 fontWeight: fontWeights.medium,
-                color: isDark ? colors.vibrantCyan : colors.electricBlue,
+                color: isDark ? colors.vibrantCyan : "#1e40af",
               }}
             >
               Real World Assets & Crypto
@@ -151,12 +152,10 @@ export default function HeroSection() {
               fontWeight: 800,
               lineHeight: 1.1,
               marginBottom: token.marginMD,
-              color: isDark ? "#ffffff" : colors.deepNavy,
+              color: isDark ? "#ffffff" : "#0a0f1a",
               letterSpacing: "-0.02em",
-              textShadow: isTablet
-                ? isDark
-                  ? "0 2px 20px rgba(0,0,0,0.8)"
-                  : "0 2px 20px rgba(255,255,255,0.9)"
+              textShadow: isTablet && isDark
+                ? "0 2px 20px rgba(0,0,0,0.8)"
                 : undefined,
             }}
           >
@@ -164,16 +163,20 @@ export default function HeroSection() {
             <span style={{ display: "block" }}>
               <span
                 style={{
+                  display: "inline-block",
                   fontSize: headlineSize,
-                  // Bold gradient text - matching page theme
-                  background: `linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #06b6d4 100%)`,
+                  fontWeight: 800,
+                  color: "transparent",
+                  backgroundImage: isDark
+                    ? "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #06b6d4 100%)"
+                    : "linear-gradient(135deg, #1d4ed8 0%, #6d28d9 50%, #0e7490 100%)",
                   WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
                   backgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
                 }}
               >
-                Land, Commodity, & Celebrity{" "}
-              </span>
+                Land, Commodity, & Celebrity
+              </span>{" "}
               <span style={{ fontSize: headlineAccentSize }}>Coin Marketplace</span>
             </span>
           </h1>
@@ -181,18 +184,16 @@ export default function HeroSection() {
           {/* Subtitle */}
           <p
             style={{
-              fontSize: isMobile ? 15 : 18,
+              fontSize: isMobile ? 16 : 18,
               lineHeight: 1.6,
-              color: isDark ? "rgba(255,255,255,0.85)" : "rgba(0,0,0,0.7)",
+              color: isDark ? "rgba(255,255,255,0.9)" : "#1e293b",
               maxWidth: 520,
               marginTop: 0,
               marginBottom: token.marginMD,
               marginLeft: isTablet ? "auto" : 0,
               marginRight: isTablet ? "auto" : 0,
-              textShadow: isTablet
-                ? isDark
-                  ? "0 1px 12px rgba(0,0,0,0.8)"
-                  : "0 1px 12px rgba(255,255,255,0.95)"
+              textShadow: isTablet && isDark
+                ? "0 1px 12px rgba(0,0,0,0.8)"
                 : undefined,
             }}
           >
@@ -225,7 +226,7 @@ export default function HeroSection() {
                   style={{
                     height: isMobile ? 48 : 56,
                     paddingInline: isMobile ? 24 : 32,
-                    fontSize: isMobile ? 15 : 16,
+                    fontSize: isMobile ? 16 : 16,
                     fontWeight: fontWeights.bold,
                     borderRadius: 16,
                     border: "1px solid rgba(96, 165, 250, 0.4)",
@@ -271,12 +272,12 @@ export default function HeroSection() {
                     borderRadius: 16,
                     background: isDark
                       ? "rgba(255,255,255,0.08)"
-                      : "rgba(255,255,255,0.7)",
+                      : "rgba(255,255,255,0.95)",
                     backdropFilter: "blur(12px)",
                     border: isDark
                       ? "1px solid rgba(255,255,255,0.15)"
-                      : "1px solid rgba(0,0,0,0.1)",
-                    color: isDark ? "#ffffff" : colors.deepNavy,
+                      : "1px solid rgba(0,0,0,0.15)",
+                    color: isDark ? "#ffffff" : "#0a0f1a",
                     boxShadow: isDark
                       ? "0 4px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)"
                       : "0 4px 20px rgba(0,0,0,0.08)",
@@ -313,10 +314,10 @@ export default function HeroSection() {
                 )`
               : `linear-gradient(
                   to bottom,
-                  rgba(248, 250, 252, 0.98) 0%,
-                  rgba(248, 250, 252, 0.92) 30%,
-                  rgba(248, 250, 252, 0.65) 50%,
-                  transparent 70%
+                  rgba(255, 255, 255, 0.97) 0%,
+                  rgba(255, 255, 255, 0.94) 35%,
+                  rgba(248, 250, 252, 0.8) 55%,
+                  transparent 75%
                 )`,
           }}
         />

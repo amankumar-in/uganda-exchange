@@ -11,12 +11,6 @@ const { useBreakpoint } = Grid;
 
 const TRADING_SCREEN = "/images/home/18bdae5aa5c55c7079759a3b3f0791a7ccf6b3e7-3528x1922.webp";
 
-const stats = [
-  { value: "UGX First", label: "Trade in local currency" },
-  { value: "RWAs + Crypto", label: "Land, commodities & celebrities" },
-  { value: "Secure Exchange", label: "Built for Uganda's market" },
-];
-
 export default function TradingHeroSection() {
   const { token } = useToken();
   const screens = useBreakpoint();
@@ -28,88 +22,10 @@ export default function TradingHeroSection() {
 
   return (
     <section style={{ background: "#ffffff" }}>
-      {/* Light hero — Kraken-style centered signup */}
-      <div
-        style={{
-          maxWidth: MAX_CONTENT_WIDTH,
-          margin: "0 auto",
-          padding: `${isMobile ? token.paddingXL * 2 : token.paddingXL * 3}px ${token.paddingLG}px ${token.paddingXL}px`,
-          textAlign: "center",
-        }}
-      >
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-        >
-          <h1
-            style={{
-              fontSize: isMobile ? 36 : isTablet ? 48 : 56,
-              fontWeight: 800,
-              lineHeight: 1.1,
-              letterSpacing: "-0.03em",
-              color: "#0a0a0a",
-              marginBottom: token.marginMD,
-              maxWidth: 720,
-              marginLeft: "auto",
-              marginRight: "auto",
-            }}
-          >
-            Ownership, Brand Power, & Demand
-          </h1>
-
-          <p
-            style={{
-              fontSize: isMobile ? 16 : 18,
-              lineHeight: 1.6,
-              color: "rgba(0,0,0,0.55)",
-              maxWidth: 560,
-              margin: `0 auto ${token.marginXL * 2}px`,
-            }}
-          >
-            Crypto, land, commodities, and celebrity tokens - Uganda&apos;s home for digital assets of the future.
-          </p>
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr",
-              gap: isMobile ? token.marginLG : 0,
-              maxWidth: 800,
-              margin: "0 auto",
-              borderTop: isMobile ? "none" : "1px solid rgba(0,0,0,0.08)",
-              paddingTop: isMobile ? 0 : token.paddingXL,
-            }}
-          >
-            {stats.map((stat, i) => (
-              <div
-                key={stat.value}
-                style={{
-                  padding: isMobile ? 0 : `0 ${token.paddingLG}px`,
-                  borderLeft: !isMobile && i > 0 ? "1px solid rgba(0,0,0,0.08)" : "none",
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: isMobile ? 18 : 20,
-                    fontWeight: fontWeights.bold,
-                    color: "#0a0a0a",
-                    marginBottom: 4,
-                  }}
-                >
-                  {stat.value}
-                </div>
-                <div style={{ fontSize: 14, color: "rgba(0,0,0,0.5)" }}>{stat.label}</div>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-      </div>
-
       {/* Dark trading hero — platform showcase */}
       <div
         style={{
-          padding: `0 0 ${isMobile ? token.paddingXL : 0}`,
+          padding: `${token.paddingXL}px 0 ${isMobile ? token.paddingXL : 0}`,
           background: "#ffffff",
           display: "flex",
           justifyContent: "center",
