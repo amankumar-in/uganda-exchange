@@ -17,6 +17,8 @@ export default function HeroSection() {
   const isDark = mode === "dark";
   const isMobile = !screens.md;
   const isTablet = !screens.lg;
+  const headlineSize = isMobile ? 28 : isTablet ? 36 : 46;
+  const headlineAccentSize = isMobile ? 20 : isTablet ? 24 : 30;
 
   // Deep, rich color palette - not generic
   const colors = {
@@ -146,7 +148,6 @@ export default function HeroSection() {
           {/* Main heading - bold, impactful */}
           <h1
             style={{
-              fontSize: isMobile ? 36 : isTablet ? 48 : 64,
               fontWeight: 800,
               lineHeight: 1.1,
               marginBottom: token.marginMD,
@@ -159,21 +160,22 @@ export default function HeroSection() {
                 : undefined,
             }}
           >
-            Uganda's
-            <br />
-            <span
-              style={{
-                // Bold gradient text - matching page theme
-                background: `linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #06b6d4 100%)`,
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-              }}
-            >
-              Land, Commodity, & Celebrity
+            <span style={{ fontSize: headlineAccentSize, display: "block" }}>Uganda&apos;s</span>
+            <span style={{ display: "block" }}>
+              <span
+                style={{
+                  fontSize: headlineSize,
+                  // Bold gradient text - matching page theme
+                  background: `linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #06b6d4 100%)`,
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                }}
+              >
+                Land, Commodity, & Celebrity{" "}
+              </span>
+              <span style={{ fontSize: headlineAccentSize }}>Coin Marketplace</span>
             </span>
-            <br />
-            Coin Marketplace
           </h1>
 
           {/* Subtitle */}
