@@ -186,7 +186,7 @@ export default function LoginPage() {
             }}
           >
             <Image
-              src="/images/ugcoin-logo-no-text.svg"
+              src="/images/intuition-logo-no-text.svg"
               alt="UG Coin"
               width={40}
               height={40}
