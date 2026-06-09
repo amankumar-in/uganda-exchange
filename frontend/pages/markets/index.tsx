@@ -41,6 +41,7 @@ interface TradingPairExtended {
   iconUrl: string;
   _usdVolume?: number;
   isDemoCollegeCoin?: boolean;
+  assetType?: string;
 }
 
 // Filter pill component - responsive sizing
