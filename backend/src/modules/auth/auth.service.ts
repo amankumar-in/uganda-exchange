@@ -96,7 +96,7 @@ export class AuthService {
       ]);
 
       return {
-        message: 'Verification codes sent to your email and phone',
+        message: 'Verification code sent to your email',
       };
     }
 
