@@ -990,7 +990,7 @@ model Token {
   allowBuy       Boolean @default(false)
   allowSell      Boolean @default(false)
   allowTradeUsdt Boolean @default(false)
-  allowTradeUgx  Boolean @default(false)
+  allowTradeUgx  Boolean @default(true)
   allowTradeEth  Boolean @default(false)
   allowTradeTuit Boolean @default(false)
   allowDeposit   Boolean @default(false)
