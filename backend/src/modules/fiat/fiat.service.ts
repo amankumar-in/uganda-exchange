@@ -45,7 +45,7 @@ export class FiatService {
     this.consumerSecret = this.config.get<string>('PESAPAL_CONSUMER_SECRET') || '';
     this.ipnId = this.config.get<string>('PESAPAL_IPN_ID') || '';
     this.pesapalBaseUrl = this.config.get<string>('PESAPAL_BASE_URL') || 'https://pay.pesapal.com/v3';
-    this.frontendUrl = this.config.get<string>('FRONTEND_URL') || 'https://intuitionex.com';
+    this.frontendUrl = this.config.get<string>('FRONTEND_URL') || 'https://ugcoin.com';
 
     if (this.consumerKey && this.consumerSecret) {
       this.logger.log('Pesapal payment gateway configured');
@@ -155,11 +155,11 @@ export class FiatService {
         id: transaction.transactionId || transaction.id,
         currency: PLATFORM_CURRENCY,
         amount: amountUgx,
-        description: `Deposit UGX ${amountUgx.toLocaleString()} - InTuition Exchange`,
+        description: `Deposit UGX ${amountUgx.toLocaleString()} - UG Coin`,
         callback_url: callbackUrl,
         redirect_mode: '',
         notification_id: this.ipnId,
-        branch: 'InTuition Exchange',
+        branch: 'UG Coin',
         billing_address: {
           email_address: userEmail || '',
           phone_number: userPhone || '',

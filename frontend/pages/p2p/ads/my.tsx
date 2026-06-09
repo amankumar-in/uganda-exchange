@@ -351,7 +351,7 @@ const MyAdsPage: NextPageWithLayout = () => {
   return (
     <>
       <Head>
-        <title>My Ads | P2P | InTuition</title>
+        <title>My Ads | P2P | UG Coin</title>
       </Head>
 
       <div style={{ maxWidth: 1200, margin: '0 auto' }}>

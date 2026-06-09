@@ -1,4 +1,4 @@
-// InTuition Exchange - Financial Seed Round Page JavaScript
+// UG Coin - Financial Seed Round Page JavaScript
 
 // Tab Navigation
 document.addEventListener('DOMContentLoaded', function() {

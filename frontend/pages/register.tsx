@@ -216,8 +216,8 @@ export default function RegisterPage() {
   return (
     <>
       <Head>
-        <title>{step === 'otp' ? 'Verify Your Account' : 'Create Account'} - InTuition Exchange</title>
-        <meta name="description" content="Create your InTuition Exchange account" />
+        <title>{step === 'otp' ? 'Verify Your Account' : 'Create Account'} - UG Coin</title>
+        <meta name="description" content="Create your UG Coin account" />
       </Head>
 
       <div
@@ -298,7 +298,7 @@ export default function RegisterPage() {
           >
             <Image
               src="/images/intuition-logo-no-text.svg"
-              alt="InTuition"
+              alt="UG Coin"
               width={40}
               height={40}
             />
@@ -308,7 +308,7 @@ export default function RegisterPage() {
               fontWeight: fontWeights.bold,
               letterSpacing: '-0.02em',
             }}>
-              InTuition
+              UG Coin
             </span>
           </Link>
 

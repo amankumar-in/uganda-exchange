@@ -179,7 +179,7 @@ const AdDetailPage: NextPageWithLayout = () => {
   return (
     <>
       <Head>
-        <title>{actionText} {ad.asset} | P2P | InTuition</title>
+        <title>{actionText} {ad.asset} | P2P | UG Coin</title>
       </Head>
 
       <div style={{ maxWidth: 800, margin: '0 auto' }}>

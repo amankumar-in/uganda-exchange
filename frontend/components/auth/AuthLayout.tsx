@@ -122,11 +122,11 @@ export default function AuthLayout({
         <Link href="/" style={logoContainerStyle}>
           <Image
             src="/images/intuition-logo-no-text.svg"
-            alt="InTuition Exchange"
+            alt="UG Coin"
             width={token.controlHeightLG}
             height={token.controlHeightLG}
           />
-          <span style={logoTextStyle}>InTuition</span>
+          <span style={logoTextStyle}>UG Coin</span>
         </Link>
 
         {showBackToHome && (
@@ -150,7 +150,7 @@ export default function AuthLayout({
       {/* Footer */}
       <footer style={footerStyle}>
         <Text style={footerTextStyle}>
-          © {new Date().getFullYear()} InTuition Exchange
+          © {new Date().getFullYear()} UG Coin
           <Link href="/terms" style={footerLinkStyle}>Terms</Link>
           <Link href="/privacy" style={{ ...footerLinkStyle, marginLeft: token.marginMD }}>Privacy</Link>
         </Text>

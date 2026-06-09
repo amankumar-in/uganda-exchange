@@ -94,20 +94,20 @@ export class TuitTransferService {
 
     if (!authorizedWallet) {
       throw new NotFoundException(
-        'This wallet address is not found in our authorized list. Please contact help@intuitionexchange.com if you believe this is an error.',
+        'This wallet address is not found in our authorized list. Please contact help@ugcoin.com if you believe this is an error.',
       );
     }
 
     if (!authorizedWallet.isActive) {
       throw new BadRequestException(
-        'This wallet has been deactivated. Please contact help@intuitionexchange.com.',
+        'This wallet has been deactivated. Please contact help@ugcoin.com.',
       );
     }
 
     // Check if email matches (case-insensitive)
     if (!authorizedWallet.email) {
       throw new BadRequestException(
-        'No email is associated with this wallet. Please contact help@intuitionexchange.com with your Name, Email, and Wallet Address.',
+        'No email is associated with this wallet. Please contact help@ugcoin.com with your Name, Email, and Wallet Address.',
       );
     }
 

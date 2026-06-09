@@ -27,7 +27,7 @@ const steps = [
   {
     number: "03",
     icon: <LinkOutlined />,
-    title: "Connect with InTuition Exchange",
+    title: "Connect with UG Coin",
     description: "Link your Coins for College account to access the full range of trading options available for TUIT.",
   },
   {

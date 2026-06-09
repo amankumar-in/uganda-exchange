@@ -1,6 +1,6 @@
-# Intuition Exchange - Backend API
+# UG Coin - Backend API
 
-Backend API for Intuition Exchange cryptocurrency trading platform.
+Backend API for UG Coin cryptocurrency trading platform.
 
 ## Tech Stack
 
@@ -149,4 +149,4 @@ View full schema in `prisma/schema.prisma`
 
 ## License
 
-Proprietary - Intuition Exchange
+Proprietary - UG Coin

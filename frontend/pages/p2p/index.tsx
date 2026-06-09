@@ -357,7 +357,7 @@ const P2PMarketplace: NextPageWithLayout = () => {
     return (
       <>
         <Head>
-          <title>P2P Trading | InTuition</title>
+          <title>P2P Trading | UG Coin</title>
         </Head>
         <div style={{ maxWidth: 600, margin: '0 auto', textAlign: 'center', padding: token.paddingXL }}>
           <SafetyCertificateOutlined style={{ fontSize: 64, color: token.colorWarning, marginBottom: token.marginLG }} />
@@ -376,7 +376,7 @@ const P2PMarketplace: NextPageWithLayout = () => {
   return (
     <>
       <Head>
-        <title>P2P Marketplace | InTuition</title>
+        <title>P2P Marketplace | UG Coin</title>
       </Head>
 
       <div style={{ maxWidth: 1400, margin: '0 auto', padding: isMobile ? 0 : token.paddingLG }}>

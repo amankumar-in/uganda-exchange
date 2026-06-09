@@ -563,7 +563,7 @@ export default function MarketsPage() {
   if (pageLoading) {
     return (
       <>
-        <Head><title>Crypto Markets — Live INR Prices | InTuition Exchange</title></Head>
+        <Head><title>Crypto Markets — Live INR Prices | UG Coin</title></Head>
         {isAuthenticated ? (
           <DashboardLayout activeKey="markets">
             <Skeleton active paragraph={{ rows: 12 }} />
@@ -852,10 +852,10 @@ export default function MarketsPage() {
   return (
     <>
       <Head>
-        <title>Crypto Markets — Live UGX Prices | InTuition Exchange</title>
+        <title>Crypto Markets — Live UGX Prices | UG Coin</title>
         <meta
           name="description"
-          content="Live UGX prices for Bitcoin, Ethereum, and 300+ crypto assets. Buy, sell, and trade crypto and college coins on InTuition Exchange — Uganda's home for digital assets."
+          content="Live UGX prices for Bitcoin, Ethereum, and 300+ crypto assets. Buy, sell, and trade crypto and college coins on UG Coin — Uganda's home for digital assets."
         />
       </Head>
 

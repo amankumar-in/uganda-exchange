@@ -67,12 +67,12 @@ export default function AuthHeader() {
       <Link href="/" style={logoContainerStyle}>
         <Image
           src="/images/intuition-logo-no-text.svg"
-          alt="InTuition"
+          alt="UG Coin"
           width={token.controlHeightLG}
           height={token.controlHeightLG}
         />
         <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <span style={logoTextStyle}>InTuition</span>
+          <span style={logoTextStyle}>UG Coin</span>
           <span style={{ fontSize: token.fontSizeSM - 1, color: token.colorTextSecondary, lineHeight: 1, marginTop: -2 }}>Uganda</span>
         </div>
       </Link>

@@ -244,7 +244,7 @@ export default function WelcomeModal({
                       fontWeight: fontWeights.bold,
                     }}
                   >
-                    Welcome to InTuition Exchange! 🎉
+                    Welcome to UG Coin! 🎉
                   </motion.h2>
                   <motion.p
                     initial={{ opacity: 0 }}

@@ -8,10 +8,10 @@ export default function GrievanceBlock() {
       </p>
       <p>
         <strong>Grievance Officer</strong><br />
-        Head — Uganda Region, InTuition Exchange<br />
+        Head — Uganda Region, UG Coin<br />
         <br />
         Kampala, Uganda<br />       <br />
-        Email: <a href="mailto:help@intuitionexchange.com">help@intuitionexchange.com</a>
+        Email: <a href="mailto:help@ugcoin.com">help@ugcoin.com</a>
       </p>
       <p style={{ marginBottom: 0 }}>
         We acknowledge written complaints within 48 hours and aim to resolve them within 30

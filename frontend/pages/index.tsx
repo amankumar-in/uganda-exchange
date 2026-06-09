@@ -30,10 +30,10 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>InTuition Exchange — Buy Crypto in INR & Trade College Coins</title>
+        <title>UG Coin — Buy Crypto in INR & Trade College Coins</title>
         <meta
           name="description"
-          content="Buy crypto in UGX, mine TUIT, and pay for tuition with college coins. InTuition Exchange — Uganda's home for digital assets and campus money. Instant UGX deposits via Pesapal."
+          content="Buy crypto in UGX, mine TUIT, and pay for tuition with college coins. UG Coin — Uganda's home for digital assets and campus money. Instant UGX deposits via Pesapal."
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />

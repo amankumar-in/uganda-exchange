@@ -105,8 +105,8 @@ export default function LoginPage() {
   return (
     <>
       <Head>
-        <title>Login - InTuition Exchange</title>
-        <meta name="description" content="Login to your InTuition Exchange account" />
+        <title>Login - UG Coin</title>
+        <meta name="description" content="Login to your UG Coin account" />
       </Head>
 
       <div
@@ -186,8 +186,8 @@ export default function LoginPage() {
             }}
           >
             <Image
-              src="/images/intuition-logo-no-text.svg"
-              alt="InTuition"
+              src="/images/ugcoin-logo-no-text.svg"
+              alt="UG Coin"
               width={40}
               height={40}
             />
@@ -197,7 +197,7 @@ export default function LoginPage() {
               fontWeight: fontWeights.bold,
               letterSpacing: '-0.02em',
             }}>
-              InTuition
+              UG Coin
             </span>
           </Link>
 
@@ -454,7 +454,7 @@ export default function LoginPage() {
               </Title>
               <Text style={{ fontSize: isMobile ? token.fontSizeSM : token.fontSize, color: token.colorTextSecondary }}>
                 {isBridgeFlow
-                  ? 'Log in to your InTuition Exchange account to approve the connection'
+                  ? 'Log in to your UG Coin account to approve the connection'
                   : 'Enter your credentials to access your dashboard'}
               </Text>
             </div>

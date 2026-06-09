@@ -8,7 +8,7 @@
 >
 > our users from open market is also going to increase + in addition to users from student/college ecosystem.
 >
-> also we only want to present our exchange (InTuition Exchange) - that's the business for now. CFC, RFE etc are helpers as far as this pitch is concerned.
+> also we only want to present our exchange (UG Coin) - that's the business for now. CFC, RFE etc are helpers as far as this pitch is concerned.
 >
 > and I want more data, less paragraphs. Investors need to see what they get, why its valued like this, what are exit options, what exit looks like 3 or 5 years down the road.
 >
@@ -21,7 +21,7 @@ Assumptions are explicit so you can tweak them.
 
 ---
 
-## 1. Round & cap table snapshot (InTuition Exchange only)
+## 1. Round & cap table snapshot (UG Coin only)
 
 ### 1.1 Round terms
 
@@ -86,7 +86,7 @@ After 500k at 8M post:
 | Binance 2024          | Revenue **$16.8B** on volume **$7.3T** → ~**0.23%** effective capture |                                   |
 | Coinbase Q1 2024      | Revenue **$1.2B** on volume **$312B** → ~**0.38%** effective capture  |                                   |
 
-**Conservative assumption for InTuition Exchange projections:**
+**Conservative assumption for UG Coin projections:**
 **0.15% blended fee rate** (below large-exchange realised ranges).
 
 ### 3.2 Valuation multiples & exits
@@ -102,7 +102,7 @@ Low 4x, Base 8x, High 12x EV / Revenue.
 
 ---
 
-## 4. InTuition Exchange – user & college projections
+## 4. UG Coin – user & college projections
 
 Assumptions are explicit; adjust as needed.
 
@@ -213,14 +213,14 @@ These tables show **what investors get** under conservative, base, and strong ex
 | CoinDCX (India) | Valuation **$2.45B** at latest round; annualised revenue ≈ **$141M**, AUC $1.2B | Shows what a leading India-focused exchange can be worth.     |
 | WazirX (India)  | 24h volume ≈ **$0.30M** (~$110M annual)                                         | Illustrates local volume level even with regulatory overhang. |
 
-### 7.2 InTuition Exchange leverage points (data-oriented)
+### 7.2 UG Coin leverage points (data-oriented)
 
 Use bullets, not story, on your slide:
 
 * India crypto market: $2.6B → $13.9B by 2033, 18.48% CAGR
 * Global exchange platform market: $33.4B → $88.8B by 2033, 11.2% CAGR
 * First-month CFC app: **~500 early users** mining future college coins with zero marketing (your internal metric).
-* College pipeline plan: **1,350 colleges live by Year 3**, driving structurally captive order flow to InTuition Exchange.
+* College pipeline plan: **1,350 colleges live by Year 3**, driving structurally captive order flow to UG Coin.
 * Prior exchange experience: you previously ran a Prime-Trust-backed exchange that reached profitability in one month before Prime Trust’s own insolvency and Chapter 11 (shortfall up to $500M, 25k–50k creditors) forced shutdown at the custodian layer . This demonstrates ability to reach profitability quickly with a more resilient custody setup now.
 
 ---
@@ -260,7 +260,7 @@ For the deck, suggested charts (based on the tables above):
 >
 > we have our traditional growth line like any other exchange PLUS exponential growth because of colleges. And each college also brings in liquidity and assets in form of their coins. They also form exclusivity
 
-Here is an **updated, more aggressive, data-backed sheet** for **InTuition Exchange only**, tuned to:
+Here is an **updated, more aggressive, data-backed sheet** for **UG Coin only**, tuned to:
 
 * Faster user & revenue growth (crypto-style)
 * Dual funnel: open market + college tokens
@@ -270,7 +270,7 @@ Use this as the *numbers* backbone for your deck.
 
 ---
 
-## 1. Round & cap table (InTuition Exchange)
+## 1. Round & cap table (UG Coin)
 
 **Round terms (unchanged)**
 
@@ -340,7 +340,7 @@ Assumptions (you can tune in the deck):
 | Active traders per college (avg)   | 300           | 400            | 500              |
 | College ecosystem active users     | 100×300 = 30k | 600×400 = 240k | 1,350×500 = 675k |
 | Open-market active users           | 20k           | 160k           | 525k             |
-| **Total active users (InTuition)** | **50k**       | **400k**       | **1,200k**       |
+| **Total active users (UG Coin)** | **50k**       | **400k**       | **1,200k**       |
 
 This reflects:
 
@@ -357,7 +357,7 @@ Industry context:
 
 * Top CEXs handle trillions in annual volume for tens of millions of users. That implies **tens of thousands of dollars traded per active user per year** in many cases.
 
-Assumptions for InTuition (still below top-tier):
+Assumptions for UG Coin (still below top-tier):
 
 | Assumption                                    | Year 1  | Year 2  | Year 3  |
 | --------------------------------------------- | ------- | ------- | ------- |
@@ -395,7 +395,7 @@ You can optionally add 5–10% extra for listing, market-making spreads, and oth
 
 ## 5. College token AUM / liquidity (exclusivity effect)
 
-Assume each college token has a modest but growing circulating market cap, much of whose liquidity is on InTuition.
+Assume each college token has a modest but growing circulating market cap, much of whose liquidity is on UG Coin.
 
 | Assumption                            | Year 1 | Year 2 | Year 3 |
 | ------------------------------------- | ------ | ------ | ------ |
@@ -405,12 +405,12 @@ Assume each college token has a modest but growing circulating market cap, much 
 | ---------------------------------------- | -------- | --------- | --------- |
 | Cumulative colleges                      | 100      | 600       | 1,350     |
 | Avg token AUM per college                | $100k    | $200k     | $400k     |
-| **Total college token AUM on InTuition** | **$10M** | **$120M** | **$540M** |
+| **Total college token AUM on UG Coin** | **$10M** | **$120M** | **$540M** |
 
 This supports your “exclusivity” thesis:
 
 * Hundreds of illiquid, college-specific assets
-* Only practical trading venue: InTuition Exchange
+* Only practical trading venue: UG Coin
 * Adds depth and differentiation beyond standard BTC/ETH pairs
 
 ---

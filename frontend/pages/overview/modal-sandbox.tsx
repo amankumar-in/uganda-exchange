@@ -99,7 +99,7 @@ export default function ModalSandboxPage() {
   return (
     <>
       <Head>
-        <title>Modal Sandbox - InTuition Exchange</title>
+        <title>Modal Sandbox - UG Coin</title>
         <meta name="description" content="Design and test order status modal" />
       </Head>
 

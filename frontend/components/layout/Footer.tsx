@@ -56,7 +56,7 @@ const socialLinks = [
   { icon: <TwitterOutlined />, href: "https://twitter.com", label: "Twitter" },
   { icon: <LinkedinOutlined />, href: "https://linkedin.com", label: "LinkedIn" },
   { icon: <GithubOutlined />, href: "https://github.com", label: "GitHub" },
-  { icon: <MailOutlined />, href: "mailto:info@intuitionexchange.com", label: "Email" },
+  { icon: <MailOutlined />, href: "mailto:info@ugcoin.com", label: "Email" },
 ];
 
 export default function Footer() {
@@ -128,13 +128,13 @@ export default function Footer() {
               <Link href="/" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: token.marginSM }}>
                 <Image
                   src="/images/intuition-logo-no-text.svg"
-                  alt="InTuition Exchange"
+                  alt="UG Coin"
                   width={token.controlHeight}
                   height={token.controlHeight}
                 />
                 <div style={{ display: "flex", flexDirection: "column" }}>
                   <Title level={4} style={{ margin: 0, color: token.colorText }}>
-                    InTuition Exchange
+                    UG Coin
                   </Title>
                   <Text style={{ fontSize: token.fontSizeSM - 1, color: token.colorTextSecondary, lineHeight: 1, marginTop: -2 }}>Uganda</Text>
                 </div>
@@ -171,7 +171,7 @@ export default function Footer() {
         {/* Bottom Bar */}
         <div style={bottomBarStyle}>
           <Text style={{ color: token.colorTextTertiary, fontSize: token.fontSize }}>
-            © {new Date().getFullYear()} InTuition Exchange. All rights reserved.
+            © {new Date().getFullYear()} UG Coin. All rights reserved.
           </Text>
           <Space size="middle">
             <Link href="/terms" style={{ color: token.colorTextSecondary, fontSize: token.fontSize, textDecoration: "none" }}>

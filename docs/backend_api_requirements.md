@@ -1,7 +1,7 @@
-# Backend API Requirements - Intuition Exchange
+# Backend API Requirements - UG Coin
 
 ## Project Overview
-**Intuition Exchange** is a cryptocurrency exchange platform with fiat on/off ramps. The frontend is built with Next.js 13 and TypeScript, and requires a comprehensive backend API to handle:
+**UG Coin** is a cryptocurrency exchange platform with fiat on/off ramps. The frontend is built with Next.js 13 and TypeScript, and requires a comprehensive backend API to handle:
 - User authentication & KYC
 - Fiat deposits/withdrawals (Stripe integration)
 - Crypto deposits/withdrawals (Binance API integration)
@@ -236,7 +236,7 @@ GET    /api/fiat/wire/instructions  - Get wire transfer instructions
   "bankName": "Prime Trust Bank",
   "accountNumber": "1234567890",
   "routingNumber": "987654321",
-  "accountName": "Intuition Exchange - User #12345",
+  "accountName": "UG Coin - User #12345",
   "reference": "USER12345"
 }
 ```
@@ -755,7 +755,7 @@ TWILIO_PHONE_NUMBER=+1234567890
 
 # SendGrid (Email)
 SENDGRID_API_KEY=your_sendgrid_key
-FROM_EMAIL=noreply@intuitionexchange.com
+FROM_EMAIL=noreply@ugcoin.com
 
 # Blockchain APIs
 ALCHEMY_API_KEY=your_alchemy_key

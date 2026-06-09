@@ -323,7 +323,7 @@ export default function HeroSection() {
       {/* Hand with phone emerging from bottom edge - positioned to section */}
       <Image
         src="/images/hero/layer01.png"
-        alt="InTuition Exchange App"
+        alt="UG Coin App"
         width={500}
         height={600}
         priority

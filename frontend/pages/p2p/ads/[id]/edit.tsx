@@ -142,7 +142,7 @@ const EditAdPage: NextPageWithLayout = () => {
   return (
     <>
       <Head>
-        <title>Edit Ad | P2P | InTuition</title>
+        <title>Edit Ad | P2P | UG Coin</title>
       </Head>
 
       <div style={{ maxWidth: 700, margin: '0 auto' }}>

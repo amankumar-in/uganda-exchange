@@ -161,7 +161,7 @@ const TuitionCenterPage: NextPageWithLayout = () => {
   return (
     <>
       <Head>
-        <title>Tuition Center - InTuition Exchange</title>
+        <title>Tuition Center - UG Coin</title>
         <meta name="description" content="Learn about investing and finance in a fun way!" />
       </Head>
 

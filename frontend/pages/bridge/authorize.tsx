@@ -114,7 +114,7 @@ export default function BridgeAuthorizePage() {
   return (
     <>
       <Head>
-        <title>Authorize Account Linking - InTuition Exchange</title>
+        <title>Authorize Account Linking - UG Coin</title>
       </Head>
 
       <div
@@ -152,7 +152,7 @@ export default function BridgeAuthorizePage() {
               <div style={{ width: 48, height: 48, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Image
                   src="/images/intuition-logo-no-text.svg"
-                  alt="InTuition"
+                  alt="UG Coin"
                   width={28}
                   height={28}
                 />
@@ -170,7 +170,7 @@ export default function BridgeAuthorizePage() {
           {/* Body */}
           <div style={{ padding: `${token.paddingLG}px ${token.paddingXL}px` }}>
             <Text style={{ fontSize: token.fontSizeLG, color: token.colorText, display: 'block', marginBottom: token.marginLG }}>
-              <strong>Coins for College</strong> wants to link to your InTuition Exchange account.
+              <strong>Coins for College</strong> wants to link to your UG Coin account.
             </Text>
 
             {/* Account linking info */}

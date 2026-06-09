@@ -5,9 +5,9 @@
  * changes. www/non-www counterparts are auto-included for every origin.
  */
 const HARDCODED_FRONTEND_ORIGINS = [
-  'https://intuitionexchange.com',
+  'https://ugcoin.com',
   'https://intuitionex.in',
-  'https://intuitionex.com',
+  'https://ugcoin.com',
   'https://intuition-ind-frontend.onrender.com',
   'https://uganda-exchange-frontend.onrender.com',
 ];

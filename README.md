@@ -1,11 +1,11 @@
-# Intuition Exchange
+# UG Coin
 
 A cryptocurrency exchange platform with fiat on/off ramps, spot trading, and P2P marketplace.
 
 ## Project Structure
 
 ```
-IntuitionExchange/
+UG CoinExchange/
 ├── frontend/          # Next.js frontend application
 │   ├── components/    # React components
 │   ├── pages/         # Next.js pages
@@ -92,4 +92,4 @@ See `/docs` folder for detailed API requirements and implementation plans.
 
 ## License
 
-Proprietary - Intuition Exchange
+Proprietary - UG Coin

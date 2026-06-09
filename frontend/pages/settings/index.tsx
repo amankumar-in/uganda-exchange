@@ -343,7 +343,7 @@ const SettingsPage: NextPageWithLayout = () => {
   if (loading) {
     return (
       <>
-        <Head><title>Settings - InTuition Exchange</title></Head>
+        <Head><title>Settings - UG Coin</title></Head>
         <Skeleton active paragraph={{ rows: 12 }} />
       </>
     );
@@ -839,7 +839,7 @@ const SettingsPage: NextPageWithLayout = () => {
   return (
     <>
       <Head>
-        <title>Settings - InTuition Exchange</title>
+        <title>Settings - UG Coin</title>
         <meta name="description" content="Manage your account settings" />
       </Head>
 

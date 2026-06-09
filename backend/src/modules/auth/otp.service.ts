@@ -87,7 +87,7 @@ export class OtpService {
     if (this.twilioClient) {
       try {
         await this.twilioClient.messages.create({
-          body: `Your Intuition Exchange verification code is: ${code}. Valid for 10 minutes.`,
+          body: `Your UG Coin verification code is: ${code}. Valid for 10 minutes.`,
           from: this.configService.get('TWILIO_PHONE_NUMBER'),
           to: `+${phoneCountry}${phone}`,
         });

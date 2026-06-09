@@ -520,7 +520,7 @@ const DashboardPage: NextPageWithLayout = () => {
     return (
       <>
         <Head>
-          <title>Overview - InTuition Exchange</title>
+          <title>Overview - UG Coin</title>
         </Head>
         <Skeleton active paragraph={{ rows: 12 }} />
       </>
@@ -530,8 +530,8 @@ const DashboardPage: NextPageWithLayout = () => {
   return (
     <>
       <Head>
-        <title>Overview - InTuition Exchange</title>
-        <meta name="description" content="Your InTuition Exchange overview" />
+        <title>Overview - UG Coin</title>
+        <meta name="description" content="Your UG Coin overview" />
       </Head>
 
       {/* Desktop: 2-column layout */}

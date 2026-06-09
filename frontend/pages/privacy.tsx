@@ -5,13 +5,13 @@ export default function PrivacyPage() {
   return (
     <LegalPageLayout
       title="Privacy Policy"
-      description="How InTuition Exchange collects, uses, shares, and retains personal data on the platform."
+      description="How UG Coin collects, uses, shares, and retains personal data on the platform."
       lastUpdated="27 April 2026"
     >
       <p>
-        This Privacy Policy explains how <strong>InTuition Exchange</strong>{" "}
+        This Privacy Policy explains how <strong>UG Coin</strong>{" "}
         (<strong>&ldquo;we&rdquo;</strong>, <strong>&ldquo;us&rdquo;</strong>) processes
-        personal data of users of the InTuition Exchange platform. It applies in addition to,
+        personal data of users of the UG Coin platform. It applies in addition to,
         and forms part of, our Terms of Service. This Policy is published in accordance with
         the Information Technology Act, 2000, the Information Technology (Reasonable Security
         Practices and Procedures and Sensitive Personal Data or Information) Rules, 2011, and
@@ -101,7 +101,7 @@ export default function PrivacyPage() {
       <p>
         No system is perfectly secure. If you believe your account has been compromised,
         contact us immediately at{" "}
-        <a href="mailto:help@intuitionexchange.com">help@intuitionexchange.com</a>.
+        <a href="mailto:help@ugcoin.com">help@ugcoin.com</a>.
       </p>
 
       <h2>7. Cookies</h2>
@@ -129,7 +129,7 @@ export default function PrivacyPage() {
       <p>
         Some rights are limited by our legal obligation to retain KYC and transaction records
         under the PMLA. To exercise your rights, write to{" "}
-        <a href="mailto:help@intuitionexchange.com">help@intuitionexchange.com</a> from your
+        <a href="mailto:help@ugcoin.com">help@ugcoin.com</a> from your
         registered email address.
       </p>
 

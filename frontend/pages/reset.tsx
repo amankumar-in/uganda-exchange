@@ -183,7 +183,7 @@ export default function ResetPasswordPage() {
   return (
     <>
       <Head>
-        <title>{getTitle()} - InTuition Exchange</title>
+        <title>{getTitle()} - UG Coin</title>
       </Head>
 
       <div
@@ -248,12 +248,12 @@ export default function ResetPasswordPage() {
             <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: token.marginSM, textDecoration: 'none' }}>
               <Image
                 src="/images/intuition-logo-no-text.svg"
-                alt="InTuition"
+                alt="UG Coin"
                 width={40}
                 height={40}
               />
               <span style={{ color: '#ffffff', fontSize: token.fontSizeHeading4, fontWeight: fontWeights.bold }}>
-                InTuition
+                UG Coin
               </span>
             </Link>
           </motion.div>
@@ -402,8 +402,8 @@ export default function ResetPasswordPage() {
             {/* Mobile Logo */}
             {isMobile && (
               <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: token.marginXS, textDecoration: 'none' }}>
-                <Image src="/images/intuition-logo-no-text.svg" alt="InTuition" width={32} height={32} />
-                <span style={{ color: token.colorText, fontSize: token.fontSizeLG, fontWeight: fontWeights.bold }}>InTuition</span>
+                <Image src="/images/intuition-logo-no-text.svg" alt="UG Coin" width={32} height={32} />
+                <span style={{ color: token.colorText, fontSize: token.fontSizeLG, fontWeight: fontWeights.bold }}>UG Coin</span>
               </Link>
             )}
             {!isMobile && <div />}

@@ -286,7 +286,7 @@ const TradeDetailPage: NextPageWithLayout = () => {
   return (
     <>
       <Head>
-        <title>Trade {trade.tradeNumber} | P2P | InTuition</title>
+        <title>Trade {trade.tradeNumber} | P2P | UG Coin</title>
       </Head>
 
       <div style={{ maxWidth: 900, margin: '0 auto' }}>

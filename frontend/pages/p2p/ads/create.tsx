@@ -138,7 +138,7 @@ const CreateAdPage: NextPageWithLayout = () => {
   return (
     <>
       <Head>
-        <title>Create Ad | P2P | InTuition</title>
+        <title>Create Ad | P2P | UG Coin</title>
       </Head>
 
       <div style={{ maxWidth: 700, margin: '0 auto' }}>

@@ -5,12 +5,12 @@ export default function RefundPage() {
   return (
     <LegalPageLayout
       title="Refund Policy"
-      description="When INR refunds are issued on the InTuition Exchange platform and how to request one. Crypto trades are not reversible."
+      description="When INR refunds are issued on the UG Coin platform and how to request one. Crypto trades are not reversible."
       lastUpdated="27 April 2026"
     >
       <p>
-        InTuition Exchange is a virtual digital asset (<strong>VDA</strong>) trading platform
-        operated by <strong>InTuition Exchange</strong>. This Refund Policy
+        UG Coin is a virtual digital asset (<strong>VDA</strong>) trading platform
+        operated by <strong>UG Coin</strong>. This Refund Policy
         explains the limited circumstances in which we issue an INR refund, the route the
         refund takes, and the timeline you can expect.
       </p>
@@ -81,12 +81,12 @@ export default function RefundPage() {
 
       <h2>6. How to request a refund</h2>
       <p>
-        Email <a href="mailto:help@intuitionexchange.com">help@intuitionexchange.com</a> from
+        Email <a href="mailto:help@ugcoin.com">help@ugcoin.com</a> from
         your registered email address with:
       </p>
       <ul>
         <li>your registered mobile number and the last four digits of your KYC PAN;</li>
-        <li>the InTuition deposit transaction ID (begins with <code>TXN-</code>);</li>
+        <li>the UG Coin deposit transaction ID (begins with <code>TXN-</code>);</li>
         <li>the Razorpay payment ID (begins with <code>pay_</code>);</li>
         <li>the date, time, and INR amount of the deposit;</li>
         <li>a screenshot of the bank or Mobile Money debit confirmation.</li>

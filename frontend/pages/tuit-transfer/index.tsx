@@ -79,7 +79,7 @@ const TuitTransferPage: NextPageWithLayout = () => {
   return (
     <>
       <Head>
-        <title>Link TUIT Wallet | Intuition Exchange</title>
+        <title>Link TUIT Wallet | UG Coin</title>
       </Head>
 
       <motion.div
@@ -168,7 +168,7 @@ function GuideSection({ activeTab, isDark, token }: GuideSectionProps) {
       </Title>
 
       <Paragraph style={{ fontSize: 16, color: token.colorTextSecondary, marginBottom: token.marginLG }}>
-        Transfer your TUIT token allocation to your Intuition Exchange account. Choose the option that applies to you.
+        Transfer your TUIT token allocation to your UG Coin account. Choose the option that applies to you.
       </Paragraph>
 
       {activeTab === 'flow1' ? (
@@ -195,7 +195,7 @@ function GuideSection({ activeTab, isDark, token }: GuideSectionProps) {
         <ul style={{ paddingLeft: 20, margin: 0, color: token.colorTextSecondary }}>
           <li>Contact your investment manager</li>
           <li>
-            Email <a href="mailto:help@intuitionexchange.com">help@intuitionexchange.com</a> with your Name, Email, and Wallet Address
+            Email <a href="mailto:help@ugcoin.com">help@ugcoin.com</a> with your Name, Email, and Wallet Address
           </li>
         </ul>
       </Card>

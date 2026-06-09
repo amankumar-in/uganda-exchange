@@ -52,7 +52,7 @@ const BuySellPage: NextPageWithLayout = () => {
     return (
       <>
         <Head>
-          <title>Buy & Sell - InTuition Exchange</title>
+          <title>Buy & Sell - UG Coin</title>
         </Head>
         <div style={{
           display: 'flex',
@@ -72,7 +72,7 @@ const BuySellPage: NextPageWithLayout = () => {
   return (
     <>
       <Head>
-        <title>Buy & Sell - InTuition Exchange</title>
+        <title>Buy & Sell - UG Coin</title>
         <meta name="description" content="Buy and sell cryptocurrency instantly with INR" />
       </Head>
 

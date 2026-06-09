@@ -180,7 +180,7 @@ export default function WatchlistPage() {
     return (
       <>
         <Head>
-          <title>Add to Watchlist - InTuition Exchange</title>
+          <title>Add to Watchlist - UG Coin</title>
         </Head>
         <DashboardLayout activeKey="overview">
           <Skeleton active paragraph={{ rows: 12 }} />
@@ -192,7 +192,7 @@ export default function WatchlistPage() {
   return (
     <>
       <Head>
-        <title>Add to Watchlist - InTuition Exchange</title>
+        <title>Add to Watchlist - UG Coin</title>
         <meta name="description" content="Add cryptocurrencies to your watchlist" />
       </Head>
 

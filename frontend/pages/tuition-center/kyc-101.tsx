@@ -1130,7 +1130,7 @@ export default function KYC101Page() {
   return (
     <>
       <Head>
-        <title>KYC 101 - InTuition Exchange</title>
+        <title>KYC 101 - UG Coin</title>
         <meta name="description" content="Learn about KYC verification" />
       </Head>
 

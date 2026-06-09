@@ -127,12 +127,12 @@ export default function Header() {
           <div style={logoContainerStyle}>
             <Image
               src="/images/intuition-logo-no-text.svg"
-              alt="InTuition Exchange"
+              alt="UG Coin"
               width={token.controlHeightLG}
               height={token.controlHeightLG}
             />
             <div style={{ display: "flex", flexDirection: "column" }}>
-              <span style={logoTextStyle}>InTuition Exchange</span>
+              <span style={logoTextStyle}>UG Coin</span>
               <span style={{ fontSize: token.fontSizeSM - 1, color: token.colorTextSecondary, lineHeight: 1, marginTop: -2 }}>Uganda</span>
             </div>
           </div>
@@ -247,7 +247,7 @@ export default function Header() {
             <div style={{ display: "flex", alignItems: "center", gap: token.marginSM }}>
               <Image
                 src="/images/intuition-logo-no-text.svg"
-                alt="InTuition"
+                alt="UG Coin"
                 width={36}
                 height={36}
               />
@@ -257,7 +257,7 @@ export default function Header() {
                   fontSize: token.fontSizeLG,
                   color: mode === "dark" ? "#ffffff" : "#0f172a",
                 }}>
-                  InTuition Exchange
+                  UG Coin
                 </span>
                 <span style={{ fontSize: token.fontSizeSM - 1, color: mode === "dark" ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.45)", lineHeight: 1, marginTop: -2 }}>Uganda</span>
               </div>

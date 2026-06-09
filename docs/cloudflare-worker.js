@@ -1,5 +1,5 @@
 /**
- * Cloudflare Worker for geo-routing intuitionexchange.com
+ * Cloudflare Worker for geo-routing ugcoin.com
  *
  * Routes Indian users to the India frontend deployment,
  * and all other users to the US frontend deployment.
@@ -7,7 +7,7 @@
  * Setup:
  * 1. Add your domain to Cloudflare (free tier)
  * 2. Create a Worker and paste this script
- * 3. Add a route: intuitionexchange.com/* -> this worker
+ * 3. Add a route: ugcoin.com/* -> this worker
  * 4. Set environment variables in Worker settings:
  *    - US_ORIGIN: https://us-frontend.onrender.com
  *    - IN_ORIGIN: https://india-frontend.onrender.com

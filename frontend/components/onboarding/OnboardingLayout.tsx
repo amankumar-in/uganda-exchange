@@ -194,7 +194,7 @@ const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
             <Link href="/overview" style={{ display: 'flex', alignItems: 'center', gap: token.marginXS, textDecoration: 'none' }}>
               <Image
                 src="/images/intuition-logo-no-text.svg"
-                alt="InTuition"
+                alt="UG Coin"
                 width={32}
                 height={32}
               />
@@ -206,7 +206,7 @@ const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
                     color: '#ffffff',
                     textShadow: '0 1px 2px rgba(0,0,0,0.3)',
                   }}>
-                    InTuition
+                    UG Coin
                   </span>
                   <span style={{ fontSize: token.fontSizeSM - 1, color: 'rgba(255,255,255,0.6)', lineHeight: 1, marginTop: -2 }}>Uganda</span>
                 </div>

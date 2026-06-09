@@ -985,7 +985,7 @@ const TransactionsPage: NextPageWithLayout = () => {
   if (pageLoading) {
     return (
       <>
-        <Head><title>Transactions - InTuition Exchange</title></Head>
+        <Head><title>Transactions - UG Coin</title></Head>
         <Skeleton active paragraph={{ rows: 12 }} />
       </>
     );
@@ -994,7 +994,7 @@ const TransactionsPage: NextPageWithLayout = () => {
   return (
     <>
       <Head>
-        <title>Transactions - InTuition Exchange</title>
+        <title>Transactions - UG Coin</title>
         <meta name="description" content="View your transaction history" />
       </Head>
 

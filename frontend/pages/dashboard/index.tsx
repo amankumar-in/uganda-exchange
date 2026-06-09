@@ -424,7 +424,7 @@ export default function DashboardPage() {
     return (
       <>
         <Head>
-          <title>Dashboard - InTuition Exchange</title>
+          <title>Dashboard - UG Coin</title>
         </Head>
         <DashboardLayout activeKey="dashboard">
           <Skeleton active paragraph={{ rows: 12 }} />
@@ -436,8 +436,8 @@ export default function DashboardPage() {
   return (
     <>
       <Head>
-        <title>Dashboard - InTuition Exchange</title>
-        <meta name="description" content="Your InTuition Exchange dashboard" />
+        <title>Dashboard - UG Coin</title>
+        <meta name="description" content="Your UG Coin dashboard" />
       </Head>
 
       <DashboardLayout activeKey="dashboard">

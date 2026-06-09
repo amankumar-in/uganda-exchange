@@ -820,12 +820,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           <Link href="/overview" style={logoStyle}>
             <Image
               src={isLearnerMode ? "/images/intuition-logo-no-text-amber.svg" : "/images/intuition-logo-no-text.svg"}
-              alt="InTuition"
+              alt="UG Coin"
               width={token.controlHeight}
               height={token.controlHeight}
             />
             <div style={{ display: 'flex', flexDirection: 'column', opacity: sidebarCollapsed && !isMobile ? 0 : 1, width: sidebarCollapsed && !isMobile ? 0 : 'auto', overflow: 'hidden', transition: 'all 0.3s ease' }}>
-              <span style={logoTextStyle}>InTuition</span>
+              <span style={logoTextStyle}>UG Coin</span>
               <span style={{ fontSize: token.fontSizeSM - 1, color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.4)', lineHeight: 1, marginTop: -2, whiteSpace: 'nowrap' }}>Uganda</span>
             </div>
           </Link>
@@ -962,7 +962,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               <Link href="/overview">
                 <Image
                   src={isLearnerMode ? "/images/intuition-logo-no-text-amber.svg" : "/images/intuition-logo-no-text.svg"}
-                  alt="InTuition"
+                  alt="UG Coin"
                   width={token.controlHeight}
                   height={token.controlHeight}
                   style={{ cursor: 'pointer' }}

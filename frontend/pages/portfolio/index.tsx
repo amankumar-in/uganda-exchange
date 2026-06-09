@@ -646,7 +646,7 @@ const WalletPage: NextPageWithLayout = () => {
     return (
       <>
         <Head>
-          <title>Wallet - InTuition Exchange</title>
+          <title>Wallet - UG Coin</title>
         </Head>
         <Skeleton active paragraph={{ rows: 12 }} />
       </>
@@ -656,7 +656,7 @@ const WalletPage: NextPageWithLayout = () => {
   return (
     <>
       <Head>
-        <title>Wallet - InTuition Exchange</title>
+        <title>Wallet - UG Coin</title>
         <meta name="description" content="Manage your crypto assets" />
       </Head>
       <style jsx global>{`

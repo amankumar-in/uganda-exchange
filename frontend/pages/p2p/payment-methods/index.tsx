@@ -306,7 +306,7 @@ const PaymentMethodsPage: NextPageWithLayout = () => {
   return (
     <>
       <Head>
-        <title>Payment Methods | P2P | InTuition</title>
+        <title>Payment Methods | P2P | UG Coin</title>
       </Head>
 
       <div style={{ maxWidth: 800, margin: '0 auto' }}>

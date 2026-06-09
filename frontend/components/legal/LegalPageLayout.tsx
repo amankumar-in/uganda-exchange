@@ -60,7 +60,7 @@ export default function LegalPageLayout({
   return (
     <>
       <Head>
-        <title>{`${title} — InTuition Exchange`}</title>
+        <title>{`${title} — UG Coin`}</title>
         <meta name="description" content={description} />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
@@ -88,7 +88,7 @@ export default function LegalPageLayout({
                   fontSize: token.fontSize,
                 }}
               >
-                Last updated: {lastUpdated} · InTuition Exchange
+                Last updated: {lastUpdated} · UG Coin
               </Text>
             </div>
           </section>

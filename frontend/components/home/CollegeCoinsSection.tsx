@@ -33,9 +33,9 @@ const features = [
   },
   {
     icon: <SwapOutlined />,
-    title: "Trade on InTuition Exchange",
+    title: "Trade on UG Coin",
     description:
-      "Convert coins to cash or other crypto through the InTuition Exchange. Full liquidity for students, parents, and employers.",
+      "Convert coins to cash or other crypto through the UG Coin. Full liquidity for students, parents, and employers.",
     color: "#3b82f6",
     colorLight: "#60a5fa",
     colorDark: "#1e40af",

@@ -214,7 +214,7 @@ export default function AdminP2PDisputesPage() {
   return (
     <AdminLayout selectedKey="p2p-disputes" title="P2P Disputes">
       <Head>
-        <title>P2P Disputes | Admin | InTuition</title>
+        <title>P2P Disputes | Admin | UG Coin</title>
       </Head>
 
       {/* Header */}

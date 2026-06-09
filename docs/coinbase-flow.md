@@ -45,7 +45,7 @@ User → Stripe Checkout/Payment → YOUR Bank → Update Ledger
 
 | Step | Action | API |
 |------|--------|-----|
-| 1 | User initiates deposit on Intuition | Your frontend |
+| 1 | User initiates deposit on UG Coin | Your frontend |
 | 2 | Create Stripe PaymentIntent | `POST /v1/payment_intents` |
 | 3 | User pays via card/bank | Stripe Checkout |
 | 4 | Stripe webhook confirms payment | `payment_intent.succeeded` |
@@ -58,7 +58,7 @@ User → Stripe Checkout/Payment → YOUR Bank → Update Ledger
 ### 2️⃣ User Buys Crypto (BTC with USD)
 
 ```
-User clicks "Buy BTC" → Intuition Backend → Coinbase Trade API → Update Ledger
+User clicks "Buy BTC" → UG Coin Backend → Coinbase Trade API → Update Ledger
 ```
 
 | Step | Action | API |
@@ -91,7 +91,7 @@ POST https://api.coinbase.com/api/v3/brokerage/orders
 ### 3️⃣ User Sells Crypto (BTC for USD)
 
 ```
-User clicks "Sell BTC" → Intuition Backend → Coinbase Trade API → Update Ledger
+User clicks "Sell BTC" → UG Coin Backend → Coinbase Trade API → Update Ledger
 ```
 
 | Step | Action | API |

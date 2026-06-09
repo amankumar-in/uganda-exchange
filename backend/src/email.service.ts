@@ -47,7 +47,7 @@ export class EmailService {
         <p>This code will expire in 10 minutes.</p>
         <p>If you didn't request this code, please ignore this email.</p>
         <hr>
-        <p style="color: #666; font-size: 12px;">InTuition Exchange</p>
+        <p style="color: #666; font-size: 12px;">UG Coin</p>
       </div>
     `;
 
@@ -55,7 +55,7 @@ export class EmailService {
       await this.client.sendMail({
         from: {
           address: this.fromEmail,
-          name: 'InTuition Exchange',
+          name: 'UG Coin',
         },
         to: [
           {
@@ -96,7 +96,7 @@ export class EmailService {
         <p>This link will expire in 1 hour.</p>
         <p>If you didn't request this, please ignore this email.</p>
         <hr>
-        <p style="color: #666; font-size: 12px;">InTuition Exchange</p>
+        <p style="color: #666; font-size: 12px;">UG Coin</p>
       </div>
     `;
 
@@ -104,7 +104,7 @@ export class EmailService {
       await this.client.sendMail({
         from: {
           address: this.fromEmail,
-          name: 'InTuition Exchange',
+          name: 'UG Coin',
         },
         to: [
           {
@@ -132,9 +132,9 @@ export class EmailService {
 
     const html = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2>Welcome to InTuition Exchange!</h2>
+        <h2>Welcome to UG Coin!</h2>
         <p>Hi ${name},</p>
-        <p>Thank you for joining InTuition Exchange. Your account has been successfully created.</p>
+        <p>Thank you for joining UG Coin. Your account has been successfully created.</p>
         <p>You can now:</p>
         <ul>
           <li>Complete your KYC verification</li>
@@ -148,7 +148,7 @@ export class EmailService {
           </a>
         </div>
         <hr>
-        <p style="color: #666; font-size: 12px;">InTuition Exchange</p>
+        <p style="color: #666; font-size: 12px;">UG Coin</p>
       </div>
     `;
 
@@ -156,7 +156,7 @@ export class EmailService {
       await this.client.sendMail({
         from: {
           address: this.fromEmail,
-          name: 'InTuition Exchange',
+          name: 'UG Coin',
         },
         to: [
           {
@@ -166,7 +166,7 @@ export class EmailService {
             },
           },
         ],
-        subject: 'Welcome to InTuition Exchange',
+        subject: 'Welcome to UG Coin',
         htmlbody: html,
       });
       console.log(`Welcome email sent to ${to}`);

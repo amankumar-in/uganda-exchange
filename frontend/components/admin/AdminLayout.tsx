@@ -139,7 +139,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
         <div style={{ padding: '16px', borderBottom: `1px solid ${token.colorBorderSecondary}` }}>
           <Space direction="vertical" size={4}>
             <Title level={4} style={{ margin: 0, color: token.colorText }}>
-              Intuition Admin
+              UG Coin Admin
             </Title>
             <Typography.Text style={{ color: token.colorTextSecondary, fontSize: 12 }}>
               {user.email}

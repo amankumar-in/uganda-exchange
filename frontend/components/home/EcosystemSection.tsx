@@ -34,7 +34,7 @@ const ecosystemItems = [
   {
     step: "03",
     icon: <DollarOutlined />,
-    title: "InTuition Exchange",
+    title: "UG Coin",
     description:
       "Trade coins for USD, USDC, or USDT. Full liquidity for students, parents, and employers.",
     color: "#f59e0b",

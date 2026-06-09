@@ -5,16 +5,16 @@ export default function TermsPage() {
   return (
     <LegalPageLayout
       title="Terms of Service"
-      description="Terms governing the use of the InTuition Exchange virtual digital asset trading platform operated by InTuition Exchange."
+      description="Terms governing the use of the UG Coin virtual digital asset trading platform operated by UG Coin."
       lastUpdated="27 April 2026"
     >
       <p>
         These Terms of Service (<strong>&ldquo;Terms&rdquo;</strong>) form a binding agreement
         between you (<strong>&ldquo;User&rdquo;</strong>, <strong>&ldquo;you&rdquo;</strong>)
-        and <strong>InTuition Exchange</strong>, a company
-        incorporated under the laws of Uganda, having its registered office at Kampala, Uganda (<strong>&ldquo;InTuition Exchange&rdquo;</strong>,{" "}
+        and <strong>UG Coin</strong>, a company
+        incorporated under the laws of Uganda, having its registered office at Kampala, Uganda (<strong>&ldquo;UG Coin&rdquo;</strong>,{" "}
         <strong>&ldquo;we&rdquo;</strong>, <strong>&ldquo;us&rdquo;</strong>), governing your
-        access to and use of the InTuition Exchange platform at intuitionexchange.com and any
+        access to and use of the UG Coin platform at ugcoin.com and any
         related services (the <strong>&ldquo;Platform&rdquo;</strong>).
       </p>
       <p>
@@ -47,7 +47,7 @@ export default function TermsPage() {
 
       <h2>3. KYC, AML, and CFT compliance</h2>
       <p>
-        InTuition is a Reporting Entity under the Prevention of Money Laundering Act, 2002
+        UG Coin is a Reporting Entity under the Prevention of Money Laundering Act, 2002
         (<strong>PMLA</strong>) read with the Ministry of Finance notification dated 7 March
         2023 bringing virtual digital asset service providers within the scope of the PMLA. Our
         registration with the relevant financial authorities in Uganda is in progress.
@@ -127,7 +127,7 @@ export default function TermsPage() {
 
       <h2>10. Limitation of liability</h2>
       <p>
-        To the fullest extent permitted by law, InTuition is not liable for indirect,
+        To the fullest extent permitted by law, UG Coin is not liable for indirect,
         incidental, consequential, special, or punitive damages, lost profits, lost data, or
         loss of goodwill arising from your use of the Platform. Our aggregate liability for any
         claim is limited to the total fees you have paid to us in the three months preceding
@@ -150,7 +150,7 @@ export default function TermsPage() {
       <p>
         These Terms are governed by Ugandan law. Any dispute arising out of or in connection
         with these Terms shall be referred to and finally resolved by arbitration under the
-        Arbitration and Conciliation Act, 1996, by a sole arbitrator appointed by InTuition.
+        Arbitration and Conciliation Act, 1996, by a sole arbitrator appointed by UG Coin.
         The seat and venue of arbitration is New Delhi and the proceedings shall be conducted
         in English. Subject to the arbitration clause, courts at New Delhi have exclusive
         jurisdiction.
@@ -165,7 +165,7 @@ export default function TermsPage() {
 
       <h2>14. Contact and grievance</h2>
       <p>
-        General queries: <a href="mailto:help@intuitionexchange.com">help@intuitionexchange.com</a>.
+        General queries: <a href="mailto:help@ugcoin.com">help@ugcoin.com</a>.
       </p>
       <GrievanceBlock />
     </LegalPageLayout>

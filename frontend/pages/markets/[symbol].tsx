@@ -432,7 +432,7 @@ export default function TokenDetailsPage() {
   if (pageLoading || !symbol) {
     return (
       <>
-        <Head><title>Buy Crypto in UGX — InTuition Exchange</title></Head>
+        <Head><title>Buy Crypto in UGX — UG Coin</title></Head>
         {isAuthenticated ? (
           <DashboardLayout activeKey="markets">
             <Skeleton active paragraph={{ rows: 12 }} />
@@ -1636,10 +1636,10 @@ export default function TokenDetailsPage() {
   return (
     <>
       <Head>
-        <title>{`Buy ${tokenData?.name || symbolStr} (${symbolStr}) in UGX — InTuition Exchange`}</title>
+        <title>{`Buy ${tokenData?.name || symbolStr} (${symbolStr}) in UGX — UG Coin`}</title>
         <meta
           name="description"
-          content={`Live ${tokenData?.name || symbolStr} (${symbolStr}) price in Ugandan Shillings. Buy, sell, and trade ${tokenData?.name || symbolStr} on InTuition Exchange — Uganda's home for crypto and college coins.`}
+          content={`Live ${tokenData?.name || symbolStr} (${symbolStr}) price in Ugandan Shillings. Buy, sell, and trade ${tokenData?.name || symbolStr} on UG Coin — Uganda's home for crypto and college coins.`}
         />
       </Head>
 

@@ -284,7 +284,7 @@ function ExchangePageContent() {
       return (
         <>
           <Head>
-            <title>Trade - InTuition Exchange</title>
+            <title>Trade - UG Coin</title>
           </Head>
           <div style={{ 
             display: 'flex', 
@@ -333,7 +333,7 @@ function ExchangePageContent() {
     return (
       <>
         <Head>
-          <title>Trade - InTuition Exchange</title>
+          <title>Trade - UG Coin</title>
         </Head>
         <div style={{ display: 'flex', width: '100%' }}>
             {/* Left - Markets skeleton */}
@@ -401,7 +401,7 @@ function ExchangePageContent() {
     return (
       <>
         <Head>
-          <title>Trade {selectedPair} - InTuition Exchange</title>
+          <title>Trade {selectedPair} - UG Coin</title>
         </Head>
         <MobileTradePage
             pairs={pairs}
@@ -454,7 +454,7 @@ function ExchangePageContent() {
   return (
     <>
       <Head>
-        <title>Trade {selectedPair} - InTuition Exchange</title>
+        <title>Trade {selectedPair} - UG Coin</title>
       </Head>
       <div style={{ 
           display: 'flex', 

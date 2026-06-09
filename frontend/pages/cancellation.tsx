@@ -5,12 +5,12 @@ export default function CancellationPage() {
   return (
     <LegalPageLayout
       title="Cancellation Policy"
-      description="What can be cancelled on the InTuition Exchange platform — open orders, pending withdrawals, and accounts — and what cannot."
+      description="What can be cancelled on the UG Coin platform — open orders, pending withdrawals, and accounts — and what cannot."
       lastUpdated="27 April 2026"
     >
       <p>
-        This Cancellation Policy explains what you can cancel on the InTuition Exchange
-        platform operated by <strong>InTuition Exchange</strong>, and what
+        This Cancellation Policy explains what you can cancel on the UG Coin
+        platform operated by <strong>UG Coin</strong>, and what
         cannot be cancelled because of how blockchain settlement and payment-rail processing
         work. Read it together with our Refund Policy and Terms of Service.
       </p>
@@ -65,7 +65,7 @@ export default function CancellationPage() {
 
       <h2>6. Account closure</h2>
       <ul>
-        <li>You may request closure of your InTuition account at any time by writing to <a href="mailto:help@intuitionexchange.com">help@intuitionexchange.com</a> from your registered email.</li>
+        <li>You may request closure of your UG Coin account at any time by writing to <a href="mailto:help@ugcoin.com">help@ugcoin.com</a> from your registered email.</li>
         <li>Before we close the account, you must close all open orders, withdraw your VDA balances, and withdraw your INR balance to your verified bank account. Any residual INR below the minimum withdrawal threshold may be retained as administrative cost.</li>
         <li>Closure is typically completed within 7 business days of all balances being settled.</li>
         <li>KYC, account, and transaction records are retained for at least <strong>five years</strong> after closure as required by Section 12 of the Prevention of Money Laundering Act, 2002. Closure does not result in deletion of these records.</li>
@@ -90,8 +90,8 @@ export default function CancellationPage() {
       <ul>
         <li><strong>Open orders</strong> — Trade screen, Open Orders panel.</li>
         <li><strong>INR withdrawals (Pending)</strong> — Portfolio screen, Withdrawals tab.</li>
-        <li><strong>Account closure</strong> — email <a href="mailto:help@intuitionexchange.com">help@intuitionexchange.com</a>.</li>
-        <li><strong>Anything else</strong> — email <a href="mailto:help@intuitionexchange.com">help@intuitionexchange.com</a>; we acknowledge within 48 hours.</li>
+        <li><strong>Account closure</strong> — email <a href="mailto:help@ugcoin.com">help@ugcoin.com</a>.</li>
+        <li><strong>Anything else</strong> — email <a href="mailto:help@ugcoin.com">help@ugcoin.com</a>; we acknowledge within 48 hours.</li>
       </ul>
 
       <h2>10. Grievance</h2>

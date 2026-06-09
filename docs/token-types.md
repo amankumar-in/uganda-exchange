@@ -1,6 +1,6 @@
 # Token Types & Price Discovery
 
-There are 4 types of tokens in IntuitionExchange. Each has different price discovery, trading, and display logic.
+There are 4 types of tokens in UG CoinExchange. Each has different price discovery, trading, and display logic.
 
 ---
 
