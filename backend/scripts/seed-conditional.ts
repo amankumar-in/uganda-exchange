@@ -12,13 +12,18 @@ async function main() {
   console.log('Checking if database needs seeding...');
 
   // Ensure all custom assets are properly flagged as native
-  await prisma.token.updateMany({
-    where: { 
-      assetType: { in: ['LAND', 'COMMODITY', 'CELEBRITY'] },
-      isNative: false
-    },
-    data: { isNative: true }
-  });
+  // (wrapped in try/catch in case the isNative column doesn't exist yet on this deployment)
+  try {
+    await prisma.token.updateMany({
+      where: { 
+        assetType: { in: ['LAND', 'COMMODITY', 'CELEBRITY'] },
+        isNative: false
+      },
+      data: { isNative: true }
+    });
+  } catch (e) {
+    console.warn('⚠ Could not update isNative flag (column may not exist yet, migration pending). Continuing...');
+  }
 
   const totalTokens = await prisma.token.count();
   const customCount = await prisma.token.count({
