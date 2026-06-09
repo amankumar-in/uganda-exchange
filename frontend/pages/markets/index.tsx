@@ -39,6 +39,7 @@ interface TradingPairExtended {
   baseCurrency: string;
   quoteCurrency: string;
   iconUrl: string;
+  hasCustomIcon?: boolean;
   _usdVolume?: number;
   isDemoCollegeCoin?: boolean;
   assetType?: string;
@@ -518,10 +519,9 @@ export default function MarketsPage() {
       // For custom asset tabs: tokens with a real uploaded image come first
       const isCustomTab = ['land', 'commodity', 'celebrity'].includes(activeTab);
       if (isCustomTab) {
-        const aHasImage = a.iconUrl && !a.iconUrl.includes('ui-avatars.com');
-        const bHasImage = b.iconUrl && !b.iconUrl.includes('ui-avatars.com');
-        if (aHasImage && !bHasImage) return -1;
-        if (!aHasImage && bHasImage) return 1;
+        const aHasImage = !!(a as TradingPairExtended).hasCustomIcon;
+        const bHasImage = !!(b as TradingPairExtended).hasCustomIcon;
+        if (aHasImage !== bHasImage) return aHasImage ? -1 : 1;
       }
 
       let comparison = 0;

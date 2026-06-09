@@ -56,6 +56,8 @@ interface TradingPair {
   baseCurrency: string;
   quoteCurrency: string;
   iconUrl: string;
+  /** True when iconUrl was set via admin panel; false when using CoinCap fallback */
+  hasCustomIcon?: boolean;
   _rawVolume24h?: number;
   _usdVolume?: number;
   // Demo college coin fields (practice coins pegged to real crypto, NOT Token.isCollegeCoin for real college tokens)
@@ -290,6 +292,7 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       activeTokens.forEach((token: any) => {
         const ugxPrice = token.currentPrice || Number(token.manualPrice) || 0;
+        const hasCustomIcon = !!token.iconUrl;
         const icon = token.iconUrl || getIconUrl(token.symbol);
         const permissions = {
           allowBuy: token.allowBuy ?? true,
@@ -303,7 +306,7 @@ export const ExchangeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         const pushPair = (quote: string, price: number, volume: number) => {
           const symbol = `${token.symbol}-${quote}`;
           const baseInfo = {
-            symbol, name: token.name, quote, baseCurrency: token.symbol, quoteCurrency: quote, iconUrl: icon,
+            symbol, name: token.name, quote, baseCurrency: token.symbol, quoteCurrency: quote, iconUrl: icon, hasCustomIcon,
           };
           baseProducts.set(symbol, baseInfo);
           tokenPairs.push({
