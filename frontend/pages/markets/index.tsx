@@ -515,6 +515,15 @@ export default function MarketsPage() {
     // 'colleges' filter is handled above by using collegePairs as base
 
     result.sort((a, b) => {
+      // For custom asset tabs: tokens with a real uploaded image come first
+      const isCustomTab = ['land', 'commodity', 'celebrity'].includes(activeTab);
+      if (isCustomTab) {
+        const aHasImage = a.iconUrl && !a.iconUrl.includes('ui-avatars.com');
+        const bHasImage = b.iconUrl && !b.iconUrl.includes('ui-avatars.com');
+        if (aHasImage && !bHasImage) return -1;
+        if (!aHasImage && bHasImage) return 1;
+      }
+
       let comparison = 0;
       const aVolume = (a as TradingPairExtended)._usdVolume || 0;
       const bVolume = (b as TradingPairExtended)._usdVolume || 0;
