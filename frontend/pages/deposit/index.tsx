@@ -18,6 +18,7 @@ import { useThemeMode } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
 import { getApiBaseUrl } from '@/services/api/config';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
+import { useExchange } from '@/context/ExchangeContext';
 
 const { useToken } = theme;
 const { useBreakpoint } = Grid;
@@ -46,6 +47,7 @@ const DepositPage = () => {
   const screens = useBreakpoint();
   const { mode } = useThemeMode();
   const { user } = useAuth();
+  const { refreshBalances } = useExchange();
   const isDark = mode === 'dark';
   const isMobile = !screens.md;
 
@@ -55,6 +57,27 @@ const DepositPage = () => {
   const [method, setMethod] = useState<PaymentMethod>('mobile_money');
   const [processingProgress, setProcessingProgress] = useState(0);
   const [processingLabel, setProcessingLabel] = useState('');
+  const [depositLimit, setDepositLimit] = useState<{ limit: number; used: number; available: number } | null>(null);
+
+  useEffect(() => {
+    const fetchDepositLimit = async () => {
+      try {
+        const apiBase = getApiBaseUrl();
+        const authToken = localStorage.getItem('authToken');
+        if (!authToken) return;
+        const res = await fetch(`${apiBase}/fiat/limit`, {
+          headers: { Authorization: `Bearer ${authToken}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setDepositLimit(data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch deposit limit', err);
+      }
+    };
+    fetchDepositLimit();
+  }, []);
 
   // Mobile money fields
   const [mobileNumber, setMobileNumber] = useState('');
@@ -136,8 +159,8 @@ const DepositPage = () => {
       setError('Minimum deposit is UGX 1,000');
       return;
     }
-    if (numericAmount > 40_000_000) {
-      setError('Maximum single deposit is UGX 40,000,000');
+    if (depositLimit && numericAmount > depositLimit.available) {
+      setError(`Maximum cumulative deposit limit exceeded. You can deposit up to UGX ${depositLimit.available.toLocaleString('en-UG')}`);
       return;
     }
     setError('');
@@ -267,10 +290,8 @@ const DepositPage = () => {
       setStep('success');
       message.success('A confirmation SMS has been sent to your phone.');
       
-      // Tell the DashboardLayout to refresh the portfolio header value
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new Event('refresh_portfolio_header'));
-      }
+      // Tell the ExchangeContext to refresh the balances
+      refreshBalances();
     } catch (err: any) {
       setStep('details');
       setError(err.message || 'Network error. Please try again.');
@@ -416,7 +437,7 @@ const DepositPage = () => {
       {/* Info */}
       <div style={{ textAlign: 'center', fontSize: 12, color: subtleText, marginBottom: token.marginLG }}>
         <SafetyOutlined style={{ marginRight: 4 }} />
-        Maximum cumulative deposit: UGX 40,000,000
+        {depositLimit ? `Available Deposit Limit: UGX ${depositLimit.available.toLocaleString('en-UG')}` : 'Maximum cumulative deposit: UGX 40,000,000'}
       </div>
 
       {/* Continue button */}

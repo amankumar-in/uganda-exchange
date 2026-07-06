@@ -122,4 +122,15 @@ export class FiatController {
       deposits: await this.fiatService.getUserDeposits(userId, limit ? parseInt(limit) : 50),
     };
   }
+
+  /**
+   * GET /fiat/limit
+   * Get the cumulative deposit limits.
+   */
+  @Get('limit')
+  @UseGuards(JwtAuthGuard)
+  async getDepositLimit(@Request() req: any) {
+    const userId = req.user.userId || req.user.id || req.user.sub;
+    return this.fiatService.getDepositLimit(userId);
+  }
 }

@@ -437,6 +437,19 @@ export class FiatService {
     }));
   }
 
+  async getDepositLimit(userId: string) {
+    const CUMULATIVE_LIMIT = 40_000_000;
+    const depositHistory = await this.prisma.client.fiatTransaction.findMany({
+      where: { userId, type: 'DEPOSIT', status: 'COMPLETED' },
+    });
+    const totalDeposits = depositHistory.reduce((sum, tx) => sum + Number(tx.amount), 0);
+    return {
+      limit: CUMULATIVE_LIMIT,
+      used: totalDeposits,
+      available: Math.max(0, CUMULATIVE_LIMIT - totalDeposits),
+    };
+  }
+
   // ============================================
   // DUMMY DEPOSIT FLOW
   // ============================================
@@ -454,8 +467,9 @@ export class FiatService {
     });
     const totalDeposits = depositHistory.reduce((sum, tx) => sum + Number(tx.amount), 0);
     
+    const available = Math.max(0, CUMULATIVE_LIMIT - totalDeposits);
     if (totalDeposits + amountUgx > CUMULATIVE_LIMIT) {
-      throw new BadRequestException(`Maximum cumulative deposit limit is UGX ${CUMULATIVE_LIMIT.toLocaleString()}. You can deposit up to UGX ${(CUMULATIVE_LIMIT - totalDeposits).toLocaleString()} more.`);
+      throw new BadRequestException(`Maximum cumulative deposit limit is UGX ${CUMULATIVE_LIMIT.toLocaleString()}. You can deposit up to UGX ${available.toLocaleString()} more.`);
     }
 
     const transactionId = generateTransactionId();

@@ -40,52 +40,20 @@ const { useBreakpoint } = Grid;
 
 // Separate component for Portfolio Value to encapsulate fetching
 const PortfolioHeaderValue: React.FC<{ appMode: 'learner' | 'investor', token: any, isDark: boolean }> = ({ appMode, token, isDark }) => {
-  const [value, setValue] = useState<number | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { balances, pairs, isLoadingBalances } = useExchange();
 
-  React.useEffect(() => {
-    let mounted = true;
-    const fetchValue = async () => {
-      try {
-        setLoading(true);
-        let total = 0;
-        if (appMode === 'learner') {
-          const { getLearnerBalances } = await import('@/services/api/learner');
-          const { balances } = await getLearnerBalances();
-          total = balances.reduce((sum: number, b: any) => {
-            if (b.asset === 'UGX') return sum + (b.balance || 0);
-            return sum + (b.usdValue || 0);
-          }, 0);
-        } else {
-          const { getBalances } = await import('@/services/api/assets');
-          const balances = await getBalances();
-          total = balances.reduce((sum, b) => {
-            if (b.asset === 'UGX') return sum + (b.balance || 0);
-            return sum + (b.usdValue || 0);
-          }, 0);
-        }
-        if (mounted) setValue(total);
-      } catch (e) {
-        console.error('Failed to fetch portfolio value', e);
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    };
-    fetchValue();
+  const value = React.useMemo(() => {
+    if (!balances || balances.length === 0) return 0;
+    return balances.reduce((sum, b) => {
+      if (b.asset === 'UGX') return sum + (b.balance || 0);
+      
+      const pair = pairs.find(p => p.baseCurrency === b.asset && (p.quote === 'UGX' || (p as any).isDemoCollegeCoin));
+      const price = pair?.price || 0;
+      return sum + ((b.balance || 0) * price);
+    }, 0);
+  }, [balances, pairs]);
 
-    const handleRefresh = () => {
-      fetchValue();
-    };
-
-    window.addEventListener('refresh_portfolio_header', handleRefresh);
-
-    return () => { 
-      mounted = false; 
-      window.removeEventListener('refresh_portfolio_header', handleRefresh);
-    };
-  }, [appMode]);
-
-  if (loading || value === null) {
+  if (isLoadingBalances && value === 0) {
     return (
       <div style={{ padding: '0 12px', opacity: 0.7 }}>
         <div style={{ width: 60, height: 12, background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', borderRadius: 4, marginBottom: 2 }} />
