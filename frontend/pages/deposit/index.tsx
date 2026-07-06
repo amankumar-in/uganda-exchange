@@ -204,9 +204,12 @@ const DepositPage = () => {
   const submitDeposit = useCallback(async () => {
     // Validate details
     if (method === 'mobile_money') {
-      const clean = mobileNumber.replace(/\s/g, '');
-      if (clean.length < 9) {
-        setError('Enter a valid Uganda mobile number');
+      let clean = mobileNumber.replace(/\s/g, '');
+      if (clean.length === 10 && clean.startsWith('0')) {
+        clean = clean.substring(1);
+      }
+      if (clean.length !== 9) {
+        setError('Enter a valid Uganda mobile number (e.g. 07XX... or 7XX...)');
         return;
       }
       // No SMS OTP required for Mobile Money (STK push is used instead)
@@ -260,10 +263,15 @@ const DepositPage = () => {
       await new Promise(r => setTimeout(r, 800 + Math.random() * 400));
     }
 
-    // Make API call
     try {
       const apiBase = getApiBaseUrl();
       const authToken = localStorage.getItem('authToken');
+      
+      let finalPhone = method === 'card' ? user?.phone : mobileNumber.replace(/\s/g, '');
+      if (method === 'mobile_money' && finalPhone?.length === 10 && finalPhone.startsWith('0')) {
+        finalPhone = finalPhone.substring(1);
+      }
+
       const res = await fetch(`${apiBase}/fiat/dummy-deposit`, {
         method: 'POST',
         headers: {
@@ -274,7 +282,7 @@ const DepositPage = () => {
           amount: numericAmount, 
           method: method,
           otpCode: method === 'card' ? smsCode : undefined,
-          phone: method === 'card' ? user?.phone : mobileNumber.replace(/\s/g, ''),
+          phone: finalPhone,
           phoneCountry: method === 'card' ? user?.phoneCountry : '256'
         }),
       });
@@ -670,8 +678,8 @@ const DepositPage = () => {
               </div>
               <Input
                 value={mobileNumber}
-                onChange={(e) => setMobileNumber(e.target.value.replace(/\D/g, '').slice(0, 9))}
-                placeholder="7XX XXX XXX"
+                onChange={(e) => setMobileNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                placeholder="07XX XXX XXX"
                 inputMode="tel"
                 autoFocus
                 style={{
