@@ -52,3 +52,4 @@ next-env.d.ts
 # backend/prisma/migrations/
 tuit-transfer-data - Sheet1.csv
 tuit-transfer-flow.md
+.agents/AGENTS.md
