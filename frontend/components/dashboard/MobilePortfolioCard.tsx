@@ -142,7 +142,7 @@ const MobilePortfolioCard: React.FC<MobilePortfolioCardProps> = ({
                 fontSize: 11,
               }}
             >
-              {entry.name}: ${entry.value.toLocaleString('en-UG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {entry.name}: UGX {entry.value.toLocaleString('en-UG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
           ))}
         </div>
@@ -182,7 +182,7 @@ const MobilePortfolioCard: React.FC<MobilePortfolioCardProps> = ({
               letterSpacing: '-0.02em',
               lineHeight: 1.1,
             }}>
-              ${totalBalance.toLocaleString('en-UG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              UGX {totalBalance.toLocaleString('en-UG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
           </div>
           
@@ -268,12 +268,12 @@ const MobilePortfolioCard: React.FC<MobilePortfolioCardProps> = ({
         }}>
           <span>
             Crypto: <span style={{ fontWeight: fontWeights.semibold, color: token.colorText }}>
-              ${cryptoBalance.toLocaleString('en-UG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              UGX {cryptoBalance.toLocaleString('en-UG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
           </span>
           <span>
             Cash: <span style={{ fontWeight: fontWeights.semibold, color: token.colorText }}>
-              ${cashBalance.toLocaleString('en-UG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              UGX {cashBalance.toLocaleString('en-UG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
           </span>
         </div>

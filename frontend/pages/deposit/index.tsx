@@ -68,6 +68,17 @@ const DepositPage = () => {
   // SMS verification (for card)
   const [smsCode, setSmsCode] = useState('');
   const [showSmsVerify, setShowSmsVerify] = useState(false);
+  const [resendTimer, setResendTimer] = useState(30);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (showSmsVerify && resendTimer > 0) {
+      interval = setInterval(() => {
+        setResendTimer((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [showSmsVerify, resendTimer]);
 
   const [error, setError] = useState('');
 
@@ -147,6 +158,26 @@ const DepositPage = () => {
   };
 
   // ─── Deposit submission ──────────────────────────────
+  const triggerSmsOtp = async (phone: string, phoneCountry: string) => {
+    setResendTimer(30);
+    try {
+      const res = await fetch(`${getApiBaseUrl()}/otp/resend/phone`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, phoneCountry, type: 'DEPOSIT' })
+      });
+      if (res.ok) {
+        message.success('Verification code sent to your phone');
+      } else {
+        const data = await res.json();
+        message.error(data.message || 'Failed to send OTP');
+      }
+    } catch (e) {
+      console.error('Error triggering SMS:', e);
+      message.error('Network error while sending OTP');
+    }
+  };
+
   const submitDeposit = useCallback(async () => {
     // Validate details
     if (method === 'mobile_money') {
@@ -155,6 +186,7 @@ const DepositPage = () => {
         setError('Enter a valid Uganda mobile number');
         return;
       }
+      // No SMS OTP required for Mobile Money (STK push is used instead)
     } else if (method === 'card') {
       if (!showSmsVerify) {
         // First: validate card, then show SMS step
@@ -175,11 +207,16 @@ const DepositPage = () => {
           setError('Enter the cardholder name');
           return;
         }
-        setError('');
+        
+        // Trigger SMS for Card deposit using the user's registered phone
+        if (user?.phone) {
+          triggerSmsOtp(user.phone, user.phoneCountry || '256');
+        }
         setShowSmsVerify(true);
+        setError('');
         return;
       }
-      // SMS code validation (any 6-digit code works for dummy)
+      // SMS code validation
       if (smsCode.length < 4) {
         setError('Enter the verification code sent to your phone');
         return;
@@ -210,7 +247,13 @@ const DepositPage = () => {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${authToken}`,
         },
-        body: JSON.stringify({ amount: numericAmount, method: method }),
+        body: JSON.stringify({ 
+          amount: numericAmount, 
+          method: method,
+          otpCode: method === 'card' ? smsCode : undefined,
+          phone: method === 'card' ? user?.phone : mobileNumber.replace(/\s/g, ''),
+          phoneCountry: method === 'card' ? user?.phoneCountry : '256'
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -222,7 +265,7 @@ const DepositPage = () => {
       // Small delay before success
       await new Promise(r => setTimeout(r, 600));
       setStep('success');
-      message.success('A confirmation SMS has been sent to your phone');
+      message.success('A confirmation SMS has been sent to your phone.');
       
       // Tell the DashboardLayout to refresh the portfolio header value
       if (typeof window !== 'undefined') {
@@ -232,7 +275,7 @@ const DepositPage = () => {
       setStep('details');
       setError(err.message || 'Network error. Please try again.');
     }
-  }, [method, mobileNumber, cardNumber, cardExpiry, cardCvc, cardName, showSmsVerify, smsCode, numericAmount]);
+  }, [method, mobileNumber, cardNumber, cardExpiry, cardCvc, cardName, showSmsVerify, smsCode, numericAmount, user]);
 
   // ─── Render helpers ──────────────────────────────────
 
@@ -253,7 +296,7 @@ const DepositPage = () => {
   };
 
   const renderHeader = () => (
-    <div style={{ display: 'flex', alignItems: 'center', gap: token.marginMD, padding: `${token.paddingLG}px ${token.paddingLG}px ${token.paddingMD}px` }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: token.marginMD, padding: `${token.paddingLG}px ${isMobile ? 0 : token.paddingLG}px ${token.paddingMD}px` }}>
       {step !== 'processing' && step !== 'success' && (
         <motion.div
           whileTap={{ scale: 0.9 }}
@@ -293,10 +336,10 @@ const DepositPage = () => {
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -30 }}
       transition={{ duration: 0.3 }}
-      style={{ padding: `0 ${token.paddingLG}px`, flex: 1, display: 'flex', flexDirection: 'column' }}
+      style={{ padding: isMobile ? `0 0 100px 0` : `0 ${token.paddingLG}px`, flex: 1, display: 'flex', flexDirection: 'column' }}
     >
       {/* Large amount display */}
-      <div style={{ textAlign: 'center', padding: `${token.paddingXL * 2}px 0 ${token.paddingLG}px` }}>
+      <div style={{ textAlign: 'center', padding: `${isMobile ? token.paddingLG : token.paddingXL * 2}px 0 ${token.paddingLG}px` }}>
         <div style={{ fontSize: 14, color: subtleText, marginBottom: 8, fontWeight: fontWeights.medium }}>Amount (UGX)</div>
         <div style={{ position: 'relative', display: 'inline-block' }}>
           <Input
@@ -377,7 +420,10 @@ const DepositPage = () => {
       </div>
 
       {/* Continue button */}
-      <div style={{ marginTop: 'auto', paddingBottom: token.paddingXL }}>
+      <div style={{
+        marginTop: 'auto',
+        paddingBottom: token.paddingXL,
+      }}>
         <motion.div whileTap={{ scale: 0.97 }}>
           <Button
             type="primary"
@@ -438,9 +484,9 @@ const DepositPage = () => {
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: -30 }}
         transition={{ duration: 0.3 }}
-        style={{ padding: `0 ${token.paddingLG}px`, flex: 1, display: 'flex', flexDirection: 'column' }}
+        style={{ padding: isMobile ? `0 0 100px 0` : `0 ${token.paddingLG}px`, flex: 1, display: 'flex', flexDirection: 'column' }}
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: token.marginMD }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: isMobile ? 0 : token.marginMD }}>
           {methods.map((m, idx) => {
             const isSelected = method === m.key && m.available;
             return (
@@ -455,7 +501,7 @@ const DepositPage = () => {
                   display: 'flex',
                   alignItems: 'center',
                   gap: token.marginMD,
-                  padding: token.paddingLG,
+                  padding: isMobile ? 12 : token.paddingLG,
                   borderRadius: 16,
                   background: cardBg,
                   border: `2px solid ${isSelected ? colors.primary : cardBorder}`,
@@ -516,7 +562,10 @@ const DepositPage = () => {
         </div>
 
         {/* Continue */}
-        <div style={{ marginTop: 'auto', paddingBottom: token.paddingXL, paddingTop: token.paddingLG }}>
+        <div style={{
+          marginTop: 'auto',
+          paddingBottom: token.paddingXL,
+        }}>
           <motion.div whileTap={{ scale: 0.97 }}>
             <Button
               type="primary"
@@ -551,10 +600,10 @@ const DepositPage = () => {
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -30 }}
           transition={{ duration: 0.3 }}
-          style={{ padding: `0 ${token.paddingLG}px`, flex: 1, display: 'flex', flexDirection: 'column' }}
+          style={{ padding: isMobile ? `0 0 100px 0` : `0 ${token.paddingLG}px`, flex: 1, display: 'flex', flexDirection: 'column' }}
         >
           {/* Mobile Money icon + description */}
-          <div style={{ textAlign: 'center', padding: `${token.paddingXL}px 0` }}>
+          <div style={{ textAlign: 'center', padding: `${isMobile ? token.paddingLG : token.paddingXL}px 0` }}>
             <div style={{
               width: 72,
               height: 72,
@@ -617,25 +666,6 @@ const DepositPage = () => {
             </div>
           </div>
 
-          {/* Summary */}
-          <div style={{
-            background: isDark ? 'rgba(99, 102, 241, 0.08)' : 'rgba(99, 102, 241, 0.05)',
-            borderRadius: 12,
-            padding: token.paddingMD,
-            marginBottom: token.marginLG,
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-              <span style={{ fontSize: 13, color: subtleText }}>You deposit</span>
-              <span style={{ fontSize: 15, fontWeight: fontWeights.bold, color: token.colorText }}>
-                UGX {numericAmount.toLocaleString('en-UG')}
-              </span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 13, color: subtleText }}>Fee</span>
-              <span style={{ fontSize: 13, color: colors.success, fontWeight: fontWeights.semibold }}>Free</span>
-            </div>
-          </div>
-
           {error && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
@@ -646,7 +676,10 @@ const DepositPage = () => {
             </motion.div>
           )}
 
-          <div style={{ marginTop: 'auto', paddingBottom: token.paddingXL }}>
+          <div style={{
+            marginTop: 'auto',
+            paddingBottom: token.paddingXL,
+          }}>
             <motion.div whileTap={{ scale: 0.97 }}>
               <Button
                 type="primary"
@@ -661,11 +694,30 @@ const DepositPage = () => {
                   fontSize: 16,
                   fontWeight: fontWeights.bold,
                   boxShadow: '0 8px 24px rgba(99, 102, 241, 0.3)',
+                  marginBottom: token.marginMD,
                 }}
               >
                 Deposit UGX {numericAmount.toLocaleString('en-UG')}
               </Button>
             </motion.div>
+
+            {/* Summary */}
+            <div style={{
+              background: isDark ? 'rgba(99, 102, 241, 0.08)' : 'rgba(99, 102, 241, 0.05)',
+              borderRadius: 12,
+              padding: token.paddingMD,
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                <span style={{ fontSize: 13, color: subtleText }}>You deposit</span>
+                <span style={{ fontSize: 15, fontWeight: fontWeights.bold, color: token.colorText }}>
+                  UGX {numericAmount.toLocaleString('en-UG')}
+                </span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: 13, color: subtleText }}>Fee</span>
+                <span style={{ fontSize: 13, color: colors.success, fontWeight: fontWeights.semibold }}>Free</span>
+              </div>
+            </div>
           </div>
         </motion.div>
       );
@@ -679,7 +731,7 @@ const DepositPage = () => {
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: -30 }}
         transition={{ duration: 0.3 }}
-        style={{ padding: `0 ${token.paddingLG}px`, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'auto' }}
+        style={{ padding: isMobile ? `0 0 100px 0` : `0 ${token.paddingLG}px`, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'auto' }}
       >
         <AnimatePresence mode="wait">
           {!showSmsVerify ? (
@@ -690,7 +742,7 @@ const DepositPage = () => {
                 borderRadius: 20,
                 padding: '24px 20px',
                 marginBottom: token.marginLG,
-                marginTop: token.marginMD,
+                marginTop: isMobile ? 0 : token.marginMD,
                 position: 'relative',
                 overflow: 'hidden',
                 minHeight: 180,
@@ -772,37 +824,21 @@ const DepositPage = () => {
                 </div>
               </div>
 
-              {/* Summary */}
-              <div style={{
-                background: isDark ? 'rgba(99, 102, 241, 0.08)' : 'rgba(99, 102, 241, 0.05)',
-                borderRadius: 12,
-                padding: token.paddingMD,
-                marginTop: token.marginLG,
-                marginBottom: token.marginMD,
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <span style={{ fontSize: 13, color: subtleText }}>You deposit</span>
-                  <span style={{ fontSize: 15, fontWeight: fontWeights.bold, color: token.colorText }}>
-                    UGX {numericAmount.toLocaleString('en-UG')}
-                  </span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: 13, color: subtleText }}>Fee</span>
-                  <span style={{ fontSize: 13, color: colors.success, fontWeight: fontWeights.semibold }}>Free</span>
-                </div>
-              </div>
-
               {error && (
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  style={{ textAlign: 'center', color: '#ef4444', fontSize: 13, marginBottom: token.marginMD }}
+                  style={{ textAlign: 'center', color: '#ef4444', fontSize: 13, marginBottom: token.marginMD, marginTop: token.marginLG }}
                 >
                   {error}
                 </motion.div>
               )}
 
-              <div style={{ paddingBottom: token.paddingXL, paddingTop: token.paddingSM }}>
+              <div style={{
+                marginTop: 'auto',
+                paddingBottom: token.paddingXL,
+                paddingTop: error ? 0 : token.paddingLG,
+              }}>
                 <motion.div whileTap={{ scale: 0.97 }}>
                   <Button
                     type="primary"
@@ -817,11 +853,30 @@ const DepositPage = () => {
                       fontSize: 16,
                       fontWeight: fontWeights.bold,
                       boxShadow: '0 8px 24px rgba(99, 102, 241, 0.3)',
+                      marginBottom: token.marginMD,
                     }}
                   >
                     Pay UGX {numericAmount.toLocaleString('en-UG')}
                   </Button>
                 </motion.div>
+
+                {/* Summary */}
+                <div style={{
+                  background: isDark ? 'rgba(99, 102, 241, 0.08)' : 'rgba(99, 102, 241, 0.05)',
+                  borderRadius: 12,
+                  padding: token.paddingMD,
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                    <span style={{ fontSize: 13, color: subtleText }}>You deposit</span>
+                    <span style={{ fontSize: 15, fontWeight: fontWeights.bold, color: token.colorText }}>
+                      UGX {numericAmount.toLocaleString('en-UG')}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: 13, color: subtleText }}>Fee</span>
+                    <span style={{ fontSize: 13, color: colors.success, fontWeight: fontWeights.semibold }}>Free</span>
+                  </div>
+                </div>
               </div>
             </motion.div>
           ) : (
@@ -870,10 +925,16 @@ const DepositPage = () => {
                     fontFamily: 'monospace',
                   }}
                 />
-                <div style={{ textAlign: 'center', marginTop: token.marginSM }}>
-                  <span style={{ fontSize: 12, color: subtleText }}>
-                    For testing: enter any 4+ digit code
-                  </span>
+                
+                <div style={{ textAlign: 'center', marginTop: 16 }}>
+                  <Button 
+                    type="link" 
+                    onClick={() => user?.phone && triggerSmsOtp(user.phone, user.phoneCountry || '256')}
+                    style={{ color: resendTimer > 0 ? subtleText : colors.primary }}
+                    disabled={resendTimer > 0}
+                  >
+                    {resendTimer > 0 ? `Resend OTP in ${resendTimer}s` : "Didn't receive the code? Resend"}
+                  </Button>
                 </div>
               </div>
 
@@ -1143,30 +1204,10 @@ const DepositPage = () => {
         <title>Deposit Funds | UG Coin</title>
         <meta name="description" content="Add funds to your UG Coin account via Mobile Money or Card" />
       </Head>
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: isMobile ? 'stretch' : 'flex-start',
-        minHeight: isMobile ? 'calc(100vh - 120px)' : 'auto',
-        padding: isMobile ? 0 : `${token.paddingLG}px 0`,
-      }}>
-        <div style={{
-          width: '100%',
-          maxWidth: isMobile ? '100%' : 520,
-          minHeight: isMobile ? 'calc(100vh - 120px)' : 600,
-          background: isMobile ? 'transparent' : (isDark ? 'rgba(30, 30, 50, 0.4)' : 'rgba(255, 255, 255, 0.7)'),
-          border: isMobile ? 'none' : `1px solid ${cardBorder}`,
-          borderRadius: isMobile ? 0 : 24,
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-          backdropFilter: isMobile ? 'none' : 'blur(12px)',
-        }}>
-          {/* Progress + header */}
+      {isMobile ? (
+        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: '100dvh' }}>
           {renderProgressBar()}
           {renderHeader()}
-
-          {/* Step content */}
           <AnimatePresence mode="wait">
             {step === 'amount' && renderAmountStep()}
             {step === 'method' && renderMethodStep()}
@@ -1175,14 +1216,47 @@ const DepositPage = () => {
             {step === 'success' && renderSuccessStep()}
           </AnimatePresence>
         </div>
-      </div>
+      ) : (
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'flex-start',
+          padding: `${token.paddingLG}px 0`,
+        }}>
+          <div style={{
+            width: '100%',
+            maxWidth: 520,
+            minHeight: 600,
+            background: isDark ? 'rgba(30, 30, 50, 0.4)' : 'rgba(255, 255, 255, 0.7)',
+            border: `1px solid ${cardBorder}`,
+            borderRadius: 24,
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            backdropFilter: 'blur(12px)',
+          }}>
+            {/* Progress + header */}
+            {renderProgressBar()}
+            {renderHeader()}
+
+            {/* Step content */}
+            <AnimatePresence mode="wait">
+              {step === 'amount' && renderAmountStep()}
+              {step === 'method' && renderMethodStep()}
+              {step === 'details' && renderDetailsStep()}
+              {step === 'processing' && renderProcessingStep()}
+              {step === 'success' && renderSuccessStep()}
+            </AnimatePresence>
+          </div>
+        </div>
+      )}
     </>
   );
 }
 
 // Use DashboardLayout
 DepositPage.getLayout = (page: ReactElement) => (
-  <DashboardLayout>{page}</DashboardLayout>
+  <DashboardLayout hideMobileNav>{page}</DashboardLayout>
 );
 
 export default DepositPage;

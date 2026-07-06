@@ -8,15 +8,20 @@ import {
   Request,
   UseGuards,
   Logger,
+  BadRequestException,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { FiatService } from './fiat.service';
+import { OtpService } from '../auth/otp.service';
 
 @Controller('fiat')
 export class FiatController {
   private readonly logger = new Logger(FiatController.name);
 
-  constructor(private readonly fiatService: FiatService) {}
+  constructor(
+    private readonly fiatService: FiatService,
+    private readonly otpService: OtpService,
+  ) {}
 
   /**
    * POST /fiat/deposit
@@ -42,10 +47,42 @@ export class FiatController {
   @UseGuards(JwtAuthGuard)
   async dummyDeposit(
     @Request() req: any,
-    @Body() body: { amount: number, method?: string },
+    @Body() body: { amount: number, method?: string, otpCode?: string, phone?: string, phoneCountry?: string },
   ) {
     const userId = req.user.userId || req.user.id || req.user.sub;
-    return this.fiatService.dummyDeposit(userId, Number(body.amount), body.method);
+    
+    // Verify OTP if method is card
+    if (body.method === 'card') {
+      const phone = req.user.phone;
+      const phoneCountry = req.user.phoneCountry || '256';
+
+      if (!body.otpCode || !phone) {
+        throw new BadRequestException('Registered phone number and OTP code are required for card deposits');
+      }
+
+      const isValid = await this.otpService.verifyPhoneOtp(
+        phoneCountry, 
+        phone, 
+        body.otpCode, 
+        'DEPOSIT'
+      );
+      if (!isValid) {
+        throw new BadRequestException('Invalid or expired verification code');
+      }
+    }
+    
+    const result = await this.fiatService.dummyDeposit(userId, Number(body.amount), body.method);
+
+    // After successful deposit, send confirmation SMS
+    if (req.user.phone) {
+      await this.otpService.sendDepositConfirmationSms(
+        req.user.phoneCountry || '256',
+        req.user.phone,
+        Number(body.amount)
+      );
+    }
+
+    return result;
   }
 
   /**
