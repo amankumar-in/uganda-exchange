@@ -38,6 +38,73 @@ import MobileBottomNav from '@/components/layout/MobileBottomNav';
 const { useToken } = theme;
 const { useBreakpoint } = Grid;
 
+// Separate component for Portfolio Value to encapsulate fetching
+const PortfolioHeaderValue: React.FC<{ appMode: 'learner' | 'investor', token: any, isDark: boolean }> = ({ appMode, token, isDark }) => {
+  const [value, setValue] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  React.useEffect(() => {
+    let mounted = true;
+    const fetchValue = async () => {
+      try {
+        setLoading(true);
+        let total = 0;
+        if (appMode === 'learner') {
+          const { getLearnerBalances } = await import('@/services/api/learner');
+          const { balances } = await getLearnerBalances();
+          total = balances.reduce((sum: number, b: any) => {
+            if (b.asset === 'UGX') return sum + (b.balance || 0);
+            return sum + (b.usdValue || 0);
+          }, 0);
+        } else {
+          const { getBalances } = await import('@/services/api/assets');
+          const balances = await getBalances();
+          total = balances.reduce((sum, b) => {
+            if (b.asset === 'UGX') return sum + (b.balance || 0);
+            return sum + (b.usdValue || 0);
+          }, 0);
+        }
+        if (mounted) setValue(total);
+      } catch (e) {
+        console.error('Failed to fetch portfolio value', e);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+    fetchValue();
+
+    const handleRefresh = () => {
+      fetchValue();
+    };
+
+    window.addEventListener('refresh_portfolio_header', handleRefresh);
+
+    return () => { 
+      mounted = false; 
+      window.removeEventListener('refresh_portfolio_header', handleRefresh);
+    };
+  }, [appMode]);
+
+  if (loading || value === null) {
+    return (
+      <div style={{ padding: '0 12px', opacity: 0.7 }}>
+        <div style={{ width: 60, height: 12, background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', borderRadius: 4, marginBottom: 2 }} />
+        <div style={{ width: 80, height: 16, background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', borderRadius: 4 }} />
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', marginRight: token.marginMD }}>
+      <span style={{ fontSize: 11, color: token.colorTextSecondary, fontWeight: 500, lineHeight: 1 }}>Est. Value</span>
+      <span style={{ fontSize: token.fontSize, fontWeight: 700, color: token.colorText, lineHeight: 1.3 }}>
+        UGX {value.toLocaleString('en-UG', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+      </span>
+    </div>
+  );
+};
+
+
 interface NavItem {
   key: string;
   label: string;
@@ -140,6 +207,20 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     }
     return false;
   });
+  
+  const [demoKycCompleted, setDemoKycCompleted] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('demoKycCompleted') === 'true';
+    }
+    return false;
+  });
+
+  const [demoKycBannerDismissed, setDemoKycBannerDismissed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('demoKycBannerDismissed') === 'true';
+    }
+    return false;
+  });
 
   // Wait for client-side mount to avoid hydration mismatch with useBreakpoint
   const isMobile = mounted ? !screens.md : false;
@@ -166,6 +247,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       '/tuition-center/kyc-101',
       '/portfolio/bank-accounts',
       '/portfolio/bank-accounts/add',
+      '/deposit',
+      '/onboarding',
     ];
     
     // Prefetch all routes immediately
@@ -1129,9 +1212,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             </div>
           )}
 
+          {mounted && !isMobile && (
+            <PortfolioHeaderValue appMode={appMode} token={token} isDark={isDark} />
+          )}
+
           {!isMobile && (
             <div
-              onClick={() => router.push('/portfolio?action=deposit')}
+              onClick={() => router.push('/deposit')}
               style={{
                 cursor: 'pointer',
                 fontWeight: fontWeights.semibold,
@@ -1247,6 +1334,80 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                 />
               )}
             </div>
+          </div>
+        )}
+
+        {/* Demo KYC Banner - New Dummy Flow */}
+        {mounted && user && !demoKycCompleted && !demoKycBannerDismissed && (!isMobile || router.pathname.startsWith('/overview')) && (
+          <div
+            style={{
+              background: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
+              color: '#fff',
+              padding: `${token.paddingSM}px ${token.padding}px`,
+              display: 'flex',
+              flexDirection: isMobile ? 'column' : 'row',
+              alignItems: isMobile ? 'flex-start' : 'center',
+              gap: token.marginSM,
+              justifyContent: 'space-between',
+              boxShadow: '0 4px 12px rgba(37, 99, 235, 0.2)',
+              position: 'relative',
+              zIndex: 10,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: token.marginSM, flex: 1, paddingRight: isMobile ? 24 : 0 }}>
+              <span style={{ fontSize: 18 }}>ℹ️</span>
+              <span style={{ fontWeight: fontWeights.medium, fontSize: token.fontSize }}>
+                Action Required: Complete KYC for increased limits and faster payouts.
+              </span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: token.marginSM, justifyContent: isMobile ? 'flex-start' : 'flex-end' }}>
+              <Button
+                type="primary"
+                size="small"
+                onClick={() => router.push('/demo-onboarding')}
+                style={{
+                  background: '#fff',
+                  color: '#2563EB',
+                  border: 'none',
+                  fontWeight: fontWeights.semibold,
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                }}
+              >
+                Complete Verification
+              </Button>
+              {!isMobile && (
+                <CloseOutlined 
+                  style={{ 
+                    fontSize: 14, 
+                    color: 'rgba(255,255,255,0.8)', 
+                    cursor: 'pointer',
+                    padding: 4,
+                    marginLeft: token.marginXS,
+                  }}
+                  onClick={() => {
+                    setDemoKycBannerDismissed(true);
+                    sessionStorage.setItem('demoKycBannerDismissed', 'true');
+                  }}
+                />
+              )}
+            </div>
+            {isMobile && (
+              <CloseOutlined 
+                style={{ 
+                  position: 'absolute',
+                  top: token.paddingSM,
+                  right: token.padding,
+                  fontSize: 14, 
+                  color: 'rgba(255,255,255,0.8)', 
+                  cursor: 'pointer',
+                  padding: 4,
+                }}
+                onClick={() => {
+                  setDemoKycBannerDismissed(true);
+                  sessionStorage.setItem('demoKycBannerDismissed', 'true');
+                }}
+              />
+            )}
           </div>
         )}
         <div style={contentStyle}>

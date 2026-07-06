@@ -82,4 +82,10 @@ export class AuthController {
   async markLearnerWelcomeSeen(@Request() req) {
     return this.authService.markLearnerWelcomeSeen(req.user.id);
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('account/kyc/dummy-verify')
+  async dummyVerifyKyc(@Request() req) {
+    return this.authService.dummyVerifyKyc(req.user.id);
+  }
 }

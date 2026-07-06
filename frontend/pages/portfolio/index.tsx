@@ -27,7 +27,7 @@ import MobilePortfolioCard from '@/components/dashboard/MobilePortfolioCard';
 import { fontWeights } from '@/theme/themeConfig';
 import { useAuth } from '@/context/AuthContext';
 import { useExchange } from '@/context/ExchangeContext';
-import DepositModal from '@/components/wallet/DepositModal';
+
 import { createPortfolioSnapshot, getLearnerBalances } from '@/services/api/learner';
 import { createInvestorPortfolioSnapshot, getBalances } from '@/services/api/assets';
 import { getMiningStatus, MiningStatus } from '@/services/api/mining';
@@ -221,7 +221,7 @@ const WalletPage: NextPageWithLayout = () => {
   const [pageLoading, setPageLoading] = useState(true);
   const [ordersVisible, setOrdersVisible] = useState(false);
   const [syncLoading] = useState(false);
-  const [depositModalVisible, setDepositModalVisible] = useState(false);
+
   const [miningStatus, setMiningStatus] = useState<MiningStatus | null>(null);
   const [viewMode, setViewMode] = useState<'learner' | 'investor'>(appMode);
   const [viewBalances, setViewBalances] = useState<typeof balances>([]);
@@ -682,7 +682,7 @@ const WalletPage: NextPageWithLayout = () => {
                   cryptoBalance={cryptoBalance}
                   cashBalance={fiatBalance}
                   mode={viewMode}
-                  onDepositClick={viewMode === 'investor' ? () => setDepositModalVisible(true) : undefined}
+                  onDepositClick={viewMode === 'investor' ? () => router.push('/deposit') : undefined}
                   onSyncClick={viewMode === 'investor' ? handleSyncBalance : undefined}
                   syncLoading={syncLoading}
                 />
@@ -809,20 +809,24 @@ const WalletPage: NextPageWithLayout = () => {
         >
           <div style={actionButtonsStyle}>
             {viewMode === 'investor' && (
-              <Button
-                type="primary"
-                style={buttonStyle}
-                onClick={() => setDepositModalVisible(true)}
-              >
-                <PlusOutlined /> Add Funds
-              </Button>
+              <motion.div whileTap={{ scale: 0.95 }}>
+                <Button
+                  type="primary"
+                  style={buttonStyle}
+                  onClick={() => router.push('/deposit')}
+                >
+                  <PlusOutlined /> Add Funds
+                </Button>
+              </motion.div>
             )}
-            <Button
-              style={buttonStyle}
-              onClick={() => router.push('/tuit-transfer')}
-            >
-              <LinkOutlined /> Link TUIT Wallet
-            </Button>
+            <motion.div whileTap={{ scale: 0.95 }}>
+              <Button
+                style={buttonStyle}
+                onClick={() => router.push('/tuit-transfer')}
+              >
+                <LinkOutlined /> Link TUIT Wallet
+              </Button>
+            </motion.div>
           </div>
         </motion.div>
 
@@ -969,14 +973,6 @@ const WalletPage: NextPageWithLayout = () => {
             </motion.div>
           )}
         </motion.div>
-
-        <DepositModal
-          visible={depositModalVisible}
-          onClose={() => setDepositModalVisible(false)}
-          onSuccess={() => {
-            refreshBalances();
-          }}
-        />
 
     </>
   );

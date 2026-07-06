@@ -372,4 +372,37 @@ export class AuthService {
       throw new BadRequestException('Invalid or expired session');
     }
   }
+
+  /**
+   * Dummy endpoint to verify KYC instantly for sandbox/testing purposes
+   */
+  async dummyVerifyKyc(userId: string) {
+    await this.prisma.client.user.update({
+      where: { id: userId },
+      data: { kycStatus: 'APPROVED' },
+    });
+    
+    // Also update Kyc record if it exists
+    const existingKyc = await this.prisma.client.kyc.findUnique({
+      where: { userId },
+    });
+    
+    if (existingKyc) {
+      await this.prisma.client.kyc.update({
+        where: { userId },
+        data: { status: 'APPROVED' },
+      });
+    } else {
+      await this.prisma.client.kyc.create({
+        data: {
+          userId,
+          status: 'APPROVED',
+          currentStep: 7,
+          consentedAt: new Date(),
+        }
+      });
+    }
+
+    return { ok: true, message: 'KYC Successfully Verified' };
+  }
 }

@@ -35,6 +35,20 @@ export class FiatController {
   }
 
   /**
+   * POST /fiat/dummy-deposit
+   * Bypass external gateways to test deposits directly.
+   */
+  @Post('dummy-deposit')
+  @UseGuards(JwtAuthGuard)
+  async dummyDeposit(
+    @Request() req: any,
+    @Body() body: { amount: number, method?: string },
+  ) {
+    const userId = req.user.userId || req.user.id || req.user.sub;
+    return this.fiatService.dummyDeposit(userId, Number(body.amount), body.method);
+  }
+
+  /**
    * GET /fiat/deposit/status/:orderId
    * Poll for deposit status after returning from Pesapal callback.
    */

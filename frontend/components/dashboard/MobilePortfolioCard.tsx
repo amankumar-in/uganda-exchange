@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
+import { motion } from 'motion/react';
 import {
   AreaChart,
   Area,
@@ -210,7 +211,8 @@ const MobilePortfolioCard: React.FC<MobilePortfolioCardProps> = ({
               </button>
             )}
             {onDepositClick && (
-              <button
+              <motion.button
+                whileTap={{ scale: 0.92 }}
                 onClick={onDepositClick}
                 style={{
                   background: token.colorPrimaryBg,
@@ -228,7 +230,7 @@ const MobilePortfolioCard: React.FC<MobilePortfolioCardProps> = ({
               >
                 <PlusOutlined style={{ fontSize: 11 }} />
                 Add Cash
-              </button>
+              </motion.button>
             )}
           </div>
         </div>

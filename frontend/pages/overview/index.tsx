@@ -505,7 +505,7 @@ const DashboardPage: NextPageWithLayout = () => {
 
   // Quick actions - memoized
   const quickActions = useMemo(() => [
-    { key: 'deposit', icon: <PlusOutlined />, label: 'Deposit', color: token.colorSuccess, href: '/portfolio?action=deposit' },
+    { key: 'deposit', icon: <PlusOutlined />, label: 'Deposit', color: token.colorSuccess, href: '/deposit' },
     { key: 'trade', icon: <SwapOutlined />, label: 'Trade', color: token.colorWarning, href: '/trade' },
     { key: 'withdraw', icon: <BankOutlined />, label: 'Withdraw', color: token.colorError, href: '/portfolio?action=withdraw' },
     { key: 'portfolio', icon: <WalletOutlined />, label: 'Portfolio', color: token.colorPrimary, href: '/portfolio' },
