@@ -700,7 +700,7 @@ const OnboardingPageExport = () => {
   );
 }
 
-const OnboardingPage = OnboardingPageExport;
+const OnboardingPage = OnboardingPageExport as any;
 
 OnboardingPage.getLayout = (page: ReactElement) => (
   <DashboardLayout>{page}</DashboardLayout>
