@@ -1536,7 +1536,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             height="auto"
             zIndex={2000}
             styles={{ 
-              content: { borderTopLeftRadius: 24, borderTopRightRadius: 24 },
+              wrapper: { borderTopLeftRadius: 24, borderTopRightRadius: 24 },
               body: { padding: token.paddingLG, paddingBottom: token.paddingXL } 
             }}
           >
