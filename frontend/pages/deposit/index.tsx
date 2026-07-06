@@ -337,7 +337,7 @@ const DepositPage = () => {
       )}
       <div style={{ flex: 1 }}>
         <div style={{ fontSize: token.fontSizeLG, fontWeight: fontWeights.bold, color: token.colorText }}>
-          {step === 'amount' && 'Add Funds'}
+          {step === 'amount' && 'Add Promotional Funds'}
           {step === 'method' && 'Payment Method'}
           {step === 'details' && (method === 'mobile_money' ? 'Mobile Money' : 'Card Payment')}
           {step === 'processing' && 'Processing'}
@@ -345,7 +345,7 @@ const DepositPage = () => {
         </div>
         {step !== 'processing' && step !== 'success' && (
           <div style={{ fontSize: token.fontSizeSM, color: subtleText }}>
-            {step === 'amount' && 'Enter the amount you want to deposit'}
+            {step === 'amount' && 'Your bank will not be charged for this.'}
             {step === 'method' && `UGX ${numericAmount.toLocaleString('en-UG')}`}
             {step === 'details' && `UGX ${numericAmount.toLocaleString('en-UG')}`}
           </div>

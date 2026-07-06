@@ -4,8 +4,9 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import Image from 'next/image';
-import { theme, Grid, Button, Dropdown, Tooltip, Popover } from 'antd';
+import { theme, Grid, Button, Dropdown, Tooltip, Popover, Modal, Drawer, Typography, Segmented, ConfigProvider } from 'antd';
 import type { MenuProps } from 'antd';
+import { SoundOutlined } from '@ant-design/icons';
 import {
   AppstoreOutlined,
   WalletOutlined,
@@ -190,6 +191,142 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     return false;
   });
 
+  const [demoPromoVisible, setDemoPromoVisible] = useState(false);
+  const [promoLanguage, setPromoLanguage] = useState<'en' | 'lg'>('en');
+
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const hasSeen = sessionStorage.getItem('demoPromoVisible');
+      if (hasSeen !== 'false') {
+        setDemoPromoVisible(true);
+      }
+    }
+  }, []);
+
+  const handleCloseDemoPromo = () => {
+    setDemoPromoVisible(false);
+    sessionStorage.setItem('demoPromoVisible', 'false');
+  };
+
+  const promoTranslations = {
+    en: {
+      title: 'Welcome to the UGCoin 90-Day Challenge!',
+      body: 'We are running a special 90-day promotional event! All funds and deposits are for training purposes only.',
+      noteLabel: 'Please note:',
+      note: 'Deposits are completely free. Your bank or mobile money account will never be charged.',
+      info: 'This is your chance to test your trading skills, learn how the market works, and climb to the top of the leaderboard without any risk.',
+      button: "I Understand, Let's Trade!"
+    },
+    lg: {
+      title: 'Tukwaniriza mu Mpaka za UGCoin ez\'Ennaku 90!',
+      body: 'Tukola omukolo gw\'enjawulo ogwa ennaku 90! Buli ssente n\'okubikka byonna bya kusomesa byokka.',
+      noteLabel: 'Kyokka jjukira:',
+      note: 'Okubikka bwereere. Akaunti yo eya banka oba mobile money teeribanjibwa.',
+      info: 'Guno gwe mukisa gwo okugezesa obusobozi bwo obw\'okutunda, okuyiga enkola y\'akatale, n\'okulinnya ku ntikko y\'olukalala awatali kabi.',
+      button: 'Ntegedde, Tutandike Okutunda!'
+    }
+  };
+
+  const renderPromoContent = (isDesktop: boolean) => {
+    const t = promoTranslations[promoLanguage];
+    return (
+      <div style={{ textAlign: 'center', padding: `${token.paddingSM}px 0`, position: 'relative' }}>
+        <div style={{ position: 'absolute', top: 0, right: 0 }}>
+          <ConfigProvider
+            theme={{
+              components: {
+                Segmented: {
+                  itemSelectedBg: accentColor,
+                  itemSelectedColor: '#ffffff',
+                },
+              },
+            }}
+          >
+            <Segmented
+              options={[
+                { label: 'English', value: 'en' },
+                { label: 'Luganda', value: 'lg' }
+              ]}
+              value={promoLanguage}
+              onChange={(val) => setPromoLanguage(val as 'en' | 'lg')}
+              size="middle"
+              style={{ fontWeight: fontWeights.semibold }}
+            />
+          </ConfigProvider>
+        </div>
+        
+        <div style={{ 
+          width: 64, 
+          height: 64, 
+          borderRadius: '50%', 
+          background: isDark ? 'rgba(99, 102, 241, 0.15)' : 'rgba(99, 102, 241, 0.08)', 
+          color: accentColor,
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          margin: '0 auto', 
+          marginBottom: token.marginMD,
+          fontSize: 32,
+          marginTop: token.marginLG 
+        }}>
+          <SoundOutlined />
+        </div>
+        
+        <Typography.Title level={3} style={{ margin: 0, marginBottom: token.marginMD, fontSize: isDesktop ? 24 : undefined }}>
+          {t.title}
+        </Typography.Title>
+
+        <Typography.Text type={isDesktop ? "secondary" : undefined} style={{ display: 'block', fontSize: 16, marginBottom: token.marginLG }}>
+          {t.body}
+        </Typography.Text>
+
+        <div
+          style={{
+            padding: token.paddingMD,
+            background: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.02)',
+            borderRadius: token.borderRadiusLG,
+            marginBottom: token.marginLG,
+            textAlign: 'left'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: token.marginSM, marginBottom: token.marginSM }}>
+            <div style={{ color: accentColor, fontSize: 18, marginTop: 2 }}>
+              <BankOutlined />
+            </div>
+            <Typography.Text style={{ fontSize: 15, lineHeight: 1.5 }}>
+              <strong style={{ color: isDark ? '#fff' : '#000' }}>{t.noteLabel}</strong> {t.note}
+            </Typography.Text>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: token.marginSM }}>
+            <div style={{ color: accentColor, fontSize: 18, marginTop: 2 }}>
+              <LineChartOutlined />
+            </div>
+            <Typography.Text style={{ fontSize: 15, lineHeight: 1.5 }}>
+              {t.info}
+            </Typography.Text>
+          </div>
+        </div>
+
+        <Button 
+          type="primary" 
+          block 
+          size="large" 
+          onClick={handleCloseDemoPromo} 
+          style={{ 
+            height: 48, 
+            borderRadius: token.borderRadius,
+            background: `linear-gradient(135deg, ${accentColor} 0%, ${accentColorSecondary} 100%)`,
+            border: 'none',
+            fontWeight: fontWeights.bold,
+            fontSize: 16
+          }}
+        >
+          {t.button}
+        </Button>
+      </div>
+    );
+  };
+
   // Wait for client-side mount to avoid hydration mismatch with useBreakpoint
   const isMobile = mounted ? !screens.md : false;
 
@@ -322,6 +459,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const handleLogout = () => {
     // Clear session storage
     sessionStorage.removeItem('kycBannerDismissed');
+    sessionStorage.removeItem('demoPromoVisible');
     // Clear auth state (tokens, cookies)
     logout();
     // Hard redirect immediately - prevents any re-render with null user
@@ -1385,6 +1523,40 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
       {/* Mobile Bottom Navigation - hidden on certain pages like trade */}
       {!hideMobileNav && <MobileBottomNav />}
+
+      {/* Demo Promo Popup */}
+      {mounted && (
+        isMobile ? (
+          <Drawer
+            title={null}
+            placement="bottom"
+            closable={false}
+            maskClosable={false}
+            open={demoPromoVisible}
+            height="auto"
+            zIndex={2000}
+            styles={{ 
+              content: { borderTopLeftRadius: 24, borderTopRightRadius: 24 },
+              body: { padding: token.paddingLG, paddingBottom: token.paddingXL } 
+            }}
+          >
+            {renderPromoContent(false)}
+          </Drawer>
+        ) : (
+          <Modal
+            title={null}
+            open={demoPromoVisible}
+            closable={false}
+            maskClosable={false}
+            footer={null}
+            centered
+            width={520}
+            styles={{ body: { padding: token.paddingLG } }}
+          >
+            {renderPromoContent(true)}
+          </Modal>
+        )
+      )}
     </div>
   );
 };
