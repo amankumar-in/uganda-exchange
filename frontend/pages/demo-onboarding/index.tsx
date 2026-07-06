@@ -1194,7 +1194,7 @@ export default function KYC101Page() {
           type="primary"
           size="large"
           onClick={() => goToNextStep('Finalizing verification. Please wait...')}
-          style={{ ...getButtonStyle(), flex: isVerifying ? 0 : 2, width: isVerifying ? 52 : 'auto', padding: isVerifying ? 0 : undefined, transition: 'all 0.3s ease' }}
+          style={{ ...getButtonStyle(), flex: isVerifying ? 'none' : 2, width: isVerifying ? 52 : 'auto', padding: isVerifying ? 0 : undefined, transition: 'all 0.3s ease' }}
           disabled={isVerifying}
         >
           {isVerifying ? (
